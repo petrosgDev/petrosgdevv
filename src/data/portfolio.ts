@@ -90,8 +90,8 @@ export const SITE_PROFILE = {
   telegramUrl: 'https://t.me/petrosgdev',
   whatsappUrl: 'https://wa.me/251903433857',
   existingSiteUrl: 'https://petrosgdev.pages.dev/',
-  logoSrc: '/src/assets/images/logo-petros.png',
-  portraitSrc: '/src/assets/images/portrait-petros.png',
+  logoSrc: '/images/logo-petros.png',
+  portraitSrc: '/images/portrait-petros.png',
   heroGreeting: 'HELLO WORLD.',
   heroHeadline: 'Building practical software, scalable web platforms, and AI-powered products.',
   heroIntro:
@@ -364,14 +364,14 @@ export const PROJECTS: ProjectItem[] = [
       },
     ],
     heroImage: {
-      src: '/src/assets/images/project-aman-pay.png',
+      src: '/images/project-aman-pay.png',
       alt: 'Aman Pay escrow fintech web application interface preview',
       caption: 'Aman Pay landing interface featuring buyer/seller escrow deal initiation in ETB.',
       aspect: 'wide',
     },
     gallery: [
       {
-        src: '/src/assets/images/project-aman-pay.png',
+        src: '/images/project-aman-pay.png',
         alt: 'Aman Pay primary escrow dashboard and landing screen',
         caption: 'Primary escrow deal workflow and trust architecture on Aman Pay.',
         aspect: 'wide',
@@ -426,14 +426,14 @@ export const PROJECTS: ProjectItem[] = [
       },
     ],
     heroImage: {
-      src: '/src/assets/images/project-event-hub.png',
+      src: '/images/project-event-hub.png',
       alt: 'Event Hub DBU campus event management platform interface',
       caption: 'EventHub DBU homepage showcasing campus event discovery and quick ticket access.',
       aspect: 'wide',
     },
     gallery: [
       {
-        src: '/src/assets/images/project-event-hub.png',
+        src: '/images/project-event-hub.png',
         alt: 'Event Hub platform overview screenshot',
         caption: 'Campus event discovery, venue guidance, and organizer onboarding flow.',
         aspect: 'wide',
@@ -487,14 +487,14 @@ export const PROJECTS: ProjectItem[] = [
       },
     ],
     heroImage: {
-      src: '/src/assets/images/project-ethio-massage.png',
+      src: '/images/project-ethio-massage.png',
       alt: 'Ethio Massage wellness booking platform interface',
       caption: 'Ethio Massage storefront presenting Addis Ababa mobile wellness services and instant booking.',
       aspect: 'wide',
     },
     gallery: [
       {
-        src: '/src/assets/images/project-ethio-massage.png',
+        src: '/images/project-ethio-massage.png',
         alt: 'Ethio Massage hero and booking experience',
         caption: 'Wellness service navigation and WhatsApp-enabled booking interface.',
         aspect: 'wide',
@@ -540,14 +540,14 @@ export const PROJECTS: ProjectItem[] = [
       'Optimized image-first presentation deployed on Vercel',
     ],
     heroImage: {
-      src: '/src/assets/images/project-wende-dubai.png',
+      src: '/images/project-wende-dubai.png',
       alt: 'Wende Dubai Interior Design luxury fit-out website preview',
       caption: 'Wende Luxury Interior & Finishing hero showcase with Swiper.js transitions.',
       aspect: 'wide',
     },
     gallery: [
       {
-        src: '/src/assets/images/project-wende-dubai.png',
+        src: '/images/project-wende-dubai.png',
         alt: 'Wende Dubai Interior Design main showcase',
         caption: 'Editorial interior showcase presenting Dubai fit-out and finishing services.',
         aspect: 'wide',
@@ -588,14 +588,14 @@ export const PROJECTS: ProjectItem[] = [
       'Responsive hospitality layout tailored for desktop and mobile diners',
     ],
     heroImage: {
-      src: '/src/assets/images/project-raman-caffe.png',
+      src: '/images/project-raman-caffe.png',
       alt: 'Raman Caffe Ethiopian hospitality website preview',
       caption: 'Raman Caffe homepage highlighting highland coffee heritage and culinary menu navigation.',
       aspect: 'wide',
     },
     gallery: [
       {
-        src: '/src/assets/images/project-raman-caffe.png',
+        src: '/images/project-raman-caffe.png',
         alt: 'Raman Caffe culinary showcase interface',
         caption: 'Atmospheric hospitality presentation for Raman Cafe in Debre Birhan.',
         aspect: 'wide',
@@ -651,14 +651,14 @@ export const PROJECTS: ProjectItem[] = [
       },
     ],
     heroImage: {
-      src: '/src/assets/images/project-ncs.jpg',
+      src: '/images/project-ncs.jpg',
       alt: 'Nexus Campus Services Java desktop platform preview',
       caption: 'Nexus Campus Services (NCS) desktop interface and unified campus operations dashboard.',
       aspect: 'wide',
     },
     gallery: [
       {
-        src: '/src/assets/images/project-ncs.jpg',
+        src: '/images/project-ncs.jpg',
         alt: 'Nexus Campus Services interface overview',
         caption: 'Native JavaFX campus management workspace supporting bookings, clubs, and lost-and-found.',
         aspect: 'wide',
@@ -703,14 +703,14 @@ export const PROJECTS: ProjectItem[] = [
       'Modular card-based mobile dashboard with dark-mode visual hierarchy',
     ],
     heroImage: {
-      src: '/src/assets/images/project-myapp.png',
+      src: '/images/project-myapp.png',
       alt: 'MyApp React Native offline-first mobile productivity dashboard',
       caption: 'MyApp mobile dashboard displaying tasks, saved notes, workouts, and bottom navigation.',
       aspect: 'portrait',
     },
     gallery: [
       {
-        src: '/src/assets/images/project-myapp.png',
+        src: '/images/project-myapp.png',
         alt: 'MyApp mobile screen preview',
         caption: 'Dark-theme daily overview with pending tasks, notes, workouts, and quick tab switching.',
         aspect: 'portrait',
@@ -765,14 +765,14 @@ export const PROJECTS: ProjectItem[] = [
       },
     ],
     heroImage: {
-      src: '/src/assets/images/project-banking-system.png',
+      src: '/images/project-banking-system.png',
       alt: 'Simple Banking System C++17 Qt 6 desktop interface',
       caption: 'Simple Banking System Qt 6 desktop UI featuring role-based dashboard and transaction monitoring.',
       aspect: 'wide',
     },
     gallery: [
       {
-        src: '/src/assets/images/project-banking-system.png',
+        src: '/images/project-banking-system.png',
         alt: 'Banking System Qt Widgets desktop screen',
         caption: 'Desktop dashboard showing financial summaries, queue tracking, and account controls.',
         aspect: 'wide',
