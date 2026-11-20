@@ -42,7 +42,7 @@ npm run deploy:cf
 
 ### Option A — Git Integration (Recommended)
 1. Import the GitHub repository in **Vercel → Add New Project**.
-2. Vercel auto-detects Next.js and deploys automatically with zero extra settings (`npm run build`).
+2. `vercel.json` is pre-configured (`buildCommand: "npm run build"`, `outputDirectory: "out"`, `trailingSlash: true`), so Vercel deploys the static export cleanly even if the project was previously set to Vite or `dist`.
 
 ### Option B — Direct CLI Deploy
 ```bash
