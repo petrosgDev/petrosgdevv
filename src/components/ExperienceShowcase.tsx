@@ -11,6 +11,7 @@ import {
 } from '@/lib/portfolioLogic';
 
 const EXPAND_EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
+const MOBILE_MEDIA_QUERY = '(max-width: 767px)';
 
 interface ExperienceShowcaseProps {
   items: readonly ExperienceItem[];
@@ -28,6 +29,7 @@ export function ExperienceShowcase({
   showAboutLink = false,
 }: ExperienceShowcaseProps) {
   const [activeId, setActiveId] = useState<string>(items[0]?.id ?? '');
+  const [isMobileView, setIsMobileView] = useState<boolean>(false);
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
   const expandedRef = useRef<Set<string>>(new Set());
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
@@ -36,6 +38,10 @@ export function ExperienceShowcase({
     if (items.length === 0) {
       return;
     }
+
+    const mediaQuery = window.matchMedia(MOBILE_MEDIA_QUERY);
+    let mobile = mediaQuery.matches;
+    setIsMobileView(mobile);
 
     let rafId = 0;
 
@@ -63,10 +69,14 @@ export function ExperienceShowcase({
         lastCardVisible &&
         vh + window.scrollY >= document.documentElement.scrollHeight - 28;
 
-      const activationOffset = Math.min(280, Math.round(vh * 0.34));
+      const activationOffset = mobile ? Math.min(280, Math.round(vh * 0.34)) : 240;
       const nextActiveId = getActiveExperienceId(positions, activationOffset, isAtPageBottom);
       if (nextActiveId) {
         setActiveId((prev) => (prev === nextActiveId ? prev : nextActiveId));
+      }
+
+      if (!mobile) {
+        return;
       }
 
       const nextExpanded = computeExpandedExperienceIds(
@@ -92,13 +102,21 @@ export function ExperienceShowcase({
       rafId = window.requestAnimationFrame(updateScrollState);
     };
 
+    const onMediaChange = (event: MediaQueryListEvent) => {
+      mobile = event.matches;
+      setIsMobileView(mobile);
+      updateScrollState();
+    };
+
     updateScrollState();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', onScroll, { passive: true });
+    mediaQuery.addEventListener('change', onMediaChange);
 
     return () => {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('resize', onScroll);
+      mediaQuery.removeEventListener('change', onMediaChange);
       if (rafId !== 0) {
         window.cancelAnimationFrame(rafId);
       }
@@ -107,7 +125,7 @@ export function ExperienceShowcase({
 
   const handleSelectRole = (id: string) => {
     setActiveId(id);
-    if (!expandedRef.current.has(id)) {
+    if (isMobileView && !expandedRef.current.has(id)) {
       const nextSet = new Set(expandedRef.current);
       nextSet.add(id);
       expandedRef.current = nextSet;
@@ -211,11 +229,11 @@ export function ExperienceShowcase({
         )}
       </aside>
 
-      {/* Right Column: Scroll-Triggered Experience Cards (Reduced -> Full Detail Animation on Scroll) */}
-      <div className="grid gap-4 sm:gap-5 lg:gap-6">
+      {/* Right Column: Tablet & Desktop stay fully expanded as before; Mobile animates reduced -> full detail on scroll */}
+      <div className="grid gap-4 md:gap-5 lg:gap-7">
         {items.map((item) => {
           const isActive = activeId === item.id;
-          const isExpanded = expandedSet.has(item.id);
+          const isExpanded = !isMobileView || expandedSet.has(item.id);
 
           return (
             <article
@@ -228,25 +246,29 @@ export function ExperienceShowcase({
               data-active={isActive ? 'true' : 'false'}
               data-expanded={isExpanded ? 'true' : 'false'}
               className={`scroll-mt-24 lg:scroll-mt-28 rounded-2xl border-[1.5px] transition-all duration-300 ${
-                isExpanded
-                  ? 'p-5 sm:p-7 bg-white dark:bg-[#121211]'
-                  : 'px-5 py-4 sm:px-6 sm:py-5 bg-[#FAFAFA] dark:bg-[#10100F]'
-              } ${
-                isActive && isExpanded
-                  ? 'border-[#1A1A1A] dark:border-[#E5E5E0] shadow-[4px_4px_0_0_#1A1A1A] dark:shadow-[4px_4px_0_0_rgba(240,240,238,0.22)]'
+                !isMobileView
+                  ? `p-5 sm:p-7 bg-white dark:bg-[#121211] ${
+                      isActive
+                        ? 'border-[#1A1A1A] dark:border-[#E5E5E0] shadow-[4px_4px_0_0_#1A1A1A] dark:shadow-[4px_4px_0_0_rgba(240,240,238,0.22)]'
+                        : 'border-[#1A1A1A]/20 dark:border-white/15 shadow-[3px_3px_0_0_rgba(26,26,26,0.08)] dark:shadow-[3px_3px_0_0_rgba(255,255,255,0.05)] hover:border-[#1A1A1A]/50 dark:hover:border-white/30'
+                    }`
                   : isExpanded
-                    ? 'border-[#1A1A1A]/30 dark:border-white/20 shadow-[3px_3px_0_0_rgba(26,26,26,0.08)] dark:shadow-[3px_3px_0_0_rgba(255,255,255,0.05)]'
-                    : 'border-[#1A1A1A]/15 dark:border-white/12 shadow-[2px_2px_0_0_rgba(26,26,26,0.04)] dark:shadow-[2px_2px_0_0_rgba(255,255,255,0.03)]'
+                    ? `p-5 bg-white dark:bg-[#121211] ${
+                        isActive
+                          ? 'border-[#1A1A1A] dark:border-[#E5E5E0] shadow-[4px_4px_0_0_#1A1A1A] dark:shadow-[4px_4px_0_0_rgba(240,240,238,0.22)]'
+                          : 'border-[#1A1A1A]/30 dark:border-white/20 shadow-[3px_3px_0_0_rgba(26,26,26,0.08)] dark:shadow-[3px_3px_0_0_rgba(255,255,255,0.05)]'
+                      }`
+                    : 'px-5 py-4 bg-[#FAFAFA] dark:bg-[#10100F] border-[#1A1A1A]/15 dark:border-white/12 shadow-[2px_2px_0_0_rgba(26,26,26,0.04)] dark:shadow-[2px_2px_0_0_rgba(255,255,255,0.03)]'
               }`}
             >
-              {/* Compact Header (Always Visible in Reduced & Full States) */}
+              {/* Date, Location & Optional External Organization Link */}
               <div className="flex flex-wrap items-start sm:items-baseline justify-between gap-x-3 gap-y-1">
                 <p className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-2 gap-y-0.5 text-[13px] text-[#666666] dark:text-[#9A9A96]">
                   <span className="inline-flex items-center gap-2">
                     <span
                       aria-hidden="true"
                       className={`inline-block lg:hidden h-2 w-2 shrink-0 rounded-full border-[1.5px] transition-all duration-300 ${
-                        isExpanded
+                        (isMobileView ? isExpanded : isActive)
                           ? 'scale-110 border-[#1A1A1A] bg-[#1A1A1A] dark:border-[#F0F0EE] dark:bg-[#F0F0EE]'
                           : 'border-[#8C8C87] bg-transparent dark:border-[#6C6C68]'
                       }`}
@@ -262,7 +284,7 @@ export function ExperienceShowcase({
                 </p>
 
                 <div className="flex items-center gap-3">
-                  {item.organizationUrl && isExpanded && (
+                  {item.organizationUrl && (!isMobileView || isExpanded) && (
                     <a
                       href={item.organizationUrl}
                       target="_blank"
@@ -274,27 +296,29 @@ export function ExperienceShowcase({
                     </a>
                   )}
 
-                  {/* Minimalist Architectural Expansion Hairline Indicator */}
-                  <span
-                    aria-hidden="true"
-                    className="relative inline-flex h-4 w-4 items-center justify-center text-[#777772] dark:text-[#8E8E88]"
-                  >
-                    <span className="block h-[1.5px] w-2.5 bg-current" />
+                  {/* Mobile-Only Expansion Indicator */}
+                  {isMobileView && (
                     <span
-                      className={`absolute block h-2.5 w-[1.5px] bg-current transition-transform duration-300 ${
-                        isExpanded ? 'scale-y-0 opacity-0' : 'scale-y-100 opacity-100'
-                      }`}
-                    />
-                  </span>
+                      aria-hidden="true"
+                      className="relative inline-flex md:hidden h-4 w-4 items-center justify-center text-[#777772] dark:text-[#8E8E88]"
+                    >
+                      <span className="block h-[1.5px] w-2.5 bg-current" />
+                      <span
+                        className={`absolute block h-2.5 w-[1.5px] bg-current transition-transform duration-300 ${
+                          isExpanded ? 'scale-y-0 opacity-0' : 'scale-y-100 opacity-100'
+                        }`}
+                      />
+                    </span>
+                  )}
                 </div>
               </div>
 
               {/* Card Role & Organization Heading */}
               <h3
-                className={`mt-1.5 font-semibold tracking-[-0.015em] transition-colors duration-300 ${
-                  isExpanded
+                className={`mt-2 font-semibold tracking-[-0.015em] transition-colors duration-300 ${
+                  !isMobileView || isExpanded
                     ? 'text-[16.5px] sm:text-[18px] text-[#1A1A1A] dark:text-[#F0F0EE]'
-                    : 'text-[15.5px] sm:text-[16.5px] text-[#353532] dark:text-[#CBCBC6]'
+                    : 'text-[15.5px] text-[#353532] dark:text-[#CBCBC6]'
                 }`}
               >
                 {item.role}{' '}
@@ -303,55 +327,17 @@ export function ExperienceShowcase({
                 </span>
               </h3>
 
-              {/* Scroll-Triggered Animated Detail Container (Reduced -> Full Detail) */}
-              <motion.div
-                initial={false}
-                animate={{
-                  height: isExpanded ? 'auto' : 0,
-                  opacity: isExpanded ? 1 : 0,
-                }}
-                transition={{
-                  height: { duration: 0.48, ease: EXPAND_EASE },
-                  opacity: {
-                    duration: isExpanded ? 0.34 : 0.2,
-                    delay: isExpanded ? 0.08 : 0,
-                    ease: 'easeOut',
-                  },
-                }}
-                aria-hidden={!isExpanded}
-                className="overflow-hidden"
-              >
-                <div className="pt-2.5">
-                  <motion.p
-                    initial={false}
-                    animate={{
-                      y: isExpanded ? 0 : 10,
-                      opacity: isExpanded ? 1 : 0,
-                    }}
-                    transition={{
-                      duration: 0.38,
-                      delay: isExpanded ? 0.08 : 0,
-                      ease: EXPAND_EASE,
-                    }}
-                    className="max-w-[62ch] text-[14px] leading-[1.7] text-[#454542] dark:text-[#C8C8C4]"
-                  >
+              {/* Card Body — Full & Static on Tablet/Desktop; Scroll-Animated Reduced -> Full Detail on Mobile Only */}
+              {!isMobileView ? (
+                <div>
+                  <p className="mt-2.5 max-w-[62ch] text-[14px] leading-[1.7] text-[#454542] dark:text-[#C8C8C4]">
                     {item.summary}
-                  </motion.p>
+                  </p>
 
                   <ul className="mt-4 grid gap-2.5">
-                    {item.points.map((point, idx) => (
-                      <motion.li
+                    {item.points.map((point) => (
+                      <li
                         key={`${item.id}-${point.lead ?? point.text.slice(0, 24)}`}
-                        initial={false}
-                        animate={{
-                          y: isExpanded ? 0 : 10,
-                          opacity: isExpanded ? 1 : 0,
-                        }}
-                        transition={{
-                          duration: 0.36,
-                          delay: isExpanded ? 0.12 + idx * 0.045 : 0,
-                          ease: EXPAND_EASE,
-                        }}
                         className="relative pl-5 text-[13.5px] leading-[1.7] text-[#52524E] dark:text-[#B5B5B0]"
                       >
                         <span
@@ -364,24 +350,12 @@ export function ExperienceShowcase({
                           </strong>
                         )}
                         <span>{point.text}</span>
-                      </motion.li>
+                      </li>
                     ))}
                   </ul>
 
                   {/* Crisp Rectangular Stack Chips */}
-                  <motion.div
-                    initial={false}
-                    animate={{
-                      y: isExpanded ? 0 : 8,
-                      opacity: isExpanded ? 1 : 0,
-                    }}
-                    transition={{
-                      duration: 0.34,
-                      delay: isExpanded ? 0.22 : 0,
-                      ease: EXPAND_EASE,
-                    }}
-                    className="mt-5 flex flex-wrap gap-2"
-                  >
+                  <div className="mt-5 flex flex-wrap gap-2">
                     {item.stack.map((tech) => (
                       <span
                         key={tech}
@@ -390,9 +364,99 @@ export function ExperienceShowcase({
                         {tech}
                       </span>
                     ))}
-                  </motion.div>
+                  </div>
                 </div>
-              </motion.div>
+              ) : (
+                <motion.div
+                  initial={false}
+                  animate={{
+                    height: isExpanded ? 'auto' : 0,
+                    opacity: isExpanded ? 1 : 0,
+                  }}
+                  transition={{
+                    height: { duration: 0.48, ease: EXPAND_EASE },
+                    opacity: {
+                      duration: isExpanded ? 0.34 : 0.2,
+                      delay: isExpanded ? 0.08 : 0,
+                      ease: 'easeOut',
+                    },
+                  }}
+                  aria-hidden={!isExpanded}
+                  className="overflow-hidden"
+                >
+                  <div className="pt-2.5">
+                    <motion.p
+                      initial={false}
+                      animate={{
+                        y: isExpanded ? 0 : 10,
+                        opacity: isExpanded ? 1 : 0,
+                      }}
+                      transition={{
+                        duration: 0.38,
+                        delay: isExpanded ? 0.08 : 0,
+                        ease: EXPAND_EASE,
+                      }}
+                      className="max-w-[62ch] text-[14px] leading-[1.7] text-[#454542] dark:text-[#C8C8C4]"
+                    >
+                      {item.summary}
+                    </motion.p>
+
+                    <ul className="mt-4 grid gap-2.5">
+                      {item.points.map((point, idx) => (
+                        <motion.li
+                          key={`${item.id}-${point.lead ?? point.text.slice(0, 24)}`}
+                          initial={false}
+                          animate={{
+                            y: isExpanded ? 0 : 10,
+                            opacity: isExpanded ? 1 : 0,
+                          }}
+                          transition={{
+                            duration: 0.36,
+                            delay: isExpanded ? 0.12 + idx * 0.045 : 0,
+                            ease: EXPAND_EASE,
+                          }}
+                          className="relative pl-5 text-[13.5px] leading-[1.7] text-[#52524E] dark:text-[#B5B5B0]"
+                        >
+                          <span
+                            aria-hidden="true"
+                            className="absolute left-0 top-[0.58em] h-[7px] w-[7px] rounded-[1.5px] border border-[#1A1A1A] bg-[#1A1A1A] dark:border-[#F0F0EE] dark:bg-[#F0F0EE]"
+                          />
+                          {point.lead && (
+                            <strong className="font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]">
+                              {point.lead}{' '}
+                            </strong>
+                          )}
+                          <span>{point.text}</span>
+                        </motion.li>
+                      ))}
+                    </ul>
+
+                    {/* Crisp Rectangular Stack Chips */}
+                    <motion.div
+                      initial={false}
+                      animate={{
+                        y: isExpanded ? 0 : 8,
+                        opacity: isExpanded ? 1 : 0,
+                      }}
+                      transition={{
+                        duration: 0.34,
+                        delay: isExpanded ? 0.22 : 0,
+                        ease: EXPAND_EASE,
+                      }}
+                      className="mt-5 flex flex-wrap gap-2"
+                    >
+                      {item.stack.map((tech) => (
+                        <span
+                          key={tech}
+                          className="inline-flex items-center rounded-md border border-[#E2E2DE] dark:border-[#2B2B28] bg-[#FAFAFA] dark:bg-[#191918] px-2.5 py-1 text-[11.5px] font-medium text-[#3A3A37] dark:text-[#D4D4D0]"
+                        >
+                          {tech}
+                        </span>
+                      ))}
+                    </motion.div>
+                  </div>
+                </motion.div>
+              )}
             </article>
           );
         })}

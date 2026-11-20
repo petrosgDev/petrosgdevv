@@ -75,6 +75,7 @@ const MOBILE_DOCK_PRIMARY_NAV: DockNavItem[] = [
     hash: '#experience',
     icon: GitBranch,
   },
+  { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
 ];
 
 const MOBILE_DRAWER_NAV = [
@@ -442,7 +443,7 @@ export function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Modern Mobile Floating Icon-Sign Bottom Dock (Home, Work, Skills, Experience | Contact) */}
+      {/* Modern Mobile Floating Icon-Sign Bottom Dock (Home, Work, Skills, Experience, About | Contact) */}
       <nav
         aria-label="Mobile quick navigation"
         className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex md:hidden items-center gap-0.5 rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/92 dark:bg-[#17191C]/92 p-1.5 backdrop-blur-xl shadow-[0_10px_32px_rgba(0,0,0,0.14)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)]"
