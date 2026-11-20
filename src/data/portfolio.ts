@@ -100,7 +100,7 @@ export const SITE_PROFILE = {
   whatsappUrl: 'https://wa.me/251903433857',
   existingSiteUrl: 'https://petrosgeto.pages.dev/',
   portraitSrc: '/images/portrait-petros.png',
-  heroGreeting: 'HELLO WORLD.',
+  heroGreeting: 'SOFTWARE ENGINEER',
   heroHeadline: 'Building practical software, scalable web platforms, and AI-powered products.',
   heroIntro:
     "I'm Petros Geto, a software engineer building full-stack applications and AI-powered solutions. I turn ideas into functional, scalable digital products through clean code, thoughtful design, and engineering-driven problem solving.",
