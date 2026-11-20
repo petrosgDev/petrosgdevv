@@ -10,6 +10,7 @@ import {
 } from '@/data/portfolio';
 import { EditorialImage } from '@/components/EditorialImage';
 import { Reveal } from '@/components/Reveal';
+import { SkillShowcase } from '@/components/SkillShowcase';
 
 export const metadata: Metadata = {
   title: 'About',
@@ -147,23 +148,7 @@ export default function AboutPage() {
           </div>
         </Reveal>
 
-        <div className="divide-y divide-[#EAEAEA] dark:divide-[#222220] border-y border-[#EAEAEA] dark:border-[#222220]">
-          {SKILL_CATEGORIES.map((category) => (
-            <div
-              key={category.id}
-              className="grid grid-cols-1 gap-3 py-5 md:grid-cols-12 md:items-baseline"
-            >
-              <div className="md:col-span-4">
-                <h3 className="text-[14px] font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]">
-                  {category.name}
-                </h3>
-              </div>
-              <div className="md:col-span-8 text-[13px] text-[#666666] dark:text-[#9A9A96]">
-                {category.items.join(' · ')}
-              </div>
-            </div>
-          ))}
-        </div>
+        <SkillShowcase categories={SKILL_CATEGORIES} />
       </section>
 
       {/* Milestones */}

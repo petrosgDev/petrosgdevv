@@ -3,6 +3,7 @@ import { Barlow_Condensed, JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/g
 import { SITE_PROFILE } from '@/data/portfolio';
 import { ThemeProvider } from '@/components/ThemeContext';
 import { Navbar } from '@/components/Navbar';
+import { SocialRail } from '@/components/SocialRail';
 import { Footer } from '@/components/Footer';
 import './globals.css';
 
@@ -46,9 +47,6 @@ export const metadata: Metadata = {
   description:
     'Portfolio of Petros Geto (PETROS G DEV), a software engineer in Addis Ababa building full-stack web applications, AI-powered solutions, and scalable digital products.',
   authors: [{ name: SITE_PROFILE.fullName, url: siteUrl }],
-  icons: {
-    icon: SITE_PROFILE.logoSrc,
-  },
   openGraph: {
     type: 'website',
     siteName: SITE_PROFILE.brand,
@@ -137,6 +135,7 @@ export default function RootLayout({
             </a>
 
             <Navbar />
+            <SocialRail />
 
             <main id="main-content" className="flex-1">
               {children}

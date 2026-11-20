@@ -1,37 +1,92 @@
 'use client';
 
+import type { MouseEvent } from 'react';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   ArrowUpRight,
+  BookOpen,
   Briefcase,
+  Code2,
   Github,
   Home,
+  Layers,
+  Linkedin,
   Mail,
   Menu,
+  MessageCircle,
   Moon,
+  Send,
   Sun,
-  User,
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { NAVIGATION_LINKS, SITE_PROFILE } from '@/data/portfolio';
-import { BrandLogo } from '@/components/BrandLogo';
+import { SITE_PROFILE } from '@/data/portfolio';
 import { useTheme } from '@/components/ThemeContext';
 
-const MOBILE_DOCK_ICONS: Record<string, typeof Home> = {
-  '/': Home,
-  '/work': Briefcase,
-  '/about': User,
-  '/contact': Mail,
-};
+interface DockNavItem {
+  id: string;
+  label: string;
+  href: string;
+  matchPath: string;
+  hash?: string;
+  icon: typeof Home;
+}
+
+const DESKTOP_PRIMARY_NAV: DockNavItem[] = [
+  { id: 'home', label: 'Home', href: '/', matchPath: '/', icon: Home },
+  { id: 'work', label: 'Work', href: '/work', matchPath: '/work', icon: Code2 },
+  {
+    id: 'skills',
+    label: 'Skills',
+    href: '/#skills',
+    matchPath: '/',
+    hash: '#skills',
+    icon: Layers,
+  },
+  {
+    id: 'milestones',
+    label: 'Milestones',
+    href: '/#milestones',
+    matchPath: '/',
+    hash: '#milestones',
+    icon: Briefcase,
+  },
+  { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
+];
+
+const MOBILE_DOCK_NAV: DockNavItem[] = [
+  { id: 'home', label: 'Home', href: '/', matchPath: '/', icon: Home },
+  { id: 'work', label: 'Work', href: '/work', matchPath: '/work', icon: Code2 },
+  { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
+  { id: 'contact', label: 'Contact', href: '/contact', matchPath: '/contact', icon: Mail },
+];
+
+const MOBILE_DRAWER_NAV = [
+  { label: 'Home', href: '/', matchPath: '/' },
+  { label: 'Work', href: '/work', matchPath: '/work' },
+  { label: 'Skills', href: '/#skills', matchPath: '/', hash: '#skills' },
+  { label: 'Milestones', href: '/#milestones', matchPath: '/', hash: '#milestones' },
+  { label: 'About', href: '/about', matchPath: '/about' },
+  { label: 'Contact', href: '/contact', matchPath: '/contact' },
+];
+
+const DRAWER_SOCIALS = [
+  { label: 'GitHub', href: SITE_PROFILE.githubUrl, icon: Github, external: true },
+  { label: 'LinkedIn', href: SITE_PROFILE.linkedinUrl, icon: Linkedin, external: true },
+  { label: 'Telegram', href: SITE_PROFILE.telegramUrl, icon: Send, external: true },
+  { label: 'WhatsApp', href: SITE_PROFILE.whatsappUrl, icon: MessageCircle, external: true },
+  { label: 'Email', href: `mailto:${SITE_PROFILE.email}`, icon: Mail, external: false },
+];
 
 export function Navbar() {
   const pathname = usePathname() || '/';
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [activeHash, setActiveHash] = useState('');
   const prefersReducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -45,7 +100,48 @@ export function Navbar() {
 
   useEffect(() => {
     setMobileOpen(false);
-  }, [pathname]);
+    if (pathname !== '/') {
+      setActiveHash('');
+      return;
+    }
+
+    const pendingTarget =
+      typeof window !== 'undefined'
+        ? window.sessionStorage.getItem('pending-scroll-target')
+        : null;
+    const hashFromUrl =
+      typeof window !== 'undefined' && window.location.hash
+        ? window.location.hash.slice(1)
+        : '';
+    const targetId = pendingTarget || hashFromUrl;
+
+    if (pendingTarget && typeof window !== 'undefined') {
+      window.sessionStorage.removeItem('pending-scroll-target');
+    }
+
+    if (targetId) {
+      setActiveHash(`#${targetId}`);
+      requestAnimationFrame(() => {
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.scrollIntoView({
+            behavior: prefersReducedMotion ? 'auto' : 'smooth',
+            block: 'start',
+          });
+        }
+      });
+    } else {
+      setActiveHash('');
+    }
+  }, [pathname, prefersReducedMotion]);
+
+  useEffect(() => {
+    const onHashChange = () => {
+      setActiveHash(window.location.hash || '');
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, []);
 
   useEffect(() => {
     if (!mobileOpen) {
@@ -60,11 +156,44 @@ export function Navbar() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [mobileOpen]);
 
-  const isActivePath = (linkPath: string) => {
-    if (linkPath === '/') {
-      return pathname === '/';
+  const isRouteActive = (matchPath: string, hash?: string) => {
+    const normalized = pathname.endsWith('/') && pathname !== '/' ? pathname.slice(0, -1) : pathname;
+    if (hash) {
+      return normalized === '/' && activeHash === hash;
     }
-    return pathname === linkPath || pathname.startsWith(`${linkPath}/`);
+    if (matchPath === '/') {
+      return normalized === '/' && !activeHash;
+    }
+    return normalized === matchPath || normalized.startsWith(`${matchPath}/`);
+  };
+
+  const contactActive = isRouteActive('/contact');
+
+  const handleItemClick = (event: MouseEvent<HTMLAnchorElement>, itemHash?: string) => {
+    setMobileOpen(false);
+    if (!itemHash) {
+      setActiveHash('');
+      return;
+    }
+
+    event.preventDefault();
+    const targetId = itemHash.slice(1);
+    setActiveHash(itemHash);
+
+    if (pathname === '/') {
+      window.history.replaceState(null, '', `/#${targetId}`);
+      const el = document.getElementById(targetId);
+      if (el) {
+        el.scrollIntoView({
+          behavior: prefersReducedMotion ? 'auto' : 'smooth',
+          block: 'start',
+        });
+      }
+      return;
+    }
+
+    window.sessionStorage.setItem('pending-scroll-target', targetId);
+    router.push(`/#${targetId}`);
   };
 
   return (
@@ -76,60 +205,107 @@ export function Navbar() {
             : 'bg-white/85 dark:bg-[#0A0A0A]/85 backdrop-blur-md border-b border-transparent'
         }`}
       >
-        <div className="mx-auto flex h-14 md:h-16 max-w-[1200px] items-center justify-between gap-4 px-5 md:px-10">
-          {/* Zone 1: Brand Monogram Logo & Wordmark */}
+        <div className="mx-auto flex h-14 md:h-[68px] max-w-[1200px] items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-4 px-5 md:px-10">
+          {/* Zone 1: Clean Brand Wordmark */}
           <Link
             href="/"
-            className="group inline-flex items-center gap-2 font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] whitespace-nowrap shrink-0 transition-opacity hover:opacity-75"
+            onClick={(e) => handleItemClick(e)}
+            className="inline-flex items-center justify-self-start font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] whitespace-nowrap shrink-0 transition-opacity hover:opacity-75"
           >
-            <BrandLogo size="md" className="transition-transform duration-300 group-hover:scale-105" />
-            <span>{SITE_PROFILE.brand}</span>
+            {SITE_PROFILE.brand}
           </Link>
 
-          {/* Zone 2: Modern Desktop Segmented Glass Navigation */}
+          {/* Zone 2: Modern Floating Icon-Sign Pill Navigation Dock */}
           <nav
             aria-label="Primary navigation"
-            className="hidden md:flex items-center rounded-full bg-[#F5F5F4]/90 dark:bg-[#161615]/90 p-1 border border-black/[0.06] dark:border-white/[0.08]"
+            className="hidden md:flex items-center gap-0.5 justify-self-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/92 dark:bg-[#17191C]/92 p-1.5 backdrop-blur-xl shadow-[0_6px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.48)]"
           >
-            {NAVIGATION_LINKS.map((item) => {
-              const active = isActivePath(item.path);
+            {DESKTOP_PRIMARY_NAV.map((item) => {
+              const active = isRouteActive(item.matchPath, item.hash);
+              const Icon = item.icon;
               return (
                 <Link
-                  key={item.path}
-                  href={item.path}
+                  key={item.id}
+                  href={item.href}
+                  onClick={(e) => handleItemClick(e, item.hash)}
+                  aria-label={item.label}
                   aria-current={active ? 'page' : undefined}
-                  className={`relative px-4 py-1.5 text-[12.5px] rounded-full whitespace-nowrap shrink-0 transition-colors duration-200 ${
+                  className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] dark:focus-visible:ring-white/60 ${
                     active
-                      ? 'text-[#1A1A1A] dark:text-[#F0F0EE] font-medium'
-                      : 'text-[#666666] dark:text-[#9A9A96] hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE]'
+                      ? 'text-[#111110] dark:text-[#F5F5F3]'
+                      : 'text-[#686864] dark:text-[#A3A6AB] hover:text-[#111110] dark:hover:text-[#F5F5F3] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
                   }`}
                 >
                   {active && (
                     <motion.span
-                      layoutId="desktop-nav-active-pill"
+                      layoutId="desktop-icon-nav-active"
                       transition={
                         prefersReducedMotion
                           ? { duration: 0 }
                           : { type: 'spring', stiffness: 420, damping: 34 }
                       }
-                      className="absolute inset-0 rounded-full bg-white dark:bg-[#262624] shadow-[0_1px_4px_rgba(0,0,0,0.08)] dark:shadow-[0_1px_6px_rgba(0,0,0,0.45)] border border-black/[0.04] dark:border-white/[0.06]"
+                      className="absolute inset-0 rounded-full bg-white dark:bg-[#2B2E33] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.06] dark:ring-white/[0.08]"
                     />
                   )}
-                  <span className="relative z-10">{item.label}</span>
+                  <Icon className="relative z-10 h-[17px] w-[17px]" aria-hidden="true" />
+                  <span
+                    role="tooltip"
+                    className="pointer-events-none absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 translate-y-1 opacity-0 whitespace-nowrap rounded-lg border border-black/[0.08] dark:border-white/[0.1] bg-white/95 dark:bg-[#17191C]/95 px-2.5 py-1 text-[11px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] shadow-md backdrop-blur-md transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
+                  >
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}
+
+            {/* Subtle vertical hairline divider matching modern icon dock */}
+            <span
+              aria-hidden="true"
+              className="mx-1.5 h-5 w-px bg-black/[0.1] dark:bg-white/[0.12]"
+            />
+
+            {/* Contact Icon Sign */}
+            <Link
+              href="/contact"
+              onClick={(e) => handleItemClick(e)}
+              aria-label="Contact"
+              aria-current={contactActive ? 'page' : undefined}
+              className={`group relative flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] dark:focus-visible:ring-white/60 ${
+                contactActive
+                  ? 'text-[#111110] dark:text-[#F5F5F3]'
+                  : 'text-[#686864] dark:text-[#A3A6AB] hover:text-[#111110] dark:hover:text-[#F5F5F3] hover:bg-black/[0.04] dark:hover:bg-white/[0.06]'
+              }`}
+            >
+              {contactActive && (
+                <motion.span
+                  layoutId="desktop-icon-nav-active"
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', stiffness: 420, damping: 34 }
+                  }
+                  className="absolute inset-0 rounded-full bg-white dark:bg-[#2B2E33] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.06] dark:ring-white/[0.08]"
+                />
+              )}
+              <Mail className="relative z-10 h-[17px] w-[17px]" aria-hidden="true" />
+              <span
+                role="tooltip"
+                className="pointer-events-none absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 translate-y-1 opacity-0 whitespace-nowrap rounded-lg border border-black/[0.08] dark:border-white/[0.1] bg-white/95 dark:bg-[#17191C]/95 px-2.5 py-1 text-[11px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] shadow-md backdrop-blur-md transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
+              >
+                Contact
+              </span>
+            </Link>
           </nav>
 
-          {/* Zone 3: Modern Circular Utility Actions */}
-          <div className="flex items-center gap-2 shrink-0">
+          {/* Zone 3: Restored Circular GitHub & Theme Toggle Buttons */}
+          <div className="flex items-center justify-end justify-self-end gap-2 shrink-0">
             <a
               href={SITE_PROFILE.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit Petros Geto on GitHub"
               title="GitHub (@petrosgDev)"
-              className="hidden sm:inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-white/70 dark:bg-[#141413]/70 text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] hover:bg-[#F5F5F4] dark:hover:bg-[#1E1E1C] transition-all duration-200 shrink-0"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-white/70 dark:bg-[#141413]/70 text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] hover:bg-[#F5F5F4] dark:hover:bg-[#1E1E1C] transition-all duration-200 shrink-0"
             >
               <Github className="h-3.5 w-3.5" aria-hidden="true" />
             </a>
@@ -187,20 +363,21 @@ export function Navbar() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -8, scale: 0.98 }}
               transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-              className="fixed left-4 right-4 top-[66px] z-50 md:hidden rounded-2xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#111110] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.18)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.7)]"
+              className="fixed left-4 right-4 top-[66px] z-50 md:hidden rounded-2xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#141619] p-4 shadow-[0_24px_60px_rgba(0,0,0,0.18)] dark:shadow-[0_24px_60px_rgba(0,0,0,0.75)]"
             >
               <div className="flex flex-col gap-1">
-                {NAVIGATION_LINKS.map((item, idx) => {
-                  const active = isActivePath(item.path);
+                {MOBILE_DRAWER_NAV.map((item, idx) => {
+                  const active = isRouteActive(item.matchPath, item.hash);
                   return (
                     <Link
-                      key={item.path}
-                      href={item.path}
+                      key={item.href}
+                      href={item.href}
+                      onClick={(e) => handleItemClick(e, item.hash)}
                       aria-current={active ? 'page' : undefined}
-                      className={`flex min-h-[46px] items-center justify-between rounded-xl px-3.5 py-2.5 text-[14px] transition-colors ${
+                      className={`flex min-h-[44px] items-center justify-between rounded-xl px-3.5 py-2 text-[14px] transition-colors ${
                         active
-                          ? 'bg-[#F4F4F3] dark:bg-[#1F1F1D] font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]'
-                          : 'text-[#555553] dark:text-[#A0A09C] hover:bg-[#F8F8F7] dark:hover:bg-[#181817]'
+                          ? 'bg-[#F4F4F3] dark:bg-[#23262B] font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]'
+                          : 'text-[#555553] dark:text-[#A3A6AB] hover:bg-[#F8F8F7] dark:hover:bg-[#1C1F24]'
                       }`}
                     >
                       <span className="flex items-center gap-3">
@@ -222,35 +399,28 @@ export function Navbar() {
                 })}
               </div>
 
-              {/* Quick Connect Strip inside Mobile Menu */}
+              {/* Social Media Capsule inside Mobile Drawer */}
               <div className="mt-3.5 pt-3.5 border-t border-black/[0.06] dark:border-white/[0.08] space-y-2.5">
                 <div className="flex items-center justify-between px-1 text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
                   <span>{SITE_PROFILE.location}</span>
-                  <span>Quick Connect</span>
+                  <span>Socials</span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <a
-                    href={`mailto:${SITE_PROFILE.email}`}
-                    className="flex h-9 items-center justify-center rounded-xl border border-black/[0.08] dark:border-white/[0.1] text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:bg-[#F4F4F3] dark:hover:bg-[#1E1E1C] transition-colors"
-                  >
-                    Email
-                  </a>
-                  <a
-                    href={SITE_PROFILE.githubUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-9 items-center justify-center rounded-xl border border-black/[0.08] dark:border-white/[0.1] text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:bg-[#F4F4F3] dark:hover:bg-[#1E1E1C] transition-colors"
-                  >
-                    GitHub
-                  </a>
-                  <a
-                    href={SITE_PROFILE.linkedinUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex h-9 items-center justify-center rounded-xl border border-black/[0.08] dark:border-white/[0.1] text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:bg-[#F4F4F3] dark:hover:bg-[#1E1E1C] transition-colors"
-                  >
-                    LinkedIn
-                  </a>
+                <div className="flex items-center justify-between rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4] dark:bg-[#1C1F24] p-1">
+                  {DRAWER_SOCIALS.map((social) => {
+                    const Icon = social.icon;
+                    return (
+                      <a
+                        key={social.label}
+                        href={social.href}
+                        target={social.external ? '_blank' : undefined}
+                        rel={social.external ? 'noopener noreferrer' : undefined}
+                        aria-label={social.label}
+                        className="flex h-10 w-10 items-center justify-center rounded-full text-[#4A4A46] dark:text-[#C4C7CC] hover:bg-white dark:hover:bg-[#2B2E33] hover:text-[#111110] dark:hover:text-white transition-colors"
+                      >
+                        <Icon className="h-[17px] w-[17px]" aria-hidden="true" />
+                      </a>
+                    );
+                  })}
                 </div>
               </div>
             </motion.nav>
@@ -258,45 +428,42 @@ export function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Modern Mobile Floating Bottom Dock */}
+      {/* Modern Mobile Floating Icon-Sign Bottom Dock (matches Desktop Icon Dock) */}
       <nav
         aria-label="Mobile quick navigation"
-        className="fixed bottom-3.5 left-4 right-4 z-40 mx-auto max-w-[360px] md:hidden rounded-2xl border border-black/[0.08] dark:border-white/[0.1] bg-white/88 dark:bg-[#121211]/88 backdrop-blur-xl px-1.5 py-1.5 shadow-[0_10px_32px_rgba(0,0,0,0.12)] dark:shadow-[0_10px_32px_rgba(0,0,0,0.55)]"
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex md:hidden items-center gap-0.5 rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/92 dark:bg-[#17191C]/92 p-1.5 backdrop-blur-xl shadow-[0_10px_32px_rgba(0,0,0,0.14)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)]"
       >
-        <div className="grid grid-cols-4 gap-1">
-          {NAVIGATION_LINKS.map((item) => {
-            const active = isActivePath(item.path);
-            const Icon = MOBILE_DOCK_ICONS[item.path] ?? Home;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                aria-current={active ? 'page' : undefined}
-                className={`relative flex min-h-[46px] flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 transition-colors duration-200 ${
-                  active
-                    ? 'text-[#1A1A1A] dark:text-[#F0F0EE] font-semibold'
-                    : 'text-[#6E6E6A] dark:text-[#8E8E8A]'
-                }`}
-              >
-                {active && (
-                  <motion.span
-                    layoutId="mobile-dock-active-pill"
-                    transition={
-                      prefersReducedMotion
-                        ? { duration: 0 }
-                        : { type: 'spring', stiffness: 420, damping: 34 }
-                    }
-                    className="absolute inset-0 rounded-xl bg-[#F3F3F1] dark:bg-[#222220]"
-                  />
-                )}
-                <Icon className="relative z-10 h-4 w-4" aria-hidden="true" />
-                <span className="relative z-10 text-[10px] leading-none tracking-tight">
-                  {item.label}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
+        {MOBILE_DOCK_NAV.map((item) => {
+          const active = isRouteActive(item.matchPath);
+          const Icon = item.icon;
+          return (
+            <Link
+              key={item.id}
+              href={item.href}
+              onClick={(e) => handleItemClick(e)}
+              aria-label={item.label}
+              aria-current={active ? 'page' : undefined}
+              className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 ${
+                active
+                  ? 'text-[#111110] dark:text-[#F5F5F3]'
+                  : 'text-[#686864] dark:text-[#A3A6AB]'
+              }`}
+            >
+              {active && (
+                <motion.span
+                  layoutId="mobile-dock-active-circle"
+                  transition={
+                    prefersReducedMotion
+                      ? { duration: 0 }
+                      : { type: 'spring', stiffness: 420, damping: 34 }
+                  }
+                  className="absolute inset-0 rounded-full bg-white dark:bg-[#2B2E33] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.06] dark:ring-white/[0.08]"
+                />
+              )}
+              <Icon className="relative z-10 h-[18px] w-[18px]" aria-hidden="true" />
+            </Link>
+          );
+        })}
       </nav>
     </>
   );

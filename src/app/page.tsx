@@ -10,6 +10,7 @@ import { getFeaturedProjects } from '@/lib/portfolioLogic';
 import { EditorialImage } from '@/components/EditorialImage';
 import { ProjectCard } from '@/components/ProjectCard';
 import { Reveal } from '@/components/Reveal';
+import { SkillShowcase } from '@/components/SkillShowcase';
 
 export default function HomePage() {
   const featuredProjects = getFeaturedProjects(PROJECTS);
@@ -209,19 +210,22 @@ export default function HomePage() {
       </section>
 
       {/* 4. Technology & Skills */}
-      <section className="border-t border-[#EAEAEA] dark:border-[#222220]">
+      <section
+        id="skills"
+        className="scroll-mt-24 border-t border-[#EAEAEA] dark:border-[#222220] bg-[#F7F7F5] dark:bg-[#0E0E0D]"
+      >
         <div className="mx-auto max-w-[1200px] px-6 py-16 md:px-10 md:py-24">
           <Reveal>
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-12 pb-10">
-              <div className="lg:col-span-4 space-y-1.5">
+              <div className="lg:col-span-5 space-y-1.5">
                 <p className="text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
                   03. Capabilities
                 </p>
-                <h2 className="font-display text-[26px] sm:text-[32px] font-bold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-                  Technology &amp; Skills
+                <h2 className="font-display text-[28px] sm:text-[34px] font-bold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
+                  What I Build With
                 </h2>
               </div>
-              <div className="lg:col-span-8 flex items-end">
+              <div className="lg:col-span-7 flex items-end">
                 <p className="text-[13px] leading-relaxed text-[#666666] dark:text-[#9A9A96] max-w-[58ch]">
                   Technologies verified across live deployments, academic software engineering
                   systems, and public repositories.
@@ -230,47 +234,15 @@ export default function HomePage() {
             </div>
           </Reveal>
 
-          <div className="divide-y divide-[#EAEAEA] dark:divide-[#222220] border-y border-[#EAEAEA] dark:border-[#222220]">
-            {SKILL_CATEGORIES.map((category, index) => (
-              <Reveal key={category.id} delay={index * 0.03}>
-                <div className="grid grid-cols-1 gap-3 py-5 md:grid-cols-12 md:items-baseline">
-                  <div className="md:col-span-1 font-mono text-[11px] text-[#666666] dark:text-[#9A9A96] tabular-nums">
-                    {category.index}
-                  </div>
-                  <div className="md:col-span-4">
-                    <h3 className="text-[14px] font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]">
-                      {category.name}
-                    </h3>
-                    <p className="mt-0.5 text-[12px] text-[#666666] dark:text-[#9A9A96]">
-                      {category.description}
-                    </p>
-                  </div>
-                  <div className="md:col-span-7">
-                    <p className="text-[13px] leading-relaxed text-[#1A1A1A] dark:text-[#F0F0EE]">
-                      {category.items.map((item, idx) => (
-                        <span key={item}>
-                          {item}
-                          {idx < category.items.length - 1 && (
-                            <span
-                              aria-hidden="true"
-                              className="mx-2 text-[#666666]/50 dark:text-[#9A9A96]/50"
-                            >
-                              ·
-                            </span>
-                          )}
-                        </span>
-                      ))}
-                    </p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <SkillShowcase categories={SKILL_CATEGORIES} />
         </div>
       </section>
 
       {/* 5. Selected Engineering Milestones */}
-      <section className="border-t border-[#EAEAEA] dark:border-[#222220]">
+      <section
+        id="milestones"
+        className="scroll-mt-24 border-t border-[#EAEAEA] dark:border-[#222220]"
+      >
         <div className="mx-auto max-w-[1200px] px-6 py-16 md:px-10 md:py-24">
           <Reveal>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pb-10 border-b border-[#EAEAEA] dark:border-[#222220]">

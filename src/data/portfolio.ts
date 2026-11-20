@@ -90,7 +90,6 @@ export const SITE_PROFILE = {
   telegramUrl: 'https://t.me/petrosgdev',
   whatsappUrl: 'https://wa.me/251903433857',
   existingSiteUrl: 'https://petrosgeto.pages.dev/',
-  logoSrc: '/assets/aistudio/image_80211bc7.png',
   portraitSrc: '/images/portrait-petros.png',
   heroGreeting: 'HELLO WORLD.',
   heroHeadline: 'Building practical software, scalable web platforms, and AI-powered products.',
@@ -202,16 +201,23 @@ export const TECHNICAL_INTERESTS = [
 
 export const SKILL_CATEGORIES: SkillCategory[] = [
   {
-    id: 'frontend',
+    id: 'languages',
     index: '01',
+    name: 'Languages',
+    description: 'Core languages verified across web, mobile, and native desktop repositories.',
+    items: ['Python', 'TypeScript', 'JavaScript', 'Java', 'C++', 'Dart'],
+  },
+  {
+    id: 'frontend',
+    index: '02',
     name: 'Frontend & Mobile',
     description: 'Modern component-driven web and cross-platform mobile interfaces.',
     items: [
       'React',
       'Next.js',
+      'Tailwind CSS',
       'HTML5',
       'CSS3',
-      'Tailwind CSS',
       'Flutter',
       'React Native (Expo)',
       'Swiper.js',
@@ -219,24 +225,17 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
   },
   {
     id: 'backend',
-    index: '02',
+    index: '03',
     name: 'Backend & APIs',
     description: 'Server-side architecture, payment integrations, and structured API services.',
     items: [
       'Node.js',
       'Express',
       'Spring Boot',
-      'REST APIs',
       'WhatsApp API',
+      'REST APIs',
       'Escrow & Payment Workflows',
     ],
-  },
-  {
-    id: 'languages',
-    index: '03',
-    name: 'Programming Languages',
-    description: 'Core languages verified across web, mobile, and native desktop repositories.',
-    items: ['JavaScript', 'TypeScript', 'Python', 'Java', 'C++', 'Dart'],
   },
   {
     id: 'databases',
@@ -250,7 +249,7 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
     index: '05',
     name: 'DevOps & Platforms',
     description: 'Version control, containerization, and continuous deployment.',
-    items: ['Git', 'GitHub', 'Docker', 'Vercel', 'Render', 'CI/CD'],
+    items: ['Docker', 'Git', 'GitHub', 'Vercel', 'Render', 'CI/CD'],
   },
 ];
 

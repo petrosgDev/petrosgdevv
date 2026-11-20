@@ -3,7 +3,6 @@
 import Link from 'next/link';
 import { ArrowUp, ArrowUpRight } from 'lucide-react';
 import { NAVIGATION_LINKS, SITE_PROFILE, SOCIAL_LINKS } from '@/data/portfolio';
-import { BrandLogo } from '@/components/BrandLogo';
 
 export function Footer() {
   const scrollToTop = () => {
@@ -17,10 +16,9 @@ export function Footer() {
           <div className="md:col-span-5 space-y-3">
             <Link
               href="/"
-              className="inline-flex items-center gap-2 font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] hover:opacity-75 transition-opacity"
+              className="inline-flex items-center font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] hover:opacity-75 transition-opacity"
             >
-              <BrandLogo size="sm" />
-              <span>{SITE_PROFILE.brand}</span>
+              {SITE_PROFILE.brand}
             </Link>
             <p className="max-w-xs text-[13px] leading-relaxed text-[#666666] dark:text-[#9A9A96]">
               {SITE_PROFILE.shortPhilosophy}
