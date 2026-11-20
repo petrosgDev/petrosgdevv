@@ -1,28 +1,18 @@
-import { useEffect } from 'react';
+import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import {
   MILESTONES,
   PROJECTS,
   SITE_PROFILE,
   SKILL_CATEGORIES,
-} from '../data/portfolio';
-import { getFeaturedProjects } from '../utils/portfolioLogic';
-import { updatePageSeo } from '../utils/seo';
-import { AppLink } from '../components/RouterContext';
-import { EditorialImage } from '../components/EditorialImage';
-import { ProjectCard } from '../components/ProjectCard';
-import { Reveal } from '../components/Reveal';
+} from '@/data/portfolio';
+import { getFeaturedProjects } from '@/lib/portfolioLogic';
+import { EditorialImage } from '@/components/EditorialImage';
+import { ProjectCard } from '@/components/ProjectCard';
+import { Reveal } from '@/components/Reveal';
 
-export function HomePage() {
+export default function HomePage() {
   const featuredProjects = getFeaturedProjects(PROJECTS);
-
-  useEffect(() => {
-    updatePageSeo({
-      title: `${SITE_PROFILE.fullName} — ${SITE_PROFILE.role}`,
-      description: SITE_PROFILE.heroIntro,
-      path: '/',
-    });
-  }, []);
 
   return (
     <div>
@@ -58,19 +48,19 @@ export function HomePage() {
               <em className="italic">Addis Ababa, Ethiopia</em>. I build{' '}
               <strong className="font-semibold text-[#1A1A1A] dark:text-white">full-stack applications</strong>{' '}
               and practical, scalable digital products through clean code and thoughtful design.{' '}
-              <AppLink
-                to="/work"
+              <Link
+                href="/work"
                 className="underline underline-offset-4 decoration-[#1A1A1A]/60 dark:decoration-[#F0F0EE]/60 hover:opacity-65 transition-opacity"
               >
                 Explore my work
-              </AppLink>{' '}
+              </Link>{' '}
               or{' '}
-              <AppLink
-                to="/contact"
+              <Link
+                href="/contact"
                 className="underline underline-offset-4 decoration-[#1A1A1A]/60 dark:decoration-[#F0F0EE]/60 hover:opacity-65 transition-opacity"
               >
                 contact below
-              </AppLink>
+              </Link>
               .
             </p>
 
@@ -100,21 +90,21 @@ export function HomePage() {
             </div>
 
             <div className="pt-2 grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3">
-              <AppLink
-                to="/work"
+              <Link
+                href="/work"
                 className="inline-flex h-10 items-center justify-center gap-2 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE] px-5 text-[12px] font-medium text-white dark:text-[#0A0A0A] hover:opacity-85 active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 <span>Explore My Work</span>
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </AppLink>
+              </Link>
 
-              <AppLink
-                to="/contact"
+              <Link
+                href="/contact"
                 className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-black/[0.12] dark:border-white/[0.14] px-5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] hover:bg-[#F7F7F6] dark:hover:bg-[#161615] active:scale-[0.98] transition-all whitespace-nowrap"
               >
                 <span>Get in Touch</span>
                 <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </AppLink>
+              </Link>
             </div>
           </div>
         </div>
@@ -147,13 +137,13 @@ export function HomePage() {
                   Featured Projects
                 </h2>
               </div>
-              <AppLink
-                to="/work"
+              <Link
+                href="/work"
                 className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 hover:opacity-65 transition-opacity whitespace-nowrap"
               >
                 <span>View all {PROJECTS.length} projects</span>
                 <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </AppLink>
+              </Link>
             </div>
           </Reveal>
 
@@ -204,13 +194,13 @@ export function HomePage() {
                   the architecture cleanly, and deliver calm interfaces people enjoy using.
                 </p>
                 <div className="pt-1">
-                  <AppLink
-                    to="/about"
+                  <Link
+                    href="/about"
                     className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 hover:opacity-65 transition-opacity"
                   >
-                    <span>Read full background & philosophy</span>
+                    <span>Read full background &amp; philosophy</span>
                     <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                  </AppLink>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -228,7 +218,7 @@ export function HomePage() {
                   03. Capabilities
                 </p>
                 <h2 className="font-display text-[26px] sm:text-[32px] font-bold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-                  Technology & Skills
+                  Technology &amp; Skills
                 </h2>
               </div>
               <div className="lg:col-span-8 flex items-end">
@@ -292,13 +282,13 @@ export function HomePage() {
                   Selected Milestones
                 </h2>
               </div>
-              <AppLink
-                to="/about"
+              <Link
+                href="/about"
                 className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 hover:opacity-65 transition-opacity whitespace-nowrap"
               >
                 <span>Full background &amp; skills</span>
                 <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </AppLink>
+              </Link>
             </div>
           </Reveal>
 
@@ -347,13 +337,13 @@ export function HomePage() {
                 </p>
               </div>
               <div className="lg:col-span-4 flex flex-wrap lg:justify-end gap-3">
-                <AppLink
-                  to="/contact"
+                <Link
+                  href="/contact"
                   className="inline-flex h-10 items-center gap-2 rounded-full bg-white px-5 text-[12px] font-medium text-[#0A0A0A] hover:opacity-85 transition-opacity whitespace-nowrap"
                 >
                   <span>Start a Conversation</span>
                   <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                </AppLink>
+                </Link>
                 <a
                   href={`mailto:${SITE_PROFILE.email}`}
                   className="inline-flex h-10 items-center gap-1.5 rounded-full border border-white/25 px-4 text-[12px] font-medium text-white hover:border-white transition-colors whitespace-nowrap"

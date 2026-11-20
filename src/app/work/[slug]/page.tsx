@@ -1,56 +1,67 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, ArrowUpRight, Maximize2 } from 'lucide-react';
-import { PROJECTS, SITE_PROFILE, type ProjectImage } from '../data/portfolio';
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
+import { PROJECTS, SITE_PROFILE } from '@/data/portfolio';
 import {
   getAdjacentProjects,
   getProjectBySlug,
   getRelatedProjects,
-} from '../utils/portfolioLogic';
-import { updatePageSeo } from '../utils/seo';
-import { AppLink } from '../components/RouterContext';
-import { EditorialImage } from '../components/EditorialImage';
-import { LightboxModal } from '../components/LightboxModal';
-import { ProjectCard } from '../components/ProjectCard';
-import { Reveal } from '../components/Reveal';
-import { NotFoundPage } from './NotFoundPage';
+} from '@/lib/portfolioLogic';
+import { ProjectCard } from '@/components/ProjectCard';
+import { ProjectHeroPreview } from '@/components/ProjectHeroPreview';
+import { Reveal } from '@/components/Reveal';
 
 interface ProjectDetailPageProps {
-  slug: string;
+  params: Promise<{ slug: string }>;
 }
 
-export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
-  const project = useMemo(() => getProjectBySlug(PROJECTS, slug), [slug]);
-  const [lightboxImage, setLightboxImage] = useState<ProjectImage | null>(null);
+export function generateStaticParams() {
+  return PROJECTS.map((project) => ({ slug: project.slug }));
+}
 
-  useEffect(() => {
-    if (!project) {
-      return;
-    }
-    updatePageSeo({
-      title: `${project.title} — Case Study | ${SITE_PROFILE.fullName}`,
-      description: project.summary,
-      path: `/work/${project.slug}`,
-    });
-  }, [project]);
+export async function generateMetadata({ params }: ProjectDetailPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const project = getProjectBySlug(PROJECTS, slug);
 
   if (!project) {
-    return <NotFoundPage />;
+    return {
+      title: 'Project Not Found',
+    };
+  }
+
+  return {
+    title: `${project.title} — Case Study`,
+    description: project.summary,
+    openGraph: {
+      title: `${project.title} — Case Study | ${SITE_PROFILE.fullName}`,
+      description: project.summary,
+      images: [{ url: project.heroImage.src, alt: project.heroImage.alt }],
+    },
+  };
+}
+
+export default async function ProjectDetailPage({ params }: ProjectDetailPageProps) {
+  const { slug } = await params;
+  const project = getProjectBySlug(PROJECTS, slug);
+
+  if (!project) {
+    notFound();
   }
 
   const { previous, next } = getAdjacentProjects(PROJECTS, project.slug);
   const relatedProjects = getRelatedProjects(PROJECTS, project.slug, 2);
-  const isPortrait = project.heroImage.aspect === 'portrait';
 
   return (
     <article className="mx-auto max-w-[1200px] px-6 py-10 md:px-10 md:py-16">
       <div className="mb-8">
-        <AppLink
-          to="/work"
+        <Link
+          href="/work"
           className="inline-flex items-center gap-1.5 text-[12px] text-[#666666] dark:text-[#9A9A96] hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE] transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
           <span>Back to all projects</span>
-        </AppLink>
+        </Link>
       </div>
 
       {/* Header */}
@@ -82,7 +93,7 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
                 href={project.liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-10 items-center gap-1.5 bg-[#1A1A1A] dark:bg-[#F0F0EE] px-4 text-[12px] font-medium text-white dark:text-[#0A0A0A] hover:opacity-80 transition-opacity whitespace-nowrap"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE] px-5 text-[12px] font-medium text-white dark:text-[#0A0A0A] hover:opacity-85 transition-opacity whitespace-nowrap"
               >
                 <span>Visit Live Demo</span>
                 <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -93,7 +104,7 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-10 items-center gap-1.5 border border-[#EAEAEA] dark:border-[#222220] px-4 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors whitespace-nowrap"
+                className="inline-flex h-10 items-center gap-1.5 rounded-full border border-black/[0.12] dark:border-white/[0.14] px-5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors whitespace-nowrap"
               >
                 <span>GitHub Repository</span>
                 <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -128,44 +139,8 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
         </dl>
       </header>
 
-      {/* Hero Screenshot */}
-      <section className="py-10">
-        <figure className="space-y-2.5">
-          <button
-            type="button"
-            onClick={() => setLightboxImage(project.heroImage)}
-            aria-label={`Open fullscreen preview of ${project.title}`}
-            className={`group relative flex items-center justify-center w-full border border-[#EAEAEA] dark:border-[#222220] overflow-hidden text-left cursor-zoom-in ${
-              isPortrait
-                ? 'bg-[#141413] py-10 px-6 max-h-[620px]'
-                : 'bg-[#F6F6F5] dark:bg-[#141413] p-4 sm:p-8 lg:p-10'
-            }`}
-          >
-            <EditorialImage
-              src={project.heroImage.src}
-              alt={project.heroImage.alt}
-              fallbackTitle={project.title}
-              priority
-              fit="contain"
-              className={`bg-transparent dark:bg-transparent flex items-center justify-center ${
-                isPortrait ? 'h-[500px] w-full' : 'w-full'
-              }`}
-              imgClassName={`transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.01] ${
-                isPortrait
-                  ? 'max-h-[500px] w-auto shadow-lg'
-                  : 'w-full h-auto max-h-[620px] object-contain border border-black/8 dark:border-white/10'
-              }`}
-            />
-            <span className="absolute right-4 bottom-4 inline-flex items-center gap-1.5 bg-[#1A1A1A]/85 px-3 py-1.5 text-[11px] font-medium text-white opacity-90 group-hover:opacity-100 transition-opacity">
-              <Maximize2 className="h-3 w-3" aria-hidden="true" />
-              <span>Inspect full view</span>
-            </span>
-          </button>
-          <figcaption className="text-[11.5px] text-[#666666] dark:text-[#9A9A96]">
-            {project.heroImage.caption}
-          </figcaption>
-        </figure>
-      </section>
+      {/* Hero Screenshot with Lightbox */}
+      <ProjectHeroPreview title={project.title} heroImage={project.heroImage} />
 
       {/* Structured Case Study Sections */}
       <div className="divide-y divide-[#EAEAEA] dark:divide-[#222220] border-y border-[#EAEAEA] dark:border-[#222220]">
@@ -173,7 +148,7 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
           <section className="py-10 grid grid-cols-1 gap-6 lg:grid-cols-12">
             <div className="lg:col-span-4">
               <h2 className="font-display text-[22px] font-bold uppercase text-[#1A1A1A] dark:text-[#F0F0EE]">
-                Overview & Problem
+                Overview &amp; Problem
               </h2>
             </div>
             <div className="lg:col-span-8 space-y-5">
@@ -201,7 +176,7 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
           <section className="py-10 grid grid-cols-1 gap-6 lg:grid-cols-12">
             <div className="lg:col-span-4">
               <h2 className="font-display text-[22px] font-bold uppercase text-[#1A1A1A] dark:text-[#F0F0EE]">
-                Objectives & Role
+                Objectives &amp; Role
               </h2>
             </div>
             <div className="lg:col-span-8 space-y-6">
@@ -226,7 +201,7 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
 
               <div className="space-y-1.5 pt-4 border-t border-[#EAEAEA] dark:border-[#222220]">
                 <h3 className="text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
-                  My Role & Contribution
+                  My Role &amp; Contribution
                 </h3>
                 <p className="text-[13.5px] leading-[1.8] text-[#666666] dark:text-[#9A9A96] max-w-[65ch]">
                   {project.contribution}
@@ -240,7 +215,7 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
           <section className="py-10 grid grid-cols-1 gap-6 lg:grid-cols-12">
             <div className="lg:col-span-4">
               <h2 className="font-display text-[22px] font-bold uppercase text-[#1A1A1A] dark:text-[#F0F0EE]">
-                Key Features & Stack
+                Key Features &amp; Stack
               </h2>
             </div>
             <div className="lg:col-span-8 space-y-6">
@@ -281,7 +256,7 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
             <section className="py-10 grid grid-cols-1 gap-6 lg:grid-cols-12">
               <div className="lg:col-span-4">
                 <h2 className="font-display text-[22px] font-bold uppercase text-[#1A1A1A] dark:text-[#F0F0EE]">
-                  Architecture & Workflow
+                  Architecture &amp; Workflow
                 </h2>
               </div>
               <div className="lg:col-span-8">
@@ -308,7 +283,7 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
             <section className="py-10 grid grid-cols-1 gap-6 lg:grid-cols-12">
               <div className="lg:col-span-4">
                 <h2 className="font-display text-[22px] font-bold uppercase text-[#1A1A1A] dark:text-[#F0F0EE]">
-                  Challenges & Solutions
+                  Challenges &amp; Solutions
                 </h2>
               </div>
               <div className="lg:col-span-8 space-y-5">
@@ -350,12 +325,12 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
                 Related Projects
               </h2>
             </div>
-            <AppLink
-              to="/work"
+            <Link
+              href="/work"
               className="text-[12px] text-[#666666] dark:text-[#9A9A96] hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE] underline underline-offset-4"
             >
               All projects
-            </AppLink>
+            </Link>
           </div>
           <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
             {relatedProjects.map((related) => (
@@ -371,9 +346,9 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
         className="pt-10 grid grid-cols-1 gap-6 sm:grid-cols-2"
       >
         {previous ? (
-          <AppLink
-            to={`/work/${previous.slug}`}
-            className="group border border-[#EAEAEA] dark:border-[#222220] p-5 hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors"
+          <Link
+            href={`/work/${previous.slug}`}
+            className="group rounded-xl border border-black/[0.08] dark:border-white/[0.1] p-5 hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors"
           >
             <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
               <ArrowLeft className="h-3 w-3" aria-hidden="true" />
@@ -382,15 +357,15 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
             <p className="mt-1.5 font-display text-[22px] font-bold uppercase text-[#1A1A1A] dark:text-[#F0F0EE] group-hover:opacity-65 transition-opacity">
               {previous.title}
             </p>
-          </AppLink>
+          </Link>
         ) : (
           <div />
         )}
 
         {next && (
-          <AppLink
-            to={`/work/${next.slug}`}
-            className="group border border-[#EAEAEA] dark:border-[#222220] p-5 sm:text-right hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors"
+          <Link
+            href={`/work/${next.slug}`}
+            className="group rounded-xl border border-black/[0.08] dark:border-white/[0.1] p-5 sm:text-right hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors"
           >
             <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
               <span>Next Project</span>
@@ -399,15 +374,9 @@ export function ProjectDetailPage({ slug }: ProjectDetailPageProps) {
             <p className="mt-1.5 font-display text-[22px] font-bold uppercase text-[#1A1A1A] dark:text-[#F0F0EE] group-hover:opacity-65 transition-opacity">
               {next.title}
             </p>
-          </AppLink>
+          </Link>
         )}
       </nav>
-
-      <LightboxModal
-        image={lightboxImage}
-        projectTitle={project.title}
-        onClose={() => setLightboxImage(null)}
-      />
     </article>
   );
 }

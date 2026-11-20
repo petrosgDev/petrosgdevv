@@ -9,7 +9,6 @@ import {
   getProjectBySlug,
   getRelatedProjects,
 } from './portfolioLogic';
-import { matchRoute, normalizePathname } from './router';
 import {
   buildMailtoUrl,
   hasValidationErrors,
@@ -71,17 +70,6 @@ test('getProjectBySlug, getAdjacentProjects, and getRelatedProjects work reliabl
   assert.equal(related.length, 2);
   assert.ok(related.every((p) => p.slug !== 'aman-pay'));
   assert.ok(related.every((p) => p.category === 'Web Applications'));
-});
-
-test('router matches all portfolio routes and handles trailing slashes and 404s', () => {
-  assert.equal(normalizePathname('/work/'), '/work');
-  assert.deepEqual(matchRoute('/'), { name: 'home' });
-  assert.deepEqual(matchRoute('/work'), { name: 'work' });
-  assert.deepEqual(matchRoute('/work/event-hub'), { name: 'project', slug: 'event-hub' });
-  assert.deepEqual(matchRoute('/about/'), { name: 'about' });
-  assert.deepEqual(matchRoute('/contact'), { name: 'contact' });
-  assert.deepEqual(matchRoute('/resume'), { name: 'not-found', path: '/resume' });
-  assert.deepEqual(matchRoute('/unknown/page'), { name: 'not-found', path: '/unknown/page' });
 });
 
 test('contact form validation catches empty and malformed fields and accepts valid input', () => {

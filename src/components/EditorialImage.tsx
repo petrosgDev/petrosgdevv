@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 
 interface EditorialImageProps {
@@ -31,7 +33,7 @@ export function EditorialImage({
         className={`flex items-center justify-center bg-[#EFECE5] dark:bg-[#151513] p-8 text-center ${className}`}
       >
         <div className="space-y-2">
-          <p className="font-serif text-xl text-[#141413] dark:text-[#F2EFE9]">
+          <p className="font-display text-xl text-[#141413] dark:text-[#F2EFE9]">
             {fallbackTitle}
           </p>
           <p className="text-xs text-[#5A5955] dark:text-[#A19E96]">

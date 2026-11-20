@@ -1,3 +1,5 @@
+'use client';
+
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 export type ThemeMode = 'light' | 'dark';
@@ -11,25 +13,20 @@ interface ThemeContextValue {
 const STORAGE_KEY = 'petros-portfolio-theme';
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
-function resolveInitialTheme(): ThemeMode {
-  if (typeof window === 'undefined') {
-    return 'light';
-  }
-  try {
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-    if (saved === 'dark' || saved === 'light') {
-      return saved;
-    }
-  } catch {
-    // Ignore storage read errors
-  }
-  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
-}
-
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeMode>(resolveInitialTheme);
+  const [theme, setThemeState] = useState<ThemeMode>('light');
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setThemeState(isDark ? 'dark' : 'light');
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (!hydrated) {
+      return;
+    }
     const root = document.documentElement;
     if (theme === 'dark') {
       root.classList.add('dark');
@@ -41,7 +38,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore storage write errors
     }
-  }, [theme]);
+  }, [theme, hydrated]);
 
   const setTheme = useCallback((mode: ThemeMode) => {
     setThemeState(mode);

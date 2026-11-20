@@ -1,7 +1,7 @@
+import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
-import type { ProjectItem } from '../data/portfolio';
-import { AppLink } from './RouterContext';
-import { EditorialImage } from './EditorialImage';
+import type { ProjectItem } from '@/data/portfolio';
+import { EditorialImage } from '@/components/EditorialImage';
 
 interface ProjectCardProps {
   project: ProjectItem;
@@ -19,8 +19,8 @@ export function ProjectCard({
   return (
     <article className="group flex flex-col">
       {/* Clean Modern Minimalist Studio Matte Frame */}
-      <AppLink
-        to={`/work/${project.slug}`}
+      <Link
+        href={`/work/${project.slug}`}
         aria-label={`View ${project.title} case study`}
         className={`flex items-center justify-center w-full rounded-xl border border-black/[0.07] dark:border-white/[0.08] overflow-hidden transition-all duration-300 group-hover:border-black/15 dark:group-hover:border-white/20 group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.06)] dark:group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.4)] ${
           isPortrait
@@ -42,7 +42,7 @@ export function ProjectCard({
               : 'border border-black/8 dark:border-white/10'
           }`}
         />
-      </AppLink>
+      </Link>
 
       {/* Quiet Small-Font Minimalist Metadata */}
       <div className="mt-4 flex flex-col gap-2">
@@ -56,12 +56,12 @@ export function ProjectCard({
         </div>
 
         <h3 className="font-display text-[22px] sm:text-[24px] font-bold uppercase tracking-[0.01em] leading-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-          <AppLink
-            to={`/work/${project.slug}`}
+          <Link
+            href={`/work/${project.slug}`}
             className="hover:opacity-65 transition-opacity"
           >
             {project.title}
-          </AppLink>
+          </Link>
         </h3>
 
         <p className="text-[13px] leading-[1.65] text-[#666666] dark:text-[#9A9A96] max-w-[58ch]">
@@ -73,13 +73,13 @@ export function ProjectCard({
         </p>
 
         <div className="mt-1.5 flex flex-wrap items-center gap-x-5 gap-y-2 pt-2.5 border-t border-[#EAEAEA] dark:border-[#222220] text-[12px]">
-          <AppLink
-            to={`/work/${project.slug}`}
+          <Link
+            href={`/work/${project.slug}`}
             className="inline-flex items-center gap-1 font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 hover:opacity-65 transition-opacity whitespace-nowrap"
           >
             <span>Case Study</span>
             <ArrowUpRight className="h-3 w-3" aria-hidden="true" />
-          </AppLink>
+          </Link>
 
           {project.liveUrl && (
             <a

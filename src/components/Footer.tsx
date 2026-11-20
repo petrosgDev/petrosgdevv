@@ -1,6 +1,8 @@
+'use client';
+
+import Link from 'next/link';
 import { ArrowUp, ArrowUpRight } from 'lucide-react';
-import { NAVIGATION_LINKS, SITE_PROFILE, SOCIAL_LINKS } from '../data/portfolio';
-import { AppLink } from './RouterContext';
+import { NAVIGATION_LINKS, SITE_PROFILE, SOCIAL_LINKS } from '@/data/portfolio';
 
 export function Footer() {
   const scrollToTop = () => {
@@ -12,12 +14,12 @@ export function Footer() {
       <div className="mx-auto max-w-[1200px] px-6 pt-14 pb-24 md:px-10 md:py-16">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
           <div className="md:col-span-5 space-y-3">
-            <AppLink
-              to="/"
+            <Link
+              href="/"
               className="inline-block font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE]"
             >
               {SITE_PROFILE.brand}
-            </AppLink>
+            </Link>
             <p className="max-w-xs text-[13px] leading-relaxed text-[#666666] dark:text-[#9A9A96]">
               {SITE_PROFILE.shortPhilosophy}
             </p>
@@ -40,12 +42,12 @@ export function Footer() {
             <ul className="space-y-2 text-[13px]">
               {NAVIGATION_LINKS.map((item) => (
                 <li key={item.path}>
-                  <AppLink
-                    to={item.path}
+                  <Link
+                    href={item.path}
                     className="text-[#1A1A1A] dark:text-[#F0F0EE] hover:underline underline-offset-4 transition-colors"
                   >
                     {item.label}
-                  </AppLink>
+                  </Link>
                 </li>
               ))}
             </ul>

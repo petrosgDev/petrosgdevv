@@ -74,10 +74,9 @@ export function buildPlainTextMessage(values: ContactFormValues): string {
 
 /**
  * Submits contact inquiries honestly:
- * 1. If VITE_CONTACT_ENDPOINT is configured (e.g. Formspree, Web3Forms, or backend API),
+ * 1. If NEXT_PUBLIC_CONTACT_ENDPOINT is configured (e.g. Formspree, Web3Forms, or custom API),
  *    sends a real JSON POST request and reports genuine server delivery or failure.
- * 2. Otherwise, prepares a verified mailto: dispatch URL (matching petrosgdev.pages.dev)
- *    without fabricating a fake server delivery confirmation.
+ * 2. Otherwise, prepares a verified mailto: dispatch URL without fabricating delivery.
  */
 export async function submitContactInquiry(
   values: ContactFormValues,

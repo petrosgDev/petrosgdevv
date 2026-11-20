@@ -89,7 +89,7 @@ export const SITE_PROFILE = {
   telegramHandle: '@petrosgdev',
   telegramUrl: 'https://t.me/petrosgdev',
   whatsappUrl: 'https://wa.me/251903433857',
-  existingSiteUrl: 'https://petrosgdev.pages.dev/',
+  existingSiteUrl: 'https://petrosgeto.pages.dev/',
   logoSrc: '/images/logo-petros.png',
   portraitSrc: '/images/portrait-petros.png',
   heroGreeting: 'HELLO WORLD.',

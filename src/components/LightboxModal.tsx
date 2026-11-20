@@ -1,7 +1,9 @@
+'use client';
+
 import { useEffect } from 'react';
 import { X } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import type { ProjectImage } from '../data/portfolio';
+import type { ProjectImage } from '@/data/portfolio';
 
 interface LightboxModalProps {
   image: ProjectImage | null;
@@ -54,13 +56,13 @@ export function LightboxModal({ image, projectTitle, onClose }: LightboxModalPro
                 type="button"
                 onClick={onClose}
                 aria-label="Close image preview"
-                className="inline-flex h-10 w-10 items-center justify-center rounded-sm border border-[#F2EFE9]/25 text-[#F2EFE9] hover:bg-[#F2EFE9] hover:text-[#0C0C0B] transition-colors cursor-pointer shrink-0"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[#F2EFE9]/25 text-[#F2EFE9] hover:bg-[#F2EFE9] hover:text-[#0C0C0B] transition-colors cursor-pointer shrink-0"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="overflow-hidden border border-[#262522] bg-[#151513] flex items-center justify-center max-h-[78vh]">
+            <div className="overflow-hidden rounded-xl border border-[#262522] bg-[#151513] flex items-center justify-center max-h-[78vh]">
               <img
                 src={image.src}
                 alt={image.alt}

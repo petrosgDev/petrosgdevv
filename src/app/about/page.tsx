@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import type { Metadata } from 'next';
+import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import {
   MILESTONES,
@@ -6,22 +7,17 @@ import {
   SITE_PROFILE,
   SKILL_CATEGORIES,
   TECHNICAL_INTERESTS,
-} from '../data/portfolio';
-import { updatePageSeo } from '../utils/seo';
-import { AppLink } from '../components/RouterContext';
-import { EditorialImage } from '../components/EditorialImage';
-import { Reveal } from '../components/Reveal';
+} from '@/data/portfolio';
+import { EditorialImage } from '@/components/EditorialImage';
+import { Reveal } from '@/components/Reveal';
 
-export function AboutPage() {
-  useEffect(() => {
-    updatePageSeo({
-      title: `About — ${SITE_PROFILE.fullName} (${SITE_PROFILE.brand})`,
-      description:
-        'Background, development philosophy, verified skills, and software engineering milestones of Petros Geto in Addis Ababa, Ethiopia.',
-      path: '/about',
-    });
-  }, []);
+export const metadata: Metadata = {
+  title: 'About',
+  description:
+    'Background, development philosophy, verified skills, and software engineering milestones of Petros Geto in Addis Ababa, Ethiopia.',
+};
 
+export default function AboutPage() {
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-12 md:px-10 md:py-16">
       {/* Header & Left-Side Portrait matched to website background */}
@@ -59,20 +55,20 @@ export function AboutPage() {
           </p>
 
           <div className="pt-2 grid grid-cols-2 sm:flex sm:flex-wrap items-center gap-3">
-            <AppLink
-              to="/contact"
+            <Link
+              href="/contact"
               className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE] px-5 text-[12px] font-medium text-white dark:text-[#0A0A0A] hover:opacity-85 transition-opacity whitespace-nowrap"
             >
               <span>Get in Touch</span>
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </AppLink>
-            <AppLink
-              to="/work"
+            </Link>
+            <Link
+              href="/work"
               className="inline-flex h-10 items-center justify-center gap-1.5 rounded-full border border-black/[0.12] dark:border-white/[0.14] px-5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors whitespace-nowrap"
             >
               <span>Explore Work</span>
               <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </AppLink>
+            </Link>
           </div>
         </div>
       </section>
@@ -175,7 +171,7 @@ export function AboutPage() {
         <Reveal>
           <div className="mb-10 space-y-1.5">
             <p className="text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
-              04. Experience & Academic Milestones
+              04. Experience &amp; Academic Milestones
             </p>
             <h2 className="font-display text-[26px] sm:text-[32px] font-bold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
               Documented Track Record
@@ -229,7 +225,7 @@ export function AboutPage() {
               05. Looking Ahead
             </p>
             <h2 className="font-display text-[26px] sm:text-[32px] font-bold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-              Applied AI & Full-Stack Product Delivery
+              Applied AI &amp; Full-Stack Product Delivery
             </h2>
             <p className="text-[13px] leading-[1.75] text-[#666666] dark:text-[#9A9A96] max-w-[60ch]">
               My goal is to collaborate on ambitious software products where thoughtful product
@@ -238,19 +234,19 @@ export function AboutPage() {
             </p>
           </div>
           <div className="lg:col-span-4 flex flex-wrap lg:justify-end gap-3">
-            <AppLink
-              to="/work"
+            <Link
+              href="/work"
               className="inline-flex h-10 items-center rounded-full border border-black/[0.12] dark:border-white/[0.14] px-5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors whitespace-nowrap"
             >
               Explore Work
-            </AppLink>
-            <AppLink
-              to="/contact"
+            </Link>
+            <Link
+              href="/contact"
               className="inline-flex h-10 items-center gap-1.5 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE] px-5 text-[12px] font-medium text-white dark:text-[#0A0A0A] hover:opacity-85 transition-opacity whitespace-nowrap"
             >
               <span>Start a Conversation</span>
               <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </AppLink>
+            </Link>
           </div>
         </div>
       </section>

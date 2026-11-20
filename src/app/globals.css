@@ -1,10 +1,10 @@
 @import "tailwindcss";
 @custom-variant dark (&:where(.dark, .dark *));
 
-@theme {
-  --font-display: "Barlow Condensed", "Plus Jakarta Sans", -apple-system, sans-serif;
-  --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+@theme inline {
+  --font-display: var(--font-barlow-condensed), "Plus Jakarta Sans", -apple-system, sans-serif;
+  --font-sans: var(--font-plus-jakarta-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
 @layer base {
@@ -24,17 +24,19 @@
     letter-spacing: 0.008em;
   }
 
-  h1, h2, h3 {
+  h1,
+  h2,
+  h3 {
     text-wrap: balance;
   }
 
   :focus-visible {
-    outline: 2px solid #1A1A1A;
+    outline: 2px solid #1a1a1a;
     outline-offset: 3px;
   }
 
   .dark :focus-visible {
-    outline-color: #F0F0EE;
+    outline-color: #f0f0ee;
   }
 }
 
@@ -42,7 +44,9 @@
   html {
     scroll-behavior: auto;
   }
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

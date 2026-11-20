@@ -1,4 +1,8 @@
+'use client';
+
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   ArrowUpRight,
   Briefcase,
@@ -12,9 +16,8 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion, useScroll } from 'motion/react';
-import { NAVIGATION_LINKS, SITE_PROFILE } from '../data/portfolio';
-import { AppLink, useRouter } from './RouterContext';
-import { useTheme } from './ThemeContext';
+import { NAVIGATION_LINKS, SITE_PROFILE } from '@/data/portfolio';
+import { useTheme } from '@/components/ThemeContext';
 
 const MOBILE_DOCK_ICONS: Record<string, typeof Home> = {
   '/': Home,
@@ -24,7 +27,7 @@ const MOBILE_DOCK_ICONS: Record<string, typeof Home> = {
 };
 
 export function Navbar() {
-  const { pathname } = useRouter();
+  const pathname = usePathname() || '/';
   const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -82,8 +85,8 @@ export function Navbar() {
 
         <div className="mx-auto flex h-14 md:h-16 max-w-[1200px] items-center justify-between gap-4 px-5 md:px-10">
           {/* Zone 1: Clean Modern Brand Wordmark */}
-          <AppLink
-            to="/"
+          <Link
+            href="/"
             className="group inline-flex items-center gap-2.5 font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] whitespace-nowrap shrink-0 transition-opacity hover:opacity-75"
           >
             <span
@@ -91,7 +94,7 @@ export function Navbar() {
               className="h-2 w-2 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE] transition-transform duration-300 group-hover:scale-125"
             />
             <span>{SITE_PROFILE.brand}</span>
-          </AppLink>
+          </Link>
 
           {/* Zone 2: Modern Desktop Segmented Glass Navigation */}
           <nav
@@ -101,9 +104,9 @@ export function Navbar() {
             {NAVIGATION_LINKS.map((item) => {
               const active = isActivePath(item.path);
               return (
-                <AppLink
+                <Link
                   key={item.path}
-                  to={item.path}
+                  href={item.path}
                   aria-current={active ? 'page' : undefined}
                   className={`relative px-4 py-1.5 text-[12.5px] rounded-full whitespace-nowrap shrink-0 transition-colors duration-200 ${
                     active
@@ -123,7 +126,7 @@ export function Navbar() {
                     />
                   )}
                   <span className="relative z-10">{item.label}</span>
-                </AppLink>
+                </Link>
               );
             })}
           </nav>
@@ -173,7 +176,7 @@ export function Navbar() {
         </div>
       </header>
 
-      {/* Modern Floating Mobile Menu Sheet (rendered outside header so fixed backdrop covers full viewport) */}
+      {/* Modern Floating Mobile Menu Sheet */}
       <AnimatePresence>
         {mobileOpen && (
           <>
@@ -200,9 +203,9 @@ export function Navbar() {
                 {NAVIGATION_LINKS.map((item, idx) => {
                   const active = isActivePath(item.path);
                   return (
-                    <AppLink
+                    <Link
                       key={item.path}
-                      to={item.path}
+                      href={item.path}
                       aria-current={active ? 'page' : undefined}
                       className={`flex min-h-[46px] items-center justify-between rounded-xl px-3.5 py-2.5 text-[14px] transition-colors ${
                         active
@@ -224,7 +227,7 @@ export function Navbar() {
                       ) : (
                         <ArrowUpRight className="h-3.5 w-3.5 opacity-45" aria-hidden="true" />
                       )}
-                    </AppLink>
+                    </Link>
                   );
                 })}
               </div>
@@ -275,9 +278,9 @@ export function Navbar() {
             const active = isActivePath(item.path);
             const Icon = MOBILE_DOCK_ICONS[item.path] ?? Home;
             return (
-              <AppLink
+              <Link
                 key={item.path}
-                to={item.path}
+                href={item.path}
                 aria-current={active ? 'page' : undefined}
                 className={`relative flex min-h-[46px] flex-col items-center justify-center gap-0.5 rounded-xl px-2 py-1.5 transition-colors duration-200 ${
                   active
@@ -300,7 +303,7 @@ export function Navbar() {
                 <span className="relative z-10 text-[10px] leading-none tracking-tight">
                   {item.label}
                 </span>
-              </AppLink>
+              </Link>
             );
           })}
         </div>
