@@ -199,14 +199,28 @@ export function ExperienceShowcase({
                   : 'border-[#1A1A1A]/20 dark:border-white/15 shadow-[3px_3px_0_0_rgba(26,26,26,0.08)] dark:shadow-[3px_3px_0_0_rgba(255,255,255,0.05)] hover:border-[#1A1A1A]/50 dark:hover:border-white/30'
               }`}
             >
-              {/* Date & Location Header */}
-              <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[13px] text-[#666666] dark:text-[#9A9A96]">
-                <strong className="font-semibold text-[#1A1A1A] dark:text-[#F0F0EE] tabular-nums">
-                  {item.period}
-                </strong>
-                <span aria-hidden="true">·</span>
-                <span>{item.location}</span>
-              </p>
+              {/* Date, Location & Optional External Organization Link */}
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[13px] text-[#666666] dark:text-[#9A9A96]">
+                  <strong className="font-semibold text-[#1A1A1A] dark:text-[#F0F0EE] tabular-nums">
+                    {item.period}
+                  </strong>
+                  <span aria-hidden="true">·</span>
+                  <span>{item.location}</span>
+                </p>
+
+                {item.organizationUrl && (
+                  <a
+                    href={item.organizationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 decoration-[#1A1A1A]/40 dark:decoration-[#F0F0EE]/40 hover:opacity-65 transition-opacity whitespace-nowrap"
+                  >
+                    <span>{item.organizationUrlLabel ?? 'Official Site'}</span>
+                    <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
+                  </a>
+                )}
+              </div>
 
               {/* Desktop Title */}
               <h3 className="mt-2 hidden lg:block text-[18px] font-semibold tracking-[-0.015em] text-[#1A1A1A] dark:text-[#F0F0EE]">

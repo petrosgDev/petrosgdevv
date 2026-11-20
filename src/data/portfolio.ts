@@ -57,6 +57,8 @@ export interface ExperiencePoint {
 export interface ExperienceItem {
   id: string;
   organization: string;
+  organizationUrl?: string;
+  organizationUrlLabel?: string;
   role: string;
   period: string;
   shortYear: string;
@@ -261,129 +263,106 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
 
 export const EXPERIENCES: ExperienceItem[] = [
   {
-    id: 'client-web-platforms',
-    organization: 'Client & Product Builds',
-    role: 'Independent Full-Stack Engineer',
+    id: 'insa-summer-camp',
+    organization: 'INSA Summer Camp (5th Round)',
+    organizationUrl: 'https://www.insa.gov.et/',
+    organizationUrlLabel: 'insa.gov.et',
+    role: 'Web & App Development (Certified)',
+    period: '2026',
+    shortYear: '2026',
+    location: 'Information Network Security Administration · Ethiopia',
+    summary:
+      'Attended and completed the 5th Round INSA Summer Camp organized by Ethiopia’s Information Network Security Administration, earning formal certification in Web and App Development.',
+    points: [
+      {
+        lead: 'Official certification:',
+        text: 'Completed intensive hands-on technical training and graduated with certification in modern Web and App Development.',
+      },
+      {
+        lead: 'Security-aware engineering:',
+        text: 'Applied structured frontend/backend architecture, clean input validation, and reliable API design principles within a national cybersecurity-focused environment.',
+      },
+      {
+        lead: 'Collaborative delivery:',
+        text: 'Practiced agile team workflows, version control discipline, and end-to-end web and mobile application development standards.',
+      },
+    ],
+    stack: ['Web Development', 'App Development', 'TypeScript', 'React', 'Node.js', 'REST APIs'],
+  },
+  {
+    id: 'software-engineering-education',
+    organization: 'Debre Birhan University',
+    role: 'B.Sc. Software Engineering',
+    period: 'Present',
+    shortYear: 'Present',
+    location: 'Debre Birhan, Ethiopia · Undergraduate',
+    summary:
+      'Pursuing an undergraduate degree in Software Engineering with a strong academic focus on core computer science, software architecture, algorithms, and database systems.',
+    points: [
+      {
+        lead: 'Data structures & algorithms:',
+        text: 'Grounded in algorithmic analysis, linear and hierarchical data structures, memory efficiency, and modular systems programming in C++17.',
+      },
+      {
+        lead: 'Object-oriented architecture:',
+        text: 'Trained in 3-tier application design, software engineering lifecycle practices, and native desktop GUI development using Java, JavaFX, and Qt 6.',
+      },
+      {
+        lead: 'Database & systems design:',
+        text: 'Experienced in relational schema normalization, SQL querying, role-based access control, and transactional persistence with PostgreSQL and MySQL.',
+      },
+    ],
+    stack: ['C++17', 'Java', 'Python', 'Data Structures', 'PostgreSQL', 'MySQL'],
+  },
+  {
+    id: 'fullstack-web-engineering',
+    organization: 'Full-Stack Web & API Engineering',
+    role: 'Software Engineer',
     period: '2025 – Present',
     shortYear: '2026',
     location: 'Addis Ababa · Remote',
     summary:
-      'Designing, engineering, and deploying production web platforms across fintech escrow, hospitality, wellness booking, and brand showcases.',
+      'Developing end-to-end web architectures that pair responsive, accessible user interfaces with maintainable backend APIs and automated edge deployments.',
     points: [
       {
-        lead: 'Aman Pay:',
-        text: 'Architected an escrow commerce platform in Next.js and Node.js guiding buyers and sellers through a 5-stage ETB settlement workflow with Chapa payment integration.',
+        lead: 'Modern frontend systems:',
+        text: 'Proficient in React, Next.js, TypeScript, Tailwind CSS, HTML5, and CSS3 with emphasis on semantic markup, dark/light theming, and fast static rendering.',
       },
       {
-        lead: 'Ethio Massage:',
-        text: 'Built a mobile-first wellness booking platform for Addis Ababa with direct WhatsApp API appointment triggers, service galleries, and light/dark appearance switching.',
+        lead: 'Server-side & API integration:',
+        text: 'Building structured backend workflows in Node.js, Express, and Spring Boot alongside RESTful services and third-party communication APIs.',
       },
       {
-        lead: 'Brand & Hospitality:',
-        text: 'Delivered visual showcases for Wende Dubai Interior Design (Swiper.js carousels) and Raman Caffe with responsive typography and fast static edge delivery.',
+        lead: 'DevOps & cloud delivery:',
+        text: 'Maintaining clean Git workflows, containerized environments with Docker, and continuous deployment pipelines across Cloudflare Pages, Vercel, and Render.',
       },
     ],
-    stack: ['Next.js', 'React', 'TypeScript', 'Node.js', 'Tailwind CSS', 'WhatsApp API'],
+    stack: ['Next.js', 'React', 'TypeScript', 'Node.js', 'Express', 'Spring Boot'],
   },
   {
-    id: 'eventhub-dbu',
-    organization: 'EventHub DBU',
-    role: 'Full-Stack Developer',
-    period: '2026',
+    id: 'ai-mobile-development',
+    organization: 'Applied AI & Cross-Platform Mobile',
+    role: 'AI & Mobile Developer',
+    period: '2025 – Present',
     shortYear: '2026',
-    location: 'Debre Birhan University',
+    location: 'Addis Ababa, Ethiopia',
     summary:
-      'Built a unified campus event discovery, ticketing, and QR attendance web platform serving university students, clubs, and organizers.',
+      'Expanding technical depth across cross-platform mobile engineering, offline-first design patterns, and practical AI-assisted software workflows.',
     points: [
       {
-        lead: 'Student experience:',
-        text: 'Centralized workshops, seminars, and hackathons with category browsing, instant registration, ticket lookup, and interactive campus venue mapping.',
+        lead: 'Cross-platform mobile:',
+        text: 'Skilled in building responsive, offline-capable mobile interfaces using Flutter (Dart) and React Native (Expo) optimized for everyday usability.',
       },
       {
-        lead: 'Organizer workflows:',
-        text: 'Implemented event creation portals, QR-based check-in verification, Chapa payment support, real-time analytics, and digital attendance certificates.',
+        lead: 'Applied AI integration:',
+        text: 'Designing practical intelligent automation, matching algorithms, and AI-enabled application features that enhance real user workflows.',
       },
       {
-        lead: 'Backend architecture:',
-        text: 'Structured PostgreSQL models and Node.js APIs separating attendee, organizer, and campus administrator governance flows.',
+        lead: 'Multi-language versatility:',
+        text: 'Continuously advancing engineering standards across Python, Dart, TypeScript, Java, and C++ through disciplined open-source practice.',
       },
     ],
-    stack: ['Next.js', 'TypeScript', 'Node.js', 'PostgreSQL', 'Chapa'],
-  },
-  {
-    id: 'nexus-campus-services',
-    organization: 'Nexus Campus Services',
-    role: 'Java Software Engineer',
-    period: '2026',
-    shortYear: '2026',
-    location: 'Debre Birhan University',
-    summary:
-      'Engineered a native 3-tier JavaFX desktop suite unifying campus notices, club management, room scheduling, and lost-and-found workflows.',
-    points: [
-      {
-        lead: 'Collision-free booking:',
-        text: 'Built a lecture-hall and resource scheduling engine with administrative approval gates and role-based access for Students, Club Leaders, and Admins.',
-      },
-      {
-        lead: 'SmartMatcher engine:',
-        text: 'Implemented weighted token-similarity matching to pair lost and found campus item reports automatically.',
-      },
-      {
-        lead: 'Dual-mode persistence:',
-        text: 'Designed a JDBC connection layer backed by MySQL with a seamless Offline Simulator Mode for local testing without a live database server.',
-      },
-    ],
-    stack: ['Java', 'JavaFX', 'MySQL', 'Maven', 'JDBC'],
-  },
-  {
-    id: 'banking-system',
-    organization: 'Banking System (SEng2022)',
-    role: 'C++ Systems & GUI Developer',
-    period: '2026',
-    shortYear: '2026',
-    location: 'Academic Engineering',
-    summary:
-      'Developed a multi-role desktop banking application connecting custom C++17 data structures directly to persistent MySQL 8.0 storage.',
-    points: [
-      {
-        lead: 'Custom data structures:',
-        text: 'Implemented a Singly Linked List enabling O(1) tail insertion for active accounts alongside a FIFO Transaction Queue for exact arrival-order settlement.',
-      },
-      {
-        lead: '4-tier RBAC interface:',
-        text: 'Built dedicated Qt 6 Widgets dashboards covering Admin, Manager, Accountant, and Customer banking workflows.',
-      },
-      {
-        lead: 'Atomic sync & auditing:',
-        text: 'Committed dequeued deposits, withdrawals, and transfers to MySQL with real-time audit logs and instant ID/name lookup.',
-      },
-    ],
-    stack: ['C++17', 'Qt 6 Widgets', 'MySQL', 'Data Structures'],
-  },
-  {
-    id: 'open-source-mobile',
-    organization: 'Open Source & Mobile',
-    role: 'Software Engineer',
-    period: '2025 – 2026',
-    shortYear: '2025',
-    location: 'GitHub · 23 Repositories',
-    summary:
-      'Maintaining 23 public repositories spanning offline-first mobile apps, Flutter prototypes, Python systems, and continuous edge deployments.',
-    points: [
-      {
-        lead: 'MyApp (React Native / Expo):',
-        text: 'Built an offline-first personal productivity mobile companion unifying daily tasks, notes, workout logs, and routines in a focused dark interface.',
-      },
-      {
-        lead: 'Cross-stack exploration:',
-        text: 'Shipped Flutter e-commerce and weather prototypes alongside Python OOP/testing exercises and modular TypeScript web architectures.',
-      },
-      {
-        lead: 'Deployment workflows:',
-        text: 'Configured repeatable static and full-stack delivery pipelines targeting Cloudflare Pages, Vercel, and Render.',
-      },
-    ],
-    stack: ['React Native', 'Flutter', 'Python', 'Docker', 'Git', 'Vercel'],
+    stack: ['Flutter', 'React Native (Expo)', 'Dart', 'Python', 'Docker', 'CI/CD'],
   },
 ];
 

@@ -110,15 +110,27 @@ test('submitContactInquiry without endpoint returns honest mailto_ready status',
   assert.ok(result.mailtoUrl?.startsWith('mailto:petrosgeto7@gmail.com?'));
 });
 
-test('EXPERIENCES dataset has unique ids, points, and technology stacks', () => {
+test('EXPERIENCES dataset covers INSA 5th Round Summer Camp, education, and skills without project names', () => {
   assert.ok(EXPERIENCES.length >= 4);
   const ids = new Set(EXPERIENCES.map((item) => item.id));
   assert.equal(ids.size, EXPERIENCES.length);
+
+  const insa = EXPERIENCES.find((item) => item.id === 'insa-summer-camp');
+  assert.ok(insa);
+  assert.equal(insa.organizationUrl, 'https://www.insa.gov.et/');
+  assert.match(insa.role, /web\s*&\s*app development/i);
+  assert.match(insa.summary, /5th round/i);
+
+  const projectNames = ['Aman Pay', 'EventHub', 'Ethio Massage', 'Raman Caffe', 'Wende Dubai', 'Nexus Campus'];
   for (const item of EXPERIENCES) {
     assert.ok(item.organization.length > 0);
     assert.ok(item.role.length > 0);
     assert.ok(item.points.length >= 2);
     assert.ok(item.stack.length >= 2);
+    const fullText = [item.organization, item.role, item.summary, ...item.points.map((p) => `${p.lead ?? ''} ${p.text}`)].join(' ');
+    for (const projectName of projectNames) {
+      assert.equal(fullText.includes(projectName), false, `Experience should not mention project "${projectName}"`);
+    }
   }
 });
 
