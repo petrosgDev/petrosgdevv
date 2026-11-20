@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowUpRight } from 'lucide-react';
 import type { ProjectItem } from '@/data/portfolio';
 import { EditorialImage } from '@/components/EditorialImage';
+import { LiveSiteFrame } from '@/components/LiveSiteFrame';
 
 interface ProjectCardProps {
   project: ProjectItem;
@@ -18,31 +19,43 @@ export function ProjectCard({
 
   return (
     <article className="group flex flex-col">
-      {/* Clean Modern Minimalist Studio Matte Frame */}
-      <Link
-        href={`/work/${project.slug}`}
-        aria-label={`View ${project.title} case study`}
-        className={`flex items-center justify-center w-full rounded-xl border border-black/[0.07] dark:border-white/[0.08] overflow-hidden transition-all duration-300 group-hover:border-black/15 dark:group-hover:border-white/20 group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.06)] dark:group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.4)] ${
-          isPortrait
-            ? 'bg-[#141413] p-5 sm:p-7'
-            : 'bg-[#F6F6F5] dark:bg-[#141413] p-4 sm:p-6'
-        } ${aspectClass}`}
-      >
-        <EditorialImage
-          src={project.heroImage.src}
-          alt={project.heroImage.alt}
-          fallbackTitle={project.title}
+      {project.liveUrl ? (
+        <LiveSiteFrame
+          url={project.liveUrl}
+          title={project.title}
+          fallbackImage={project.heroImage}
+          variant="card"
+          href={`/work/${project.slug}`}
+          aspectClass={aspectClass}
           priority={priority}
-          fit="contain"
-          transparentBg
-          className="h-full w-full flex items-center justify-center"
-          imgClassName={`max-h-full max-w-full w-auto h-auto rounded-md transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02] ${
-            isPortrait
-              ? 'shadow-lg'
-              : 'border border-black/8 dark:border-white/10'
-          }`}
         />
-      </Link>
+      ) : (
+        /* Clean Modern Minimalist Studio Matte Frame for Desktop & Mobile Native Apps */
+        <Link
+          href={`/work/${project.slug}`}
+          aria-label={`View ${project.title} case study`}
+          className={`flex items-center justify-center w-full rounded-xl border border-black/[0.07] dark:border-white/[0.08] overflow-hidden transition-all duration-300 group-hover:border-black/15 dark:group-hover:border-white/20 group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.06)] dark:group-hover:shadow-[0_12px_32px_rgba(0,0,0,0.4)] ${
+            isPortrait
+              ? 'bg-[#141413] p-5 sm:p-7'
+              : 'bg-[#F6F6F5] dark:bg-[#141413] p-4 sm:p-6'
+          } ${aspectClass}`}
+        >
+          <EditorialImage
+            src={project.heroImage.src}
+            alt={project.heroImage.alt}
+            fallbackTitle={project.title}
+            priority={priority}
+            fit="contain"
+            transparentBg
+            className="h-full w-full flex items-center justify-center"
+            imgClassName={`max-h-full max-w-full w-auto h-auto rounded-md transition-transform duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:scale-[1.02] ${
+              isPortrait
+                ? 'shadow-lg'
+                : 'border border-black/8 dark:border-white/10'
+            }`}
+          />
+        </Link>
+      )}
 
       {/* Quiet Small-Font Minimalist Metadata */}
       <div className="mt-4 flex flex-col gap-2">

@@ -139,8 +139,12 @@ export default async function ProjectDetailPage({ params }: ProjectDetailPagePro
         </dl>
       </header>
 
-      {/* Hero Screenshot with Lightbox */}
-      <ProjectHeroPreview title={project.title} heroImage={project.heroImage} />
+      {/* Live Website Frame (or Screenshot Lightbox for Non-Web Apps) */}
+      <ProjectHeroPreview
+        title={project.title}
+        heroImage={project.heroImage}
+        liveUrl={project.liveUrl}
+      />
 
       {/* Structured Case Study Sections */}
       <div className="divide-y divide-[#EAEAEA] dark:divide-[#222220] border-y border-[#EAEAEA] dark:border-[#222220]">

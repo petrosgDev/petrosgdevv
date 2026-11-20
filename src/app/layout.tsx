@@ -5,6 +5,7 @@ import { ThemeProvider } from '@/components/ThemeContext';
 import { Navbar } from '@/components/Navbar';
 import { SocialRail } from '@/components/SocialRail';
 import { Footer } from '@/components/Footer';
+import { SplashIntro } from '@/components/SplashIntro';
 import './globals.css';
 
 const barlowCondensed = Barlow_Condensed({
@@ -105,6 +106,8 @@ const PERSON_JSON_LD = {
 
 const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('petros-portfolio-theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(s==='dark'||(!s&&d)){document.documentElement.classList.add('dark');}}catch(e){}})();`;
 
+const SPLASH_INIT_SCRIPT = `(function(){try{var seen=sessionStorage.getItem('petros-splash-seen')==='1';var rm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var q=new URLSearchParams(window.location.search);var skip=q.get('nosplash')==='1'||q.get('autostart')==='1';if(!seen&&!rm&&!skip){document.documentElement.setAttribute('data-splash','active');window.setTimeout(function(){document.documentElement.removeAttribute('data-splash');},3000);}}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -119,6 +122,7 @@ export default function RootLayout({
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_INIT_SCRIPT }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(PERSON_JSON_LD) }}
@@ -126,6 +130,7 @@ export default function RootLayout({
       </head>
       <body className="bg-white text-[#1A1A1A] dark:bg-[#0A0A0A] dark:text-[#F0F0EE] antialiased selection:bg-[#1A1A1A]/10 dark:selection:bg-white/15">
         <ThemeProvider>
+          <SplashIntro />
           <div className="min-h-screen flex flex-col bg-white dark:bg-[#0A0A0A] text-[#1A1A1A] dark:text-[#F0F0EE]">
             <a
               href="#main-content"

@@ -2,13 +2,16 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EXPERIENCES, PROJECTS } from '../data/portfolio';
 import {
+  computeIframePreviewMetrics,
   filterProjects,
+  formatLiveHost,
   getActiveExperienceId,
   getAdjacentProjects,
   getCategoryCounts,
   getFeaturedProjects,
   getProjectBySlug,
   getRelatedProjects,
+  shouldSkipSplash,
 } from './portfolioLogic';
 import {
   buildMailtoUrl,
@@ -160,3 +163,53 @@ test('getActiveExperienceId tracks scroll position and bottom boundary accuratel
 
   assert.equal(getActiveExperienceId(midScroll, 240, true), 'third');
 });
+
+test('computeIframePreviewMetrics scales virtual desktop and mobile viewports accurately', () => {
+  const desktopCard = computeIframePreviewMetrics(560, 350, 1440);
+  assert.equal(desktopCard.iframeWidth, 1440);
+  assert.ok(desktopCard.scale > 0.38 && desktopCard.scale < 0.39);
+  assert.ok(desktopCard.iframeHeight >= 899 && desktopCard.iframeHeight <= 905);
+
+  // Should never upscale above 1:1 when container is wider than virtual width (e.g. mobile preview mode)
+  const mobileInWideContainer = computeIframePreviewMetrics(500, 620, 390);
+  assert.equal(mobileInWideContainer.scale, 1);
+  assert.equal(mobileInWideContainer.iframeWidth, 390);
+  assert.equal(mobileInWideContainer.iframeHeight, 620);
+
+  // Zero-size container guard
+  const zeroGuard = computeIframePreviewMetrics(0, 0, 1440);
+  assert.equal(zeroGuard.scale, 1);
+  assert.equal(zeroGuard.iframeWidth, 1440);
+  assert.equal(zeroGuard.iframeHeight, 900);
+});
+
+test('formatLiveHost extracts clean hostname without protocol or trailing slash', () => {
+  assert.equal(formatLiveHost('https://aman-pay-lake.vercel.app/'), 'aman-pay-lake.vercel.app');
+  assert.equal(formatLiveHost('https://www.insa.gov.et/programs/'), 'insa.gov.et/programs');
+  assert.equal(formatLiveHost(''), '');
+  assert.equal(formatLiveHost('event-hub-mu-five.vercel.app/'), 'event-hub-mu-five.vercel.app');
+});
+
+test('shouldSkipSplash respects session memory, reduced motion, and query overrides', () => {
+  assert.equal(
+    shouldSkipSplash({ search: '', sessionSeen: false, prefersReducedMotion: false }),
+    false
+  );
+  assert.equal(
+    shouldSkipSplash({ search: '', sessionSeen: true, prefersReducedMotion: false }),
+    true
+  );
+  assert.equal(
+    shouldSkipSplash({ search: '', sessionSeen: false, prefersReducedMotion: true }),
+    true
+  );
+  assert.equal(
+    shouldSkipSplash({ search: '?nosplash=1', sessionSeen: false, prefersReducedMotion: false }),
+    true
+  );
+  assert.equal(
+    shouldSkipSplash({ search: '?autostart=1', sessionSeen: false, prefersReducedMotion: false }),
+    true
+  );
+});
+

@@ -132,3 +132,72 @@ export function getActiveExperienceId(
 
   return activeId;
 }
+
+export interface IframePreviewMetrics {
+  scale: number;
+  iframeWidth: number;
+  iframeHeight: number;
+}
+
+export function computeIframePreviewMetrics(
+  containerWidth: number,
+  containerHeight: number,
+  virtualWidth = 1440
+): IframePreviewMetrics {
+  const safeVirtualWidth = Math.max(320, Math.round(virtualWidth));
+
+  if (containerWidth <= 0 || containerHeight <= 0) {
+    return {
+      scale: 1,
+      iframeWidth: safeVirtualWidth,
+      iframeHeight: 900,
+    };
+  }
+
+  const rawScale = containerWidth / safeVirtualWidth;
+  const scale = Number(Math.min(1, Math.max(0.1, rawScale)).toFixed(4));
+  const iframeWidth = safeVirtualWidth;
+  const iframeHeight = Math.max(240, Math.ceil(containerHeight / scale));
+
+  return {
+    scale,
+    iframeWidth,
+    iframeHeight,
+  };
+}
+
+export function formatLiveHost(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) {
+    return '';
+  }
+
+  try {
+    const parsed = new URL(trimmed);
+    const host = parsed.hostname.replace(/^www\./i, '');
+    const path = parsed.pathname && parsed.pathname !== '/' ? parsed.pathname.replace(/\/+$/, '') : '';
+    return `${host}${path}`;
+  } catch {
+    return trimmed.replace(/^https?:\/\//i, '').replace(/^www\./i, '').replace(/\/+$/, '');
+  }
+}
+
+export interface SplashSkipOptions {
+  search: string;
+  sessionSeen: boolean;
+  prefersReducedMotion: boolean;
+}
+
+export function shouldSkipSplash({
+  search,
+  sessionSeen,
+  prefersReducedMotion,
+}: SplashSkipOptions): boolean {
+  if (sessionSeen || prefersReducedMotion) {
+    return true;
+  }
+
+  const params = new URLSearchParams(search.startsWith('?') ? search : `?${search}`);
+  return params.get('nosplash') === '1' || params.get('autostart') === '1';
+}
+
