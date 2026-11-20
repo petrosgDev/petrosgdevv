@@ -234,7 +234,6 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
       'Spring Boot',
       'WhatsApp API',
       'REST APIs',
-      'Escrow & Payment Workflows',
     ],
   },
   {

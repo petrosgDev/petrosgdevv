@@ -9,9 +9,9 @@ import {
   BookOpen,
   Briefcase,
   Code2,
+  GitBranch,
   Github,
   Home,
-  Layers,
   Linkedin,
   Mail,
   Menu,
@@ -36,14 +36,14 @@ interface DockNavItem {
 
 const DESKTOP_PRIMARY_NAV: DockNavItem[] = [
   { id: 'home', label: 'Home', href: '/', matchPath: '/', icon: Home },
-  { id: 'work', label: 'Work', href: '/work', matchPath: '/work', icon: Code2 },
+  { id: 'work', label: 'Work', href: '/work', matchPath: '/work', icon: Briefcase },
   {
     id: 'skills',
     label: 'Skills',
     href: '/#skills',
     matchPath: '/',
     hash: '#skills',
-    icon: Layers,
+    icon: Code2,
   },
   {
     id: 'milestones',
@@ -51,14 +51,14 @@ const DESKTOP_PRIMARY_NAV: DockNavItem[] = [
     href: '/#milestones',
     matchPath: '/',
     hash: '#milestones',
-    icon: Briefcase,
+    icon: GitBranch,
   },
   { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
 ];
 
 const MOBILE_DOCK_NAV: DockNavItem[] = [
   { id: 'home', label: 'Home', href: '/', matchPath: '/', icon: Home },
-  { id: 'work', label: 'Work', href: '/work', matchPath: '/work', icon: Code2 },
+  { id: 'work', label: 'Work', href: '/work', matchPath: '/work', icon: Briefcase },
   { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
   { id: 'contact', label: 'Contact', href: '/contact', matchPath: '/contact', icon: Mail },
 ];
