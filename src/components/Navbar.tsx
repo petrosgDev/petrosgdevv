@@ -56,11 +56,25 @@ const DESKTOP_PRIMARY_NAV: DockNavItem[] = [
   { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
 ];
 
-const MOBILE_DOCK_NAV: DockNavItem[] = [
+const MOBILE_DOCK_PRIMARY_NAV: DockNavItem[] = [
   { id: 'home', label: 'Home', href: '/', matchPath: '/', icon: Home },
   { id: 'work', label: 'Work', href: '/work', matchPath: '/work', icon: Briefcase },
-  { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
-  { id: 'contact', label: 'Contact', href: '/contact', matchPath: '/contact', icon: Mail },
+  {
+    id: 'skills',
+    label: 'Skills',
+    href: '/#skills',
+    matchPath: '/',
+    hash: '#skills',
+    icon: Code2,
+  },
+  {
+    id: 'experience',
+    label: 'Experience',
+    href: '/#experience',
+    matchPath: '/',
+    hash: '#experience',
+    icon: GitBranch,
+  },
 ];
 
 const MOBILE_DRAWER_NAV = [
@@ -428,19 +442,19 @@ export function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Modern Mobile Floating Icon-Sign Bottom Dock (matches Desktop Icon Dock) */}
+      {/* Modern Mobile Floating Icon-Sign Bottom Dock (Home, Work, Skills, Experience | Contact) */}
       <nav
         aria-label="Mobile quick navigation"
         className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex md:hidden items-center gap-0.5 rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/92 dark:bg-[#17191C]/92 p-1.5 backdrop-blur-xl shadow-[0_10px_32px_rgba(0,0,0,0.14)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)]"
       >
-        {MOBILE_DOCK_NAV.map((item) => {
-          const active = isRouteActive(item.matchPath);
+        {MOBILE_DOCK_PRIMARY_NAV.map((item) => {
+          const active = isRouteActive(item.matchPath, item.hash);
           const Icon = item.icon;
           return (
             <Link
               key={item.id}
               href={item.href}
-              onClick={(e) => handleItemClick(e)}
+              onClick={(e) => handleItemClick(e, item.hash)}
               aria-label={item.label}
               aria-current={active ? 'page' : undefined}
               className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 ${
@@ -460,10 +474,40 @@ export function Navbar() {
                   className="absolute inset-0 rounded-full bg-white dark:bg-[#2B2E33] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.06] dark:ring-white/[0.08]"
                 />
               )}
-              <Icon className="relative z-10 h-[18px] w-[18px]" aria-hidden="true" />
+              <Icon className="relative z-10 h-[17px] w-[17px]" aria-hidden="true" />
             </Link>
           );
         })}
+
+        <span
+          aria-hidden="true"
+          className="mx-1 h-5 w-px bg-black/[0.1] dark:bg-white/[0.12]"
+        />
+
+        <Link
+          href="/contact"
+          onClick={(e) => handleItemClick(e)}
+          aria-label="Contact"
+          aria-current={contactActive ? 'page' : undefined}
+          className={`relative flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-200 ${
+            contactActive
+              ? 'text-[#111110] dark:text-[#F5F5F3]'
+              : 'text-[#686864] dark:text-[#A3A6AB]'
+          }`}
+        >
+          {contactActive && (
+            <motion.span
+              layoutId="mobile-dock-active-circle"
+              transition={
+                prefersReducedMotion
+                  ? { duration: 0 }
+                  : { type: 'spring', stiffness: 420, damping: 34 }
+              }
+              className="absolute inset-0 rounded-full bg-white dark:bg-[#2B2E33] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:shadow-[0_2px_10px_rgba(0,0,0,0.45)] ring-1 ring-black/[0.06] dark:ring-white/[0.08]"
+            />
+          )}
+          <Mail className="relative z-10 h-[17px] w-[17px]" aria-hidden="true" />
+        </Link>
       </nav>
     </>
   );

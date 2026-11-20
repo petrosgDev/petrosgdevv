@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, ChevronDown } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import type { ExperienceItem } from '@/data/portfolio';
 import { getActiveExperienceId } from '@/lib/portfolioLogic';
 
@@ -22,7 +22,6 @@ export function ExperienceShowcase({
   showAboutLink = false,
 }: ExperienceShowcaseProps) {
   const [activeId, setActiveId] = useState<string>(items[0]?.id ?? '');
-  const [openMobileId, setOpenMobileId] = useState<string>(items[0]?.id ?? '');
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
@@ -81,7 +80,6 @@ export function ExperienceShowcase({
 
   const handleSelectRole = (id: string) => {
     setActiveId(id);
-    setOpenMobileId(id);
     const el = cardRefs.current[id];
     if (el) {
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -177,12 +175,10 @@ export function ExperienceShowcase({
         )}
       </aside>
 
-      {/* Right Column: Scrollable Framed Experience Cards */}
+      {/* Right Column: Scrollable Framed Experience Cards (Always Expanded on Scroll across Mobile & Desktop) */}
       <div className="grid gap-5 lg:gap-7">
         {items.map((item) => {
           const isActive = activeId === item.id;
-          const isMobileOpen = openMobileId === item.id;
-          const panelId = `${idPrefix}-panel-${item.id}`;
 
           return (
             <article
@@ -193,19 +189,31 @@ export function ExperienceShowcase({
               }}
               data-xp-card="true"
               data-active={isActive ? 'true' : 'false'}
-              className={`scroll-mt-28 rounded-2xl border-[1.5px] bg-white dark:bg-[#121211] p-5 sm:p-7 transition-all duration-200 ${
+              className={`scroll-mt-24 lg:scroll-mt-28 rounded-2xl border-[1.5px] bg-white dark:bg-[#121211] p-5 sm:p-7 transition-all duration-200 ${
                 isActive
                   ? 'border-[#1A1A1A] dark:border-[#E5E5E0] shadow-[4px_4px_0_0_#1A1A1A] dark:shadow-[4px_4px_0_0_rgba(240,240,238,0.22)]'
                   : 'border-[#1A1A1A]/20 dark:border-white/15 shadow-[3px_3px_0_0_rgba(26,26,26,0.08)] dark:shadow-[3px_3px_0_0_rgba(255,255,255,0.05)] hover:border-[#1A1A1A]/50 dark:hover:border-white/30'
               }`}
             >
               {/* Date, Location & Optional External Organization Link */}
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5 text-[13px] text-[#666666] dark:text-[#9A9A96]">
-                  <strong className="font-semibold text-[#1A1A1A] dark:text-[#F0F0EE] tabular-nums">
-                    {item.period}
-                  </strong>
-                  <span aria-hidden="true">·</span>
+              <div className="flex flex-wrap items-start sm:items-baseline justify-between gap-x-3 gap-y-1">
+                <p className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-2 gap-y-0.5 text-[13px] text-[#666666] dark:text-[#9A9A96]">
+                  <span className="inline-flex items-center gap-2">
+                    <span
+                      aria-hidden="true"
+                      className={`inline-block lg:hidden h-2 w-2 shrink-0 rounded-full border-[1.5px] transition-colors duration-200 ${
+                        isActive
+                          ? 'border-[#1A1A1A] bg-[#1A1A1A] dark:border-[#F0F0EE] dark:bg-[#F0F0EE]'
+                          : 'border-[#8C8C87] bg-transparent dark:border-[#6C6C68]'
+                      }`}
+                    />
+                    <strong className="font-semibold text-[#1A1A1A] dark:text-[#F0F0EE] tabular-nums">
+                      {item.period}
+                    </strong>
+                  </span>
+                  <span aria-hidden="true" className="hidden sm:inline">
+                    ·
+                  </span>
                   <span>{item.location}</span>
                 </p>
 
@@ -222,45 +230,16 @@ export function ExperienceShowcase({
                 )}
               </div>
 
-              {/* Desktop Title */}
-              <h3 className="mt-2 hidden lg:block text-[18px] font-semibold tracking-[-0.015em] text-[#1A1A1A] dark:text-[#F0F0EE]">
+              {/* Card Role & Organization Heading */}
+              <h3 className="mt-2 text-[16.5px] sm:text-[18px] font-semibold tracking-[-0.015em] text-[#1A1A1A] dark:text-[#F0F0EE]">
                 {item.role}{' '}
                 <span className="font-normal text-[#666666] dark:text-[#9A9A96]">
                   — {item.organization}
                 </span>
               </h3>
 
-              {/* Mobile Collapsible Accordion Trigger */}
-              <h3 className="mt-1.5 lg:hidden">
-                <button
-                  type="button"
-                  onClick={() =>
-                    setOpenMobileId((prev) => (prev === item.id ? '' : item.id))
-                  }
-                  aria-expanded={isMobileOpen}
-                  aria-controls={panelId}
-                  className="flex min-h-[44px] w-full items-center justify-between gap-3 text-left text-[16px] font-semibold tracking-[-0.015em] text-[#1A1A1A] dark:text-[#F0F0EE] cursor-pointer"
-                >
-                  <span>
-                    {item.role}{' '}
-                    <span className="font-normal text-[#666666] dark:text-[#9A9A96]">
-                      — {item.organization}
-                    </span>
-                  </span>
-                  <ChevronDown
-                    aria-hidden="true"
-                    className={`h-4 w-4 shrink-0 text-[#666666] dark:text-[#9A9A96] transition-transform duration-200 ${
-                      isMobileOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </button>
-              </h3>
-
-              {/* Card Body (Always visible on desktop lg+; collapsible on mobile) */}
-              <div
-                id={panelId}
-                className={`${isMobileOpen ? 'block' : 'hidden'} lg:block`}
-              >
+              {/* Card Body — Immediately Visible While Scrolling on Both Mobile & Desktop */}
+              <div>
                 <p className="mt-2.5 max-w-[62ch] text-[14px] leading-[1.7] text-[#454542] dark:text-[#C8C8C4]">
                   {item.summary}
                 </p>

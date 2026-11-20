@@ -7,8 +7,8 @@ import {
   SKILL_CATEGORIES,
 } from '@/data/portfolio';
 import { getFeaturedProjects } from '@/lib/portfolioLogic';
-import { EditorialImage } from '@/components/EditorialImage';
 import { ExperienceShowcase } from '@/components/ExperienceShowcase';
+import { PortraitFrame } from '@/components/PortraitFrame';
 import { ProjectCard } from '@/components/ProjectCard';
 import { Reveal } from '@/components/Reveal';
 import { SkillShowcase } from '@/components/SkillShowcase';
@@ -18,27 +18,22 @@ export default function HomePage() {
 
   return (
     <div>
-      {/* 1. Minimalist Split Hero — Restored Portrait (Left) & Small Clean Typography (Right) */}
-      <section className="mx-auto max-w-[1200px] px-5 pt-6 pb-14 md:px-10 md:pt-20 md:pb-24">
-        <div className="grid grid-cols-1 gap-8 md:gap-12 lg:grid-cols-12 lg:items-center lg:gap-16">
-          {/* Left Column: Restored Portrait seamlessly matched to website background */}
-          <div className="lg:col-span-6 flex justify-center lg:justify-start">
-            <div className="w-full max-w-[260px] sm:max-w-[340px] lg:max-w-[460px] aspect-square overflow-hidden bg-white dark:bg-[#0A0A0A] flex items-end justify-center">
-              <EditorialImage
-                src={SITE_PROFILE.portraitSrc}
-                alt="Portrait of Petros Geto, Software Engineer and AI Developer"
-                fallbackTitle={SITE_PROFILE.fullName}
-                priority
-                fit="contain"
-                transparentBg
-                className="h-full w-full flex items-end justify-center"
-                imgClassName="h-full w-full object-contain object-bottom"
-              />
-            </div>
+      {/* 1. Minimalist Split Hero — Studio-Framed Portrait (Left) & Clean Typography (Right) */}
+      <section className="mx-auto max-w-[1200px] px-5 pt-6 pb-14 md:px-10 md:pt-16 md:pb-20">
+        <div className="grid grid-cols-1 gap-8 md:gap-12 lg:grid-cols-12 lg:items-center lg:gap-14">
+          {/* Left Column: Cohesive Studio-Framed Portrait */}
+          <div className="lg:col-span-5 flex justify-center lg:justify-start">
+            <PortraitFrame
+              src={SITE_PROFILE.portraitSrc}
+              alt="Portrait of Petros Geto, Software Engineer and AI Developer"
+              fallbackTitle={SITE_PROFILE.fullName}
+              priority
+              size="hero"
+            />
           </div>
 
-          {/* Right Column: Minimalist Small-Font Editorial Intro */}
-          <div className="lg:col-span-6 flex flex-col justify-center space-y-5 md:space-y-6">
+          {/* Right Column: Minimalist Editorial Intro */}
+          <div className="lg:col-span-7 flex flex-col justify-center space-y-5 md:space-y-6">
             <h1 className="font-display text-[2.5rem] sm:text-[3.1rem] font-extrabold uppercase leading-[0.98] tracking-[-0.01em] text-[#1A1A1A] dark:text-[#F0F0EE]">
               {SITE_PROFILE.heroGreeting}
             </h1>

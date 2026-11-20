@@ -8,8 +8,8 @@ import {
   SKILL_CATEGORIES,
   TECHNICAL_INTERESTS,
 } from '@/data/portfolio';
-import { EditorialImage } from '@/components/EditorialImage';
 import { ExperienceShowcase } from '@/components/ExperienceShowcase';
+import { PortraitFrame } from '@/components/PortraitFrame';
 import { Reveal } from '@/components/Reveal';
 import { SkillShowcase } from '@/components/SkillShowcase';
 
@@ -22,21 +22,16 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-12 md:px-10 md:py-16">
-      {/* Header & Left-Side Portrait matched to website background */}
+      {/* Header & Left-Side Studio-Framed Portrait */}
       <section className="grid grid-cols-1 gap-8 md:gap-12 pb-14 md:pb-16 border-b border-[#EAEAEA] dark:border-[#222220] lg:grid-cols-12 lg:items-center">
         <div className="lg:col-span-5 flex justify-center lg:justify-start">
-          <div className="w-full max-w-[240px] sm:max-w-[320px] lg:max-w-[420px] aspect-square overflow-hidden bg-white dark:bg-[#0A0A0A] flex items-end justify-center">
-            <EditorialImage
-              src={SITE_PROFILE.portraitSrc}
-              alt="Portrait of Petros Geto"
-              fallbackTitle={SITE_PROFILE.fullName}
-              priority
-              fit="contain"
-              transparentBg
-              className="h-full w-full flex items-end justify-center"
-              imgClassName="h-full w-full object-contain object-bottom"
-            />
-          </div>
+          <PortraitFrame
+            src={SITE_PROFILE.portraitSrc}
+            alt="Portrait of Petros Geto"
+            fallbackTitle={SITE_PROFILE.fullName}
+            priority
+            size="about"
+          />
         </div>
 
         <div className="lg:col-span-7 space-y-5">
