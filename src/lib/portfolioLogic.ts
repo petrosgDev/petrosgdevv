@@ -133,6 +133,37 @@ export function getActiveExperienceId(
   return activeId;
 }
 
+export function computeExpandedExperienceIds(
+  positions: readonly ExperiencePosition[],
+  previouslyExpanded: ReadonlySet<string>,
+  viewportHeight: number,
+  isAtBottom = false
+): string[] {
+  if (positions.length === 0) {
+    return [];
+  }
+
+  const safeVh = Math.max(320, viewportHeight);
+  const openThreshold = safeVh * 0.66;
+  const closeThreshold = safeVh * 0.84;
+
+  const nextExpanded: string[] = [];
+
+  for (const entry of positions) {
+    const wasExpanded = previouslyExpanded.has(entry.id);
+    const shouldExpand =
+      entry.top <= openThreshold ||
+      (wasExpanded && entry.top <= closeThreshold) ||
+      (isAtBottom && entry.top < safeVh);
+
+    if (shouldExpand) {
+      nextExpanded.push(entry.id);
+    }
+  }
+
+  return nextExpanded;
+}
+
 export interface IframePreviewMetrics {
   scale: number;
   iframeWidth: number;

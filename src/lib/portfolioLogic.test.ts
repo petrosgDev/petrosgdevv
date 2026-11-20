@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { EXPERIENCES, PROJECTS } from '../data/portfolio';
 import {
+  computeExpandedExperienceIds,
   computeIframePreviewMetrics,
   filterProjects,
   formatLiveHost,
@@ -211,5 +212,54 @@ test('shouldSkipSplash respects session memory, reduced motion, and query overri
     shouldSkipSplash({ search: '?autostart=1', sessionSeen: false, prefersReducedMotion: false }),
     true
   );
+});
+
+test('computeExpandedExperienceIds expands cards progressively on scroll with hysteresis', () => {
+  const vh = 800; // openThreshold = 528, closeThreshold = 672
+  const initialPositions = [
+    { id: 'first', top: 420 },
+    { id: 'second', top: 680 },
+    { id: 'third', top: 960 },
+  ];
+
+  // Only the card above 66% viewport height opens; lower cards stay reduced
+  const step1 = computeExpandedExperienceIds(initialPositions, new Set(), vh, false);
+  assert.deepEqual(step1, ['first']);
+
+  // Scrolling down brings the second card into the trigger zone while third remains reduced
+  const scrolledPositions = [
+    { id: 'first', top: 100 },
+    { id: 'second', top: 480 },
+    { id: 'third', top: 760 },
+  ];
+  const step2 = computeExpandedExperienceIds(scrolledPositions, new Set(step1), vh, false);
+  assert.deepEqual(step2, ['first', 'second']);
+
+  // Hysteresis: slight scroll up keeping second between 66% and 84% does not flicker closed
+  const slightScrollUp = [
+    { id: 'first', top: 220 },
+    { id: 'second', top: 600 },
+    { id: 'third', top: 880 },
+  ];
+  const step3 = computeExpandedExperienceIds(slightScrollUp, new Set(step2), vh, false);
+  assert.deepEqual(step3, ['first', 'second']);
+
+  // Scrolling further up pushes second below 84% so it retracts back to reduced state
+  const scrolledBackUp = [
+    { id: 'first', top: 380 },
+    { id: 'second', top: 720 },
+    { id: 'third', top: 1000 },
+  ];
+  const step4 = computeExpandedExperienceIds(scrolledBackUp, new Set(step3), vh, false);
+  assert.deepEqual(step4, ['first']);
+
+  // At page bottom, visible trailing card opens even if its top is below 66%
+  const bottomPositions = [
+    { id: 'first', top: -300 },
+    { id: 'second', top: 120 },
+    { id: 'third', top: 640 },
+  ];
+  const stepBottom = computeExpandedExperienceIds(bottomPositions, new Set(['first', 'second']), vh, true);
+  assert.deepEqual(stepBottom, ['first', 'second', 'third']);
 });
 
