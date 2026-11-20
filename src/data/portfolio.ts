@@ -90,7 +90,7 @@ export const SITE_PROFILE = {
   telegramUrl: 'https://t.me/petrosgdev',
   whatsappUrl: 'https://wa.me/251903433857',
   existingSiteUrl: 'https://petrosgeto.pages.dev/',
-  logoSrc: '/images/logo-petros.png',
+  logoSrc: '/assets/aistudio/image_80211bc7.png',
   portraitSrc: '/images/portrait-petros.png',
   heroGreeting: 'HELLO WORLD.',
   heroHeadline: 'Building practical software, scalable web platforms, and AI-powered products.',

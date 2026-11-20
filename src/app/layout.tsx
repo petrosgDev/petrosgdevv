@@ -47,7 +47,7 @@ export const metadata: Metadata = {
     'Portfolio of Petros Geto (PETROS G DEV), a software engineer in Addis Ababa building full-stack web applications, AI-powered solutions, and scalable digital products.',
   authors: [{ name: SITE_PROFILE.fullName, url: siteUrl }],
   icons: {
-    icon: '/images/logo-petros.png',
+    icon: SITE_PROFILE.logoSrc,
   },
   openGraph: {
     type: 'website',

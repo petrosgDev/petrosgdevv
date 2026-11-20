@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion, useScroll } from 'motion/react';
 import { NAVIGATION_LINKS, SITE_PROFILE } from '@/data/portfolio';
+import { BrandLogo } from '@/components/BrandLogo';
 import { useTheme } from '@/components/ThemeContext';
 
 const MOBILE_DOCK_ICONS: Record<string, typeof Home> = {
@@ -84,15 +85,12 @@ export function Navbar() {
         />
 
         <div className="mx-auto flex h-14 md:h-16 max-w-[1200px] items-center justify-between gap-4 px-5 md:px-10">
-          {/* Zone 1: Clean Modern Brand Wordmark */}
+          {/* Zone 1: Brand Monogram Logo & Wordmark */}
           <Link
             href="/"
-            className="group inline-flex items-center gap-2.5 font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] whitespace-nowrap shrink-0 transition-opacity hover:opacity-75"
+            className="group inline-flex items-center gap-2 font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] whitespace-nowrap shrink-0 transition-opacity hover:opacity-75"
           >
-            <span
-              aria-hidden="true"
-              className="h-2 w-2 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE] transition-transform duration-300 group-hover:scale-125"
-            />
+            <BrandLogo size="md" className="transition-transform duration-300 group-hover:scale-105" />
             <span>{SITE_PROFILE.brand}</span>
           </Link>
 
