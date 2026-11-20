@@ -15,7 +15,7 @@ import {
   User,
   X,
 } from 'lucide-react';
-import { AnimatePresence, motion, useReducedMotion, useScroll } from 'motion/react';
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { NAVIGATION_LINKS, SITE_PROFILE } from '@/data/portfolio';
 import { BrandLogo } from '@/components/BrandLogo';
 import { useTheme } from '@/components/ThemeContext';
@@ -33,7 +33,6 @@ export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const prefersReducedMotion = useReducedMotion();
-  const { scrollYProgress } = useScroll();
 
   useEffect(() => {
     const onScroll = () => {
@@ -77,13 +76,6 @@ export function Navbar() {
             : 'bg-white/85 dark:bg-[#0A0A0A]/85 backdrop-blur-md border-b border-transparent'
         }`}
       >
-        {/* Ultra-minimal top reading progress hairline */}
-        <motion.div
-          aria-hidden="true"
-          className="pointer-events-none absolute top-0 left-0 right-0 h-[1.5px] origin-left bg-[#1A1A1A] dark:bg-[#F0F0EE] opacity-80"
-          style={{ scaleX: prefersReducedMotion ? 0 : scrollYProgress }}
-        />
-
         <div className="mx-auto flex h-14 md:h-16 max-w-[1200px] items-center justify-between gap-4 px-5 md:px-10">
           {/* Zone 1: Brand Monogram Logo & Wordmark */}
           <Link
