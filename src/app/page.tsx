@@ -7,8 +7,8 @@ import {
   SKILL_CATEGORIES,
 } from '@/data/portfolio';
 import { getFeaturedProjects } from '@/lib/portfolioLogic';
+import { EditorialImage } from '@/components/EditorialImage';
 import { ExperienceShowcase } from '@/components/ExperienceShowcase';
-import { PortraitFrame } from '@/components/PortraitFrame';
 import { ProjectCard } from '@/components/ProjectCard';
 import { Reveal } from '@/components/Reveal';
 import { SkillShowcase } from '@/components/SkillShowcase';
@@ -21,14 +21,17 @@ export default function HomePage() {
       {/* 1. Minimalist Split Hero — Studio-Framed Portrait (Left) & Clean Typography (Right) */}
       <section className="mx-auto max-w-[1200px] px-5 pt-6 pb-14 md:px-10 md:pt-16 md:pb-20">
         <div className="grid grid-cols-1 gap-8 md:gap-12 lg:grid-cols-12 lg:items-center lg:gap-14">
-          {/* Left Column: Cohesive Studio-Framed Portrait */}
+          {/* Left Column: Clean Borderless Portrait */}
           <div className="lg:col-span-5 flex justify-center lg:justify-start">
-            <PortraitFrame
+            <EditorialImage
               src={SITE_PROFILE.portraitSrc}
               alt="Portrait of Petros Geto, Software Engineer and AI Developer"
               fallbackTitle={SITE_PROFILE.fullName}
               priority
-              size="hero"
+              fit="contain"
+              transparentBg
+              className="w-full max-w-[290px] sm:max-w-[350px] lg:max-w-[400px]"
+              imgClassName="w-full h-auto object-contain"
             />
           </div>
 

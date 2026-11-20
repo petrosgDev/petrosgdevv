@@ -8,8 +8,8 @@ import {
   SKILL_CATEGORIES,
   TECHNICAL_INTERESTS,
 } from '@/data/portfolio';
+import { EditorialImage } from '@/components/EditorialImage';
 import { ExperienceShowcase } from '@/components/ExperienceShowcase';
-import { PortraitFrame } from '@/components/PortraitFrame';
 import { Reveal } from '@/components/Reveal';
 import { SkillShowcase } from '@/components/SkillShowcase';
 
@@ -25,12 +25,15 @@ export default function AboutPage() {
       {/* Header & Left-Side Studio-Framed Portrait */}
       <section className="grid grid-cols-1 gap-8 md:gap-12 pb-14 md:pb-16 border-b border-[#EAEAEA] dark:border-[#222220] lg:grid-cols-12 lg:items-center">
         <div className="lg:col-span-5 flex justify-center lg:justify-start">
-          <PortraitFrame
+          <EditorialImage
             src={SITE_PROFILE.portraitSrc}
             alt="Portrait of Petros Geto"
             fallbackTitle={SITE_PROFILE.fullName}
             priority
-            size="about"
+            fit="contain"
+            transparentBg
+            className="w-full max-w-[260px] sm:max-w-[320px] lg:max-w-[360px]"
+            imgClassName="w-full h-auto object-contain"
           />
         </div>
 
