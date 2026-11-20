@@ -49,14 +49,21 @@ export interface SkillCategory {
   items: string[];
 }
 
-export interface MilestoneItem {
+export interface ExperiencePoint {
+  lead?: string;
+  text: string;
+}
+
+export interface ExperienceItem {
   id: string;
+  organization: string;
+  role: string;
   period: string;
-  type: string;
-  title: string;
-  context: string;
-  description: string;
-  highlights: string[];
+  shortYear: string;
+  location: string;
+  summary: string;
+  points: ExperiencePoint[];
+  stack: string[];
 }
 
 export interface SocialLink {
@@ -252,58 +259,131 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
   },
 ];
 
-export const MILESTONES: MilestoneItem[] = [
+export const EXPERIENCES: ExperienceItem[] = [
   {
-    id: 'web-platforms',
-    period: '2026',
-    type: 'Product Engineering',
-    title: 'Production Web Platforms & Client Deployments',
-    context: 'Vercel · Next.js · Node.js · PostgreSQL',
-    description:
-      'Designed, built, and deployed live web applications spanning fintech escrow workflows (Aman Pay), university event management (EventHub DBU), local wellness booking (Ethio Massage), and luxury brand showcases (Wende Dubai Interior Design, Raman Caffe).',
-    highlights: [
-      'Integrated Ethiopian payment and communication workflows including Chapa and WhatsApp API.',
-      'Delivered responsive, production-hosted frontends and full-stack Next.js platforms.',
+    id: 'client-web-platforms',
+    organization: 'Client & Product Builds',
+    role: 'Independent Full-Stack Engineer',
+    period: '2025 – Present',
+    shortYear: '2026',
+    location: 'Addis Ababa · Remote',
+    summary:
+      'Designing, engineering, and deploying production web platforms across fintech escrow, hospitality, wellness booking, and brand showcases.',
+    points: [
+      {
+        lead: 'Aman Pay:',
+        text: 'Architected an escrow commerce platform in Next.js and Node.js guiding buyers and sellers through a 5-stage ETB settlement workflow with Chapa payment integration.',
+      },
+      {
+        lead: 'Ethio Massage:',
+        text: 'Built a mobile-first wellness booking platform for Addis Ababa with direct WhatsApp API appointment triggers, service galleries, and light/dark appearance switching.',
+      },
+      {
+        lead: 'Brand & Hospitality:',
+        text: 'Delivered visual showcases for Wende Dubai Interior Design (Swiper.js carousels) and Raman Caffe with responsive typography and fast static edge delivery.',
+      },
     ],
+    stack: ['Next.js', 'React', 'TypeScript', 'Node.js', 'Tailwind CSS', 'WhatsApp API'],
   },
   {
-    id: 'campus-systems',
+    id: 'eventhub-dbu',
+    organization: 'EventHub DBU',
+    role: 'Full-Stack Developer',
     period: '2026',
-    type: 'Software Engineering Systems',
-    title: 'Nexus Campus Services & EventHub DBU',
-    context: 'Debre Birhan University Context · Java 17 · TypeScript',
-    description:
-      'Engineered both a native 3-tier Java/JavaFX desktop suite and a web-based campus events platform targeting real university workflows: room booking, club management, QR attendance, lost-and-found smart matching, and digital certificates.',
-    highlights: [
-      'Implemented token-similarity matching (SmartMatcher) and offline JDBC simulation in Java.',
-      'Designed role-based views for students, club leaders, organizers, and administrators.',
+    shortYear: '2026',
+    location: 'Debre Birhan University',
+    summary:
+      'Built a unified campus event discovery, ticketing, and QR attendance web platform serving university students, clubs, and organizers.',
+    points: [
+      {
+        lead: 'Student experience:',
+        text: 'Centralized workshops, seminars, and hackathons with category browsing, instant registration, ticket lookup, and interactive campus venue mapping.',
+      },
+      {
+        lead: 'Organizer workflows:',
+        text: 'Implemented event creation portals, QR-based check-in verification, Chapa payment support, real-time analytics, and digital attendance certificates.',
+      },
+      {
+        lead: 'Backend architecture:',
+        text: 'Structured PostgreSQL models and Node.js APIs separating attendee, organizer, and campus administrator governance flows.',
+      },
     ],
+    stack: ['Next.js', 'TypeScript', 'Node.js', 'PostgreSQL', 'Chapa'],
   },
   {
-    id: 'dsa-banking',
+    id: 'nexus-campus-services',
+    organization: 'Nexus Campus Services',
+    role: 'Java Software Engineer',
     period: '2026',
-    type: 'Academic Engineering Coursework',
-    title: 'Design & Analysis of Data Structures and Algorithms (SEng2022)',
-    context: 'C++17 · Qt 6 Widgets · MySQL 8.0',
-    description:
-      'Built a multi-role GUI banking system bridging fundamental in-memory data structures (custom Singly Linked List and FIFO Transaction Queue) with persistent MySQL relational storage.',
-    highlights: [
-      'Implemented O(1) tail insertion for account records and ordered FIFO transaction processing.',
-      'Delivered 4-tier RBAC across Admin, Manager, Accountant, and Customer interfaces.',
+    shortYear: '2026',
+    location: 'Debre Birhan University',
+    summary:
+      'Engineered a native 3-tier JavaFX desktop suite unifying campus notices, club management, room scheduling, and lost-and-found workflows.',
+    points: [
+      {
+        lead: 'Collision-free booking:',
+        text: 'Built a lecture-hall and resource scheduling engine with administrative approval gates and role-based access for Students, Club Leaders, and Admins.',
+      },
+      {
+        lead: 'SmartMatcher engine:',
+        text: 'Implemented weighted token-similarity matching to pair lost and found campus item reports automatically.',
+      },
+      {
+        lead: 'Dual-mode persistence:',
+        text: 'Designed a JDBC connection layer backed by MySQL with a seamless Offline Simulator Mode for local testing without a live database server.',
+      },
     ],
+    stack: ['Java', 'JavaFX', 'MySQL', 'Maven', 'JDBC'],
   },
   {
-    id: 'open-source',
+    id: 'banking-system',
+    organization: 'Banking System (SEng2022)',
+    role: 'C++ Systems & GUI Developer',
+    period: '2026',
+    shortYear: '2026',
+    location: 'Academic Engineering',
+    summary:
+      'Developed a multi-role desktop banking application connecting custom C++17 data structures directly to persistent MySQL 8.0 storage.',
+    points: [
+      {
+        lead: 'Custom data structures:',
+        text: 'Implemented a Singly Linked List enabling O(1) tail insertion for active accounts alongside a FIFO Transaction Queue for exact arrival-order settlement.',
+      },
+      {
+        lead: '4-tier RBAC interface:',
+        text: 'Built dedicated Qt 6 Widgets dashboards covering Admin, Manager, Accountant, and Customer banking workflows.',
+      },
+      {
+        lead: 'Atomic sync & auditing:',
+        text: 'Committed dequeued deposits, withdrawals, and transfers to MySQL with real-time audit logs and instant ID/name lookup.',
+      },
+    ],
+    stack: ['C++17', 'Qt 6 Widgets', 'MySQL', 'Data Structures'],
+  },
+  {
+    id: 'open-source-mobile',
+    organization: 'Open Source & Mobile',
+    role: 'Software Engineer',
     period: '2025 – 2026',
-    type: 'Open Source & Continuous Practice',
-    title: 'GitHub Portfolio & Multi-Language Exploration',
-    context: 'github.com/petrosgDev · 23 Public Repositories',
-    description:
-      'Maintains active public repositories spanning Flutter e-commerce and weather apps, Java desktop tools, Python OOP and testing exercises, C++ systems, and TypeScript web applications.',
-    highlights: [
-      'Cross-disciplinary foundation across web, mobile (Flutter & Expo), and native desktop software.',
-      'Editable slot: formal employment history or certifications can be added directly in src/data/portfolio.ts.',
+    shortYear: '2025',
+    location: 'GitHub · 23 Repositories',
+    summary:
+      'Maintaining 23 public repositories spanning offline-first mobile apps, Flutter prototypes, Python systems, and continuous edge deployments.',
+    points: [
+      {
+        lead: 'MyApp (React Native / Expo):',
+        text: 'Built an offline-first personal productivity mobile companion unifying daily tasks, notes, workout logs, and routines in a focused dark interface.',
+      },
+      {
+        lead: 'Cross-stack exploration:',
+        text: 'Shipped Flutter e-commerce and weather prototypes alongside Python OOP/testing exercises and modular TypeScript web architectures.',
+      },
+      {
+        lead: 'Deployment workflows:',
+        text: 'Configured repeatable static and full-stack delivery pipelines targeting Cloudflare Pages, Vercel, and Render.',
+      },
     ],
+    stack: ['React Native', 'Flutter', 'Python', 'Docker', 'Git', 'Vercel'],
   },
 ];
 

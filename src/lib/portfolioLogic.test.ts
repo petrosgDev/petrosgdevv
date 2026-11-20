@@ -1,8 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PROJECTS } from '../data/portfolio';
+import { EXPERIENCES, PROJECTS } from '../data/portfolio';
 import {
   filterProjects,
+  getActiveExperienceId,
   getAdjacentProjects,
   getCategoryCounts,
   getFeaturedProjects,
@@ -107,4 +108,43 @@ test('submitContactInquiry without endpoint returns honest mailto_ready status',
   );
   assert.equal(result.status, 'mailto_ready');
   assert.ok(result.mailtoUrl?.startsWith('mailto:petrosgeto7@gmail.com?'));
+});
+
+test('EXPERIENCES dataset has unique ids, points, and technology stacks', () => {
+  assert.ok(EXPERIENCES.length >= 4);
+  const ids = new Set(EXPERIENCES.map((item) => item.id));
+  assert.equal(ids.size, EXPERIENCES.length);
+  for (const item of EXPERIENCES) {
+    assert.ok(item.organization.length > 0);
+    assert.ok(item.role.length > 0);
+    assert.ok(item.points.length >= 2);
+    assert.ok(item.stack.length >= 2);
+  }
+});
+
+test('getActiveExperienceId tracks scroll position and bottom boundary accurately', () => {
+  assert.equal(getActiveExperienceId([]), null);
+
+  const positions = [
+    { id: 'first', top: 380 },
+    { id: 'second', top: 760 },
+    { id: 'third', top: 1140 },
+  ];
+  assert.equal(getActiveExperienceId(positions, 240, false), 'first');
+
+  const midScroll = [
+    { id: 'first', top: -180 },
+    { id: 'second', top: 210 },
+    { id: 'third', top: 640 },
+  ];
+  assert.equal(getActiveExperienceId(midScroll, 240, false), 'second');
+
+  const deepScroll = [
+    { id: 'first', top: -700 },
+    { id: 'second', top: -240 },
+    { id: 'third', top: 190 },
+  ];
+  assert.equal(getActiveExperienceId(deepScroll, 240, false), 'third');
+
+  assert.equal(getActiveExperienceId(midScroll, 240, true), 'third');
 });

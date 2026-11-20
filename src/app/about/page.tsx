@@ -2,20 +2,21 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import {
-  MILESTONES,
+  EXPERIENCES,
   PHILOSOPHY_PILLARS,
   SITE_PROFILE,
   SKILL_CATEGORIES,
   TECHNICAL_INTERESTS,
 } from '@/data/portfolio';
 import { EditorialImage } from '@/components/EditorialImage';
+import { ExperienceShowcase } from '@/components/ExperienceShowcase';
 import { Reveal } from '@/components/Reveal';
 import { SkillShowcase } from '@/components/SkillShowcase';
 
 export const metadata: Metadata = {
   title: 'About',
   description:
-    'Background, development philosophy, verified skills, and software engineering milestones of Petros Geto in Addis Ababa, Ethiopia.',
+    'Background, development philosophy, verified skills, and software engineering experience of Petros Geto in Addis Ababa, Ethiopia.',
 };
 
 export default function AboutPage() {
@@ -151,55 +152,14 @@ export default function AboutPage() {
         <SkillShowcase categories={SKILL_CATEGORIES} />
       </section>
 
-      {/* Milestones */}
+      {/* Experience */}
       <section className="py-16 border-b border-[#EAEAEA] dark:border-[#222220]">
-        <Reveal>
-          <div className="mb-10 space-y-1.5">
-            <p className="text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
-              04. Experience &amp; Academic Milestones
-            </p>
-            <h2 className="font-display text-[26px] sm:text-[32px] font-bold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-              Documented Track Record
-            </h2>
-          </div>
-        </Reveal>
-
-        <div className="divide-y divide-[#EAEAEA] dark:divide-[#222220]">
-          {MILESTONES.map((milestone) => (
-            <Reveal key={milestone.id}>
-              <div className="grid grid-cols-1 gap-3 py-6 lg:grid-cols-12">
-                <div className="lg:col-span-3 space-y-0.5">
-                  <p className="font-mono text-[11px] text-[#666666] dark:text-[#9A9A96] tabular-nums">
-                    {milestone.period}
-                  </p>
-                  <p className="text-[12px] text-[#666666] dark:text-[#9A9A96]">{milestone.type}</p>
-                </div>
-                <div className="lg:col-span-9 space-y-2">
-                  <h3 className="text-[15px] font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]">
-                    {milestone.title}
-                  </h3>
-                  <p className="text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
-                    {milestone.context}
-                  </p>
-                  <p className="text-[13px] leading-[1.75] text-[#666666] dark:text-[#9A9A96] max-w-[64ch]">
-                    {milestone.description}
-                  </p>
-                  <ul className="pt-1 space-y-1 text-[12.5px] text-[#1A1A1A] dark:text-[#F0F0EE]">
-                    {milestone.highlights.map((item) => (
-                      <li key={item} className="flex items-start gap-2.5">
-                        <span
-                          aria-hidden="true"
-                          className="mt-2 h-[1px] w-2 shrink-0 bg-[#1A1A1A] dark:bg-[#F0F0EE]"
-                        />
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        <ExperienceShowcase
+          items={EXPERIENCES}
+          idPrefix="about-exp"
+          eyebrow="04. Experience"
+          heading="Where I've Been"
+        />
       </section>
 
       {/* Looking Ahead */}

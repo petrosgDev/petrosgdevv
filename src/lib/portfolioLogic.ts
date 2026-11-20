@@ -102,3 +102,33 @@ export function getRelatedProjects(
 export function getFeaturedProjects(projects: readonly ProjectItem[]): ProjectItem[] {
   return projects.filter((project) => project.featured);
 }
+
+export interface ExperiencePosition {
+  id: string;
+  top: number;
+}
+
+export function getActiveExperienceId(
+  positions: readonly ExperiencePosition[],
+  activationOffset = 240,
+  isAtBottom = false
+): string | null {
+  if (positions.length === 0) {
+    return null;
+  }
+
+  if (isAtBottom) {
+    return positions[positions.length - 1].id;
+  }
+
+  let activeId = positions[0].id;
+  for (const entry of positions) {
+    if (entry.top <= activationOffset) {
+      activeId = entry.id;
+    } else {
+      break;
+    }
+  }
+
+  return activeId;
+}

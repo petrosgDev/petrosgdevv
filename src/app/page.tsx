@@ -1,13 +1,14 @@
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
 import {
-  MILESTONES,
+  EXPERIENCES,
   PROJECTS,
   SITE_PROFILE,
   SKILL_CATEGORIES,
 } from '@/data/portfolio';
 import { getFeaturedProjects } from '@/lib/portfolioLogic';
 import { EditorialImage } from '@/components/EditorialImage';
+import { ExperienceShowcase } from '@/components/ExperienceShowcase';
 import { ProjectCard } from '@/components/ProjectCard';
 import { Reveal } from '@/components/Reveal';
 import { SkillShowcase } from '@/components/SkillShowcase';
@@ -238,59 +239,13 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 5. Selected Engineering Milestones */}
+      {/* 5. Experience — Sticky Role Index & Scrollable Cards */}
       <section
-        id="milestones"
+        id="experience"
         className="scroll-mt-24 border-t border-[#EAEAEA] dark:border-[#222220]"
       >
         <div className="mx-auto max-w-[1200px] px-6 py-16 md:px-10 md:py-24">
-          <Reveal>
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between pb-10 border-b border-[#EAEAEA] dark:border-[#222220]">
-              <div className="space-y-1.5">
-                <p className="text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
-                  04. Track Record
-                </p>
-                <h2 className="font-display text-[26px] sm:text-[32px] font-bold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-                  Selected Milestones
-                </h2>
-              </div>
-              <Link
-                href="/about"
-                className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 hover:opacity-65 transition-opacity whitespace-nowrap"
-              >
-                <span>Full background &amp; skills</span>
-                <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-              </Link>
-            </div>
-          </Reveal>
-
-          <div className="divide-y divide-[#EAEAEA] dark:divide-[#222220]">
-            {MILESTONES.slice(0, 3).map((milestone, index) => (
-              <Reveal key={milestone.id} delay={index * 0.04}>
-                <div className="grid grid-cols-1 gap-3 py-6 lg:grid-cols-12">
-                  <div className="lg:col-span-3 space-y-0.5">
-                    <p className="font-mono text-[11px] text-[#666666] dark:text-[#9A9A96] tabular-nums">
-                      {milestone.period}
-                    </p>
-                    <p className="text-[12px] text-[#666666] dark:text-[#9A9A96]">
-                      {milestone.type}
-                    </p>
-                  </div>
-                  <div className="lg:col-span-9 space-y-2">
-                    <h3 className="text-[15px] font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]">
-                      {milestone.title}
-                    </h3>
-                    <p className="text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
-                      {milestone.context}
-                    </p>
-                    <p className="text-[13px] leading-[1.75] text-[#666666] dark:text-[#9A9A96] max-w-[64ch]">
-                      {milestone.description}
-                    </p>
-                  </div>
-                </div>
-              </Reveal>
-            ))}
-          </div>
+          <ExperienceShowcase items={EXPERIENCES} showAboutLink />
         </div>
       </section>
 
