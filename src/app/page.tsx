@@ -19,8 +19,8 @@ export default function HomePage() {
   return (
     <div>
       {/* 1. Minimalist Split Hero — Studio-Framed Portrait (Left) & Clean Typography (Right) */}
-      <section className="mx-auto max-w-[1200px] px-5 pt-6 pb-14 md:px-10 md:pt-16 md:pb-20">
-        <div className="grid grid-cols-1 gap-8 md:gap-12 lg:grid-cols-12 lg:items-center lg:gap-14">
+      <section className="mx-auto flex min-h-[calc(100svh-56px)] md:min-h-[calc(100svh-68px)] max-w-[1200px] flex-col justify-between px-5 pt-10 pb-16 md:px-10 md:pt-20 md:pb-12 lg:pt-24 lg:pb-14">
+        <div className="my-auto grid grid-cols-1 gap-10 md:gap-14 lg:grid-cols-12 lg:items-center lg:gap-16 xl:gap-24">
           {/* Left Column: Clean Borderless Portrait */}
           <div className="lg:col-span-5 flex justify-center lg:justify-start">
             <EditorialImage
@@ -36,7 +36,7 @@ export default function HomePage() {
           </div>
 
           {/* Right Column: Minimalist Editorial Intro */}
-          <div className="lg:col-span-7 flex flex-col justify-center space-y-5 md:space-y-6">
+          <div className="lg:col-span-7 flex flex-col justify-center space-y-6 md:space-y-7">
             <h1 className="font-display text-[2.5rem] sm:text-[3.1rem] font-extrabold uppercase leading-[0.98] tracking-[-0.01em] text-[#1A1A1A] dark:text-[#F0F0EE]">
               {SITE_PROFILE.heroGreeting}
             </h1>
