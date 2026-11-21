@@ -25,6 +25,7 @@ import {
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { SITE_PROFILE } from '@/data/portfolio';
 import { useTheme } from '@/components/ThemeContext';
+import { BlogDockItem } from '@/components/BlogDockItem';
 
 interface DockNavItem {
   id: string;
@@ -243,6 +244,17 @@ export function Navbar() {
           >
             {DESKTOP_PRIMARY_NAV.map((item) => {
               const active = isRouteActive(item.matchPath, item.hash);
+              if (item.id === 'blog') {
+                return (
+                  <BlogDockItem
+                    key={item.id}
+                    active={active}
+                    variant="desktop"
+                    layoutId="desktop-icon-nav-active"
+                    onNavigate={(e) => handleItemClick(e)}
+                  />
+                );
+              }
               const Icon = item.icon;
               return (
                 <Link
@@ -456,6 +468,17 @@ export function Navbar() {
       >
         {MOBILE_DOCK_PRIMARY_NAV.map((item) => {
           const active = isRouteActive(item.matchPath, item.hash);
+          if (item.id === 'blog') {
+            return (
+              <BlogDockItem
+                key={item.id}
+                active={active}
+                variant="mobile"
+                layoutId="mobile-dock-active-circle"
+                onNavigate={(e) => handleItemClick(e)}
+              />
+            );
+          }
           const Icon = item.icon;
           return (
             <Link
