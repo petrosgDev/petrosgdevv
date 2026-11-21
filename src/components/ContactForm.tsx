@@ -60,7 +60,7 @@ export function ContactForm() {
 
   const handleCopyDraft = async () => {
     try {
-      await navigator.clipboard.writeText(buildPlainTextMessage(values));
+      await navigator.clipboard.writeText(buildPlainTextMessage(values, SITE_PROFILE.email));
       setCopiedDraft(true);
       setTimeout(() => setCopiedDraft(false), 2400);
     } catch {
@@ -164,7 +164,7 @@ export function ContactForm() {
           <p className="leading-relaxed">
             {configuredEndpoint
               ? 'This form submits directly to the configured contact webhook endpoint.'
-              : 'Submitting the form validates your inquiry and prepares an immediate email dispatch to petrosgeto7@gmail.com (or configure NEXT_PUBLIC_CONTACT_ENDPOINT for webhook delivery).'}
+              : `Submitting the form validates your inquiry and prepares an immediate email dispatch to ${SITE_PROFILE.email} (or configure NEXT_PUBLIC_CONTACT_ENDPOINT for webhook delivery).`}
           </p>
         </div>
       </aside>
@@ -213,7 +213,7 @@ export function ContactForm() {
             </div>
 
             <pre className="overflow-x-auto rounded-xl border border-black/[0.08] dark:border-white/[0.1] bg-white dark:bg-[#0A0A0A] p-4 font-mono text-[11.5px] leading-relaxed text-[#1A1A1A] dark:text-[#F0F0EE] whitespace-pre-wrap">
-              {buildPlainTextMessage(values)}
+              {buildPlainTextMessage(values, SITE_PROFILE.email)}
             </pre>
 
             <div className="flex flex-wrap items-center gap-3">

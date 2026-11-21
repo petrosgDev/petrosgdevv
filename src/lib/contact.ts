@@ -62,9 +62,12 @@ export function buildMailtoUrl(recipientEmail: string, values: ContactFormValues
   return `mailto:${recipientEmail}?${params.toString()}`;
 }
 
-export function buildPlainTextMessage(values: ContactFormValues): string {
+export function buildPlainTextMessage(
+  values: ContactFormValues,
+  recipientEmail: string = ''
+): string {
   return [
-    `To: petrosgeto7@gmail.com`,
+    `To: ${recipientEmail}`,
     `Subject: ${values.subject.trim()}`,
     `From: ${values.name.trim()} <${values.email.trim()}>`,
     '',
@@ -126,8 +129,7 @@ export async function submitContactInquiry(
 
   return {
     status: 'mailto_ready',
-    message:
-      'Your message is validated and formatted for direct email dispatch to petrosgeto7@gmail.com.',
+    message: `Your message is validated and formatted for direct email dispatch to ${recipientEmail}.`,
     mailtoUrl,
   };
 }

@@ -263,3 +263,49 @@ test('computeExpandedExperienceIds expands cards progressively on scroll with hy
   assert.deepEqual(stepBottom, ['first', 'second', 'third']);
 });
 
+test('data shield vault obfuscates personal and project data and decodes cleanly', async () => {
+  const { decodeVault, encodeVault, isAiCrawlerUserAgent } = await import('./dataShield');
+  const { PORTFOLIO_VAULT } = await import('../data/portfolioVault');
+
+  const sample = { email: 'petrosgeto7@gmail.com', role: 'Software Engineer', items: [1, 2, 3] };
+  const encoded = encodeVault(sample);
+  assert.equal(encoded.includes('petrosgeto7'), false);
+  assert.equal(encoded.includes('Software Engineer'), false);
+  assert.deepEqual(decodeVault(encoded), sample);
+
+  // Verify shipped portfolio vault does not expose plaintext sensitive strings
+  for (const sensitive of [
+    'petrosgeto7@gmail.com',
+    '+251 903 433 857',
+    'Aman Pay',
+    'INSA Summer Camp',
+    'Debre Birhan University',
+  ]) {
+    assert.equal(
+      PORTFOLIO_VAULT.includes(sensitive),
+      false,
+      `PORTFOLIO_VAULT must not contain plaintext "${sensitive}"`
+    );
+  }
+
+  // AI crawlers and CLI scrapers are flagged
+  assert.equal(isAiCrawlerUserAgent('Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko); compatible; GPTBot/1.2'), true);
+  assert.equal(isAiCrawlerUserAgent('ClaudeBot/1.0; +claudebot@anthropic.com'), true);
+  assert.equal(isAiCrawlerUserAgent('PerplexityBot/1.0'), true);
+  assert.equal(isAiCrawlerUserAgent('Google-Extended'), true);
+  assert.equal(isAiCrawlerUserAgent('CCBot/2.0'), true);
+  assert.equal(isAiCrawlerUserAgent('curl/8.5.0'), true);
+  assert.equal(isAiCrawlerUserAgent('python-requests/2.31.0'), true);
+
+  // Standard human browsers are allowed
+  assert.equal(
+    isAiCrawlerUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'),
+    false
+  );
+  assert.equal(
+    isAiCrawlerUserAgent('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'),
+    false
+  );
+});
+
+
