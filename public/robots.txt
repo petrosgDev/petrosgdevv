@@ -86,5 +86,9 @@ Disallow: /
 User-agent: DataForSeoBot
 Disallow: /
 
+User-agent: Google-Site-Verification
+Allow: /google04f5d19f129b3ce9.html
+
 User-agent: *
+Allow: /google04f5d19f129b3ce9.html
 Disallow: /
