@@ -17,6 +17,7 @@ import {
   Menu,
   MessageCircle,
   Moon,
+  Newspaper,
   Send,
   Sun,
   X,
@@ -53,6 +54,7 @@ const DESKTOP_PRIMARY_NAV: DockNavItem[] = [
     hash: '#experience',
     icon: GitBranch,
   },
+  { id: 'blog', label: 'Blog', href: '/blog', matchPath: '/blog', icon: Newspaper },
   { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
 ];
 
@@ -75,6 +77,7 @@ const MOBILE_DOCK_PRIMARY_NAV: DockNavItem[] = [
     hash: '#experience',
     icon: GitBranch,
   },
+  { id: 'blog', label: 'Blog', href: '/blog', matchPath: '/blog', icon: Newspaper },
   { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
 ];
 
@@ -83,6 +86,7 @@ const MOBILE_DRAWER_NAV = [
   { label: 'Work', href: '/work', matchPath: '/work' },
   { label: 'Skills', href: '/#skills', matchPath: '/', hash: '#skills' },
   { label: 'Experience', href: '/#experience', matchPath: '/', hash: '#experience' },
+  { label: 'Blog', href: '/blog', matchPath: '/blog' },
   { label: 'About', href: '/about', matchPath: '/about' },
   { label: 'Contact', href: '/contact', matchPath: '/contact' },
 ];
@@ -213,27 +217,29 @@ export function Navbar() {
 
   return (
     <>
-      <header
-        className={`sticky top-0 z-50 transition-all duration-300 ${
-          scrolled
-            ? 'bg-white/80 dark:bg-[#0A0A0A]/80 backdrop-blur-xl border-b border-black/[0.06] dark:border-white/[0.08] shadow-[0_1px_18px_rgba(0,0,0,0.04)] dark:shadow-[0_1px_18px_rgba(0,0,0,0.35)]'
-            : 'bg-white/85 dark:bg-[#0A0A0A]/85 backdrop-blur-md border-b border-transparent'
-        }`}
-      >
-        <div className="mx-auto flex h-14 md:h-[68px] max-w-[1200px] items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-4 px-5 md:px-10">
-          {/* Zone 1: Clean Brand Wordmark */}
+      <header className="sticky top-0 z-50 pointer-events-none">
+        {/* Seamless top-edge atmospheric fade — replaces the rigid full-width rectangular header box */}
+        <div
+          aria-hidden="true"
+          className={`pointer-events-none absolute inset-x-0 top-0 h-20 md:h-24 transition-opacity duration-300 bg-gradient-to-b from-white/95 via-white/60 to-transparent dark:from-[#0A0A0A]/95 dark:via-[#0A0A0A]/60 dark:to-transparent ${
+            scrolled ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+
+        <div className="relative mx-auto flex h-14 md:h-[74px] max-w-[1200px] items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] gap-4 px-5 md:px-10">
+          {/* Zone 1: Floating Brand Wordmark */}
           <Link
             href="/"
             onClick={(e) => handleItemClick(e)}
-            className="inline-flex items-center justify-self-start font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] whitespace-nowrap shrink-0 transition-opacity hover:opacity-75"
+            className="pointer-events-auto inline-flex items-center justify-self-start font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] whitespace-nowrap shrink-0 transition-opacity hover:opacity-75"
           >
             {SITE_PROFILE.brand}
           </Link>
 
-          {/* Zone 2: Modern Floating Icon-Sign Pill Navigation Dock */}
+          {/* Zone 2: Floating Icon-Sign Pill Navigation Dock */}
           <nav
             aria-label="Primary navigation"
-            className="hidden md:flex items-center gap-0.5 justify-self-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/92 dark:bg-[#17191C]/92 p-1.5 backdrop-blur-xl shadow-[0_6px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.48)]"
+            className="pointer-events-auto hidden md:flex items-center gap-0.5 justify-self-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/92 dark:bg-[#17191C]/92 p-1.5 backdrop-blur-xl shadow-[0_6px_24px_rgba(0,0,0,0.06)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.48)]"
           >
             {DESKTOP_PRIMARY_NAV.map((item) => {
               const active = isRouteActive(item.matchPath, item.hash);
@@ -312,15 +318,15 @@ export function Navbar() {
             </Link>
           </nav>
 
-          {/* Zone 3: Restored Circular GitHub & Theme Toggle Buttons */}
-          <div className="flex items-center justify-end justify-self-end gap-2 shrink-0">
+          {/* Zone 3: Floating Circular GitHub & Theme Toggle Buttons */}
+          <div className="pointer-events-auto flex items-center justify-end justify-self-end gap-2 shrink-0">
             <a
               href={SITE_PROFILE.githubUrl}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit Petros Geto on GitHub"
               title="GitHub (@petrosgDev)"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-white/70 dark:bg-[#141413]/70 text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] hover:bg-[#F5F5F4] dark:hover:bg-[#1E1E1C] transition-all duration-200 shrink-0"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/88 dark:bg-[#17191C]/88 backdrop-blur-xl shadow-[0_4px_14px_rgba(0,0,0,0.05)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.42)] text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] hover:bg-white dark:hover:bg-[#23262B] transition-all duration-200 shrink-0"
             >
               <Github className="h-3.5 w-3.5" aria-hidden="true" />
             </a>
@@ -330,7 +336,7 @@ export function Navbar() {
               onClick={toggleTheme}
               aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
               title={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-white/70 dark:bg-[#141413]/70 text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] hover:bg-[#F5F5F4] dark:hover:bg-[#1E1E1C] transition-all duration-200 shrink-0 cursor-pointer"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/88 dark:bg-[#17191C]/88 backdrop-blur-xl shadow-[0_4px_14px_rgba(0,0,0,0.05)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.42)] text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] hover:bg-white dark:hover:bg-[#23262B] transition-all duration-200 shrink-0 cursor-pointer"
             >
               {theme === 'dark' ? (
                 <Sun className="h-3.5 w-3.5" aria-hidden="true" />
@@ -345,7 +351,7 @@ export function Navbar() {
               aria-expanded={mobileOpen}
               aria-controls="mobile-navigation-drawer"
               aria-label={mobileOpen ? 'Close navigation menu' : 'Open navigation menu'}
-              className="inline-flex md:hidden h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-white/80 dark:bg-[#141413]/80 text-[#1A1A1A] dark:text-[#F0F0EE] active:scale-95 transition-all duration-200 shrink-0 cursor-pointer"
+              className="inline-flex md:hidden h-9 w-9 items-center justify-center rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/90 dark:bg-[#17191C]/90 backdrop-blur-xl shadow-[0_4px_14px_rgba(0,0,0,0.06)] dark:shadow-[0_6px_20px_rgba(0,0,0,0.45)] text-[#1A1A1A] dark:text-[#F0F0EE] active:scale-95 transition-all duration-200 shrink-0 cursor-pointer"
             >
               {mobileOpen ? (
                 <X className="h-4 w-4" aria-hidden="true" />
@@ -443,10 +449,10 @@ export function Navbar() {
         )}
       </AnimatePresence>
 
-      {/* Modern Mobile Floating Icon-Sign Bottom Dock (Home, Work, Skills, Experience, About | Contact) */}
+      {/* Modern Mobile Floating Icon-Sign Bottom Dock (Home, Work, Skills, Experience, Blog, About | Contact) */}
       <nav
         aria-label="Mobile quick navigation"
-        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex md:hidden items-center gap-0.5 rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/92 dark:bg-[#17191C]/92 p-1.5 backdrop-blur-xl shadow-[0_10px_32px_rgba(0,0,0,0.14)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)]"
+        className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 flex md:hidden items-center gap-0.5 rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/92 dark:bg-[#17191C]/92 p-1.5 backdrop-blur-xl shadow-[0_10px_32px_rgba(0,0,0,0.14)] dark:shadow-[0_12px_36px_rgba(0,0,0,0.6)] max-w-[calc(100vw-24px)]"
       >
         {MOBILE_DOCK_PRIMARY_NAV.map((item) => {
           const active = isRouteActive(item.matchPath, item.hash);
@@ -482,7 +488,7 @@ export function Navbar() {
 
         <span
           aria-hidden="true"
-          className="mx-1 h-5 w-px bg-black/[0.1] dark:bg-white/[0.12]"
+          className="mx-0.5 h-5 w-px bg-black/[0.1] dark:bg-white/[0.12]"
         />
 
         <Link

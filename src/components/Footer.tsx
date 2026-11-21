@@ -50,6 +50,14 @@ export function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <Link
+                  href="/blog"
+                  className="text-[#1A1A1A] dark:text-[#F0F0EE] hover:underline underline-offset-4 transition-colors"
+                >
+                  Blog
+                </Link>
+              </li>
             </ul>
           </div>
 

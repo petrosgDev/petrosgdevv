@@ -14,6 +14,7 @@ import { ExperienceShowcase } from '@/components/ExperienceShowcase';
 import { ProjectCard } from '@/components/ProjectCard';
 import { Reveal } from '@/components/Reveal';
 import { SkillShowcase } from '@/components/SkillShowcase';
+import { TelegramBlogPreview } from '@/components/TelegramBlogPreview';
 
 export function HomeView() {
   const featuredProjects = getFeaturedProjects(PROJECTS);
@@ -258,13 +259,16 @@ export function HomeView() {
         </div>
       </section>
 
+      {/* 5.5 Live Blog Dispatches from Telegram (@abysiniyatech) */}
+      <TelegramBlogPreview />
+
       {/* 6. Minimal Closing Contact CTA */}
       <section className="border-t border-[#EAEAEA] dark:border-[#222220] bg-[#141414] text-[#F0F0EE]">
         <div className="mx-auto max-w-[1200px] px-6 py-20 md:px-10 md:py-24">
           <Reveal>
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-12 lg:items-end">
               <div className="lg:col-span-8 space-y-3">
-                <p className="text-[11px] font-mono text-[#9A9A96]">05. Collaboration</p>
+                <p className="text-[11px] font-mono text-[#9A9A96]">06. Collaboration</p>
                 <h2 className="font-display text-[30px] sm:text-[40px] font-bold uppercase leading-[1.02] tracking-tight text-white">
                   Have a product or problem worth building?
                 </h2>

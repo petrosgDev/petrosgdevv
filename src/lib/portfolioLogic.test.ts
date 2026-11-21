@@ -308,4 +308,69 @@ test('data shield vault obfuscates personal and project data and decodes cleanly
   );
 });
 
+test('telegramParser parses @abysiniyatech posts, skips service messages, and sanitizes untrusted HTML/URLs', async () => {
+  const {
+    parseTelegramChannelHtml,
+    sanitizeHttpsUrl,
+    sanitizeTelegramBeforeParam,
+  } = await import('./telegramParser');
+
+  assert.equal(sanitizeTelegramBeforeParam('42'), '42');
+  assert.equal(sanitizeTelegramBeforeParam('1'), null);
+  assert.equal(sanitizeTelegramBeforeParam('../etc/passwd'), null);
+  assert.equal(sanitizeTelegramBeforeParam('42&foo=bar'), null);
+
+  assert.equal(sanitizeHttpsUrl('https://cdn4.telesco.pe/file/test.jpg'), 'https://cdn4.telesco.pe/file/test.jpg');
+  assert.equal(sanitizeHttpsUrl('javascript:alert(1)'), null);
+  assert.equal(sanitizeHttpsUrl('data:text/html,<script>alert(1)</script>'), null);
+  assert.equal(sanitizeHttpsUrl('http://insecure.example.com'), null);
+
+  const sampleHtml = `
+    <div class="tgme_channel_info">
+      <i class="tgme_page_photo_image"><img src="https://cdn4.telesco.pe/file/avatar.jpg"></i>
+      <div class="tgme_channel_info_header_title"><span dir="auto">Abyssinia Tech</span></div>
+      <div class="tgme_channel_info_counters">
+        <div class="tgme_channel_info_counter"><span class="counter_value">128</span> <span class="counter_type">subscribers</span></div>
+      </div>
+    </div>
+    <div class="tgme_widget_message_wrap">
+      <div class="tgme_widget_message service_message" data-post="abysiniyatech/1">
+        <div class="tgme_widget_message_text">Channel created</div>
+      </div>
+    </div>
+    <div class="tgme_widget_message_wrap">
+      <div class="tgme_widget_message" data-post="abysiniyatech/2">
+        <a class="tgme_widget_message_photo_wrap" style="background-image:url('https://cdn4.telesco.pe/file/hero.jpg')"></a>
+        <div class="tgme_widget_message_text" dir="auto"><b>GTA VI broke Comcast&rsquo;s records.</b> Peak traffic rose 31%. <script>alert(1)</script><a href="https://example.com/report">Read report</a> <a href="javascript:alert(2)">Bad</a> #Gaming #Tech</div>
+        <span class="tgme_widget_message_views">6</span>
+        <time datetime="2026-11-21T07:20:01+00:00">07:20</time>
+      </div>
+    </div>
+    <div class="tgme_widget_message_wrap">
+      <div class="tgme_widget_message service_message service_message_photo" data-post="abysiniyatech/3">
+        <div class="tgme_widget_message_text">Channel photo updated</div>
+      </div>
+    </div>
+  `;
+
+  const parsed = parseTelegramChannelHtml(sampleHtml);
+  assert.equal(parsed.channel.title, 'Abyssinia Tech');
+  assert.equal(parsed.channel.username, '@abysiniyatech');
+  assert.equal(parsed.channel.subscribers, '128');
+  assert.equal(parsed.channel.avatarUrl, 'https://cdn4.telesco.pe/file/avatar.jpg');
+
+  // Only the real post (abysiniyatech/2) survives; both service messages are filtered out
+  assert.equal(parsed.posts.length, 1);
+  const post = parsed.posts[0];
+  assert.equal(post.postNumber, 2);
+  assert.equal(post.title, 'GTA VI broke Comcast’s records.');
+  assert.equal(post.body.includes('alert(1)'), false);
+  assert.equal(post.views, '6');
+  assert.deepEqual(post.images, ['https://cdn4.telesco.pe/file/hero.jpg']);
+  assert.deepEqual(post.tags, ['Gaming', 'Tech']);
+  assert.deepEqual(post.links, [{ label: 'Read report', href: 'https://example.com/report' }]);
+  assert.equal(post.permalink, 'https://t.me/abysiniyatech/2');
+});
+
+
 
