@@ -1,6 +1,6 @@
-# PETROS G DEV — Personal Portfolio (Next.js)
+# PETROS G DEV — Personal Portfolio
 
-Personal developer portfolio for **Petros Geto**, built with **Next.js App Router**, **React 19**, **TypeScript**, and **Tailwind CSS v4** using static export (`output: 'export'`) so it deploys cleanly with zero adapters on both **Cloudflare Pages** and **Vercel**.
+Personal developer portfolio for **Petros Geto**, built with **Next.js App Router**, **React 19**, **TypeScript**, and **Tailwind CSS v4**, featuring a live Telegram channel blog synced from `@abysiniyatech`.
 
 ## Local Development
 
@@ -19,32 +19,16 @@ npm test
 npm run build
 ```
 
-Production static output is generated in `out/` with pre-rendered HTML for every route (`/`, `/work`, `/work/[slug]`, `/about`, `/contact`, and `/404`).
+## Routes
 
-## Deploy to Cloudflare Pages
-
-### Option A — Git Integration (Recommended)
-1. Push this repository to GitHub (`main`).
-2. In **Cloudflare Dashboard → Workers & Pages → Create → Pages → Connect to Git**, select the repository and use:
-   - **Framework preset**: `Next.js (Static HTML Export)` (or `None`)
-   - **Build command**: `npm run build`
-   - **Build output directory**: `out`
-   - **Node version**: automatically pinned to `22` via `.node-version`
-
-`wrangler.jsonc` and `public/_headers` are pre-configured for `out/`.
-
-### Option B — Direct CLI Deploy
-```bash
-npm run deploy:cf
-```
+- `/` — Home (Hero, Featured Projects with live interactive site frames, About preview, Skills, Experience, Live Telegram Blog preview, Collaboration)
+- `/work` and `/work/[slug]` — Full project gallery & detailed case studies
+- `/blog` — Live dispatches synced server-side via `/api/telegram/` from `https://t.me/abysiniyatech`
+- `/about` — Background, engineering philosophy, capabilities, and experience
+- `/contact` — Direct channels & validated inquiry form
 
 ## Deploy to Vercel
 
-### Option A — Git Integration (Recommended)
-1. Import the GitHub repository in **Vercel → Add New Project**.
-2. `vercel.json` is pre-configured (`buildCommand: "npm run build"`, `outputDirectory: "out"`, `trailingSlash: true`), so Vercel deploys the static export cleanly even if the project was previously set to Vite or `dist`.
-
-### Option B — Direct CLI Deploy
-```bash
-npm run deploy:vercel
-```
+1. Push this repository to GitHub (`main`).
+2. Import the repository in **Vercel → Add New Project**.
+3. `vercel.json` is pre-configured (`framework: "nextjs"`, `buildCommand: "npm run build"`, anti-crawler headers).

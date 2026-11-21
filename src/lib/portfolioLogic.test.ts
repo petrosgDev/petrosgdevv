@@ -21,10 +21,13 @@ import {
   validateContactForm,
 } from './contact';
 
-test('portfolio contains all 8 verified projects with unique slugs', () => {
-  assert.equal(PROJECTS.length, 8);
+test('portfolio contains all 9 verified projects with unique slugs', () => {
+  assert.equal(PROJECTS.length, 9);
   const slugs = new Set(PROJECTS.map((p) => p.slug));
-  assert.equal(slugs.size, 8);
+  assert.equal(slugs.size, 9);
+  const lockIn = getProjectBySlug(PROJECTS, 'lock-in');
+  assert.ok(lockIn);
+  assert.equal(lockIn.liveUrl, 'https://lockin-7-ruby.vercel.app/');
 });
 
 test('filterProjects filters accurately by category and search query', () => {
@@ -43,14 +46,18 @@ test('filterProjects filters accurately by category and search query', () => {
   assert.equal(combined.length, 1);
   assert.equal(combined[0].slug, 'ethio-massage');
 
+  const lockInSearch = filterProjects(PROJECTS, 'Web Applications', 'pwa');
+  assert.equal(lockInSearch.length, 1);
+  assert.equal(lockInSearch[0].slug, 'lock-in');
+
   const noMatch = filterProjects(PROJECTS, 'Mobile', 'postgresql');
   assert.equal(noMatch.length, 0);
 });
 
 test('getCategoryCounts totals match project inventory', () => {
   const counts = getCategoryCounts(PROJECTS);
-  assert.equal(counts.All, 8);
-  assert.equal(counts['Web Applications'], 3);
+  assert.equal(counts.All, 9);
+  assert.equal(counts['Web Applications'], 4);
   assert.equal(counts['Brand & Hospitality'], 2);
   assert.equal(counts['Desktop & Systems'], 2);
   assert.equal(counts.Mobile, 1);

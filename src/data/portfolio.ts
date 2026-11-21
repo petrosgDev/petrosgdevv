@@ -99,11 +99,9 @@ export interface SiteProfile {
   brand: string;
   fullName: string;
   role: string;
-  secondaryRole: string;
   location: string;
   email: string;
   phoneDisplay: string;
-  phoneHref: string;
   githubHandle: string;
   githubUrl: string;
   linkedinHandle: string;
@@ -111,10 +109,8 @@ export interface SiteProfile {
   telegramHandle: string;
   telegramUrl: string;
   whatsappUrl: string;
-  existingSiteUrl: string;
   portraitSrc: string;
   heroGreeting: string;
-  heroHeadline: string;
   heroIntro: string;
   shortPhilosophy: string;
   copyrightYear: number;
