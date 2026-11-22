@@ -3,8 +3,10 @@ import { isAiCrawlerUserAgent } from '@/lib/dataShield';
 import {
   parseTelegramChannelHtml,
   sanitizeTelegramBeforeParam,
-  TELEGRAM_CHANNEL_WEB_URL,
+  TELEGRAM_CHANNEL_USERNAME,
 } from '@/lib/telegramParser';
+import { readPortfolioRecord } from '@/lib/portfolioStore';
+import { sanitizeTelegramUsername } from '@/lib/portfolioSchema';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,10 +35,16 @@ export async function GET(req: NextRequest) {
     );
   }
 
+  const { data } = readPortfolioRecord();
+  const configuredChannel =
+    sanitizeTelegramUsername(data.BLOG_SETTINGS?.telegramChannel) ??
+    TELEGRAM_CHANNEL_USERNAME;
+
   // Strictly locked to the allowlisted Telegram public channel endpoint (no SSRF surface)
+  const channelWebUrl = `https://t.me/s/${configuredChannel}`;
   const upstreamUrl = safeBefore
-    ? `${TELEGRAM_CHANNEL_WEB_URL}?before=${safeBefore}`
-    : TELEGRAM_CHANNEL_WEB_URL;
+    ? `${channelWebUrl}?before=${safeBefore}`
+    : channelWebUrl;
 
   try {
     const response = await fetch(upstreamUrl, {

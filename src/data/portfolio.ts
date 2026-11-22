@@ -123,9 +123,14 @@ export interface NavigationLink {
   path: string;
 }
 
-interface PortfolioBundle {
+export interface BlogSettings {
+  telegramChannel: string;
+  subtitle: string;
+}
+
+export interface PortfolioBundle {
   SITE_PROFILE: SiteProfile;
-  NAVIGATION_LINKS: readonly NavigationLink[];
+  NAVIGATION_LINKS: NavigationLink[];
   SOCIAL_LINKS: SocialLink[];
   PHILOSOPHY_PILLARS: PhilosophyPillar[];
   TECHNICAL_INTERESTS: TechnicalInterest[];
@@ -133,9 +138,25 @@ interface PortfolioBundle {
   EXPERIENCES: ExperienceItem[];
   PROJECT_CATEGORIES: readonly ('All' | ProjectCategory)[];
   PROJECTS: ProjectItem[];
+  BLOG_SETTINGS?: BlogSettings;
 }
 
+export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
+  telegramChannel: 'abysiniyatech',
+  subtitle:
+    'Engineering notes, tech industry dispatches, and software updates synced directly from my Telegram channel.',
+};
+
 const decodedBundle = decodeVault<PortfolioBundle>(PORTFOLIO_VAULT);
+
+export function getDefaultPortfolioBundle(): PortfolioBundle {
+  const cloned = JSON.parse(JSON.stringify(decodedBundle)) as PortfolioBundle;
+  cloned.BLOG_SETTINGS = {
+    ...DEFAULT_BLOG_SETTINGS,
+    ...(cloned.BLOG_SETTINGS ?? {}),
+  };
+  return cloned;
+}
 
 export const SITE_PROFILE: SiteProfile = decodedBundle.SITE_PROFILE;
 export const NAVIGATION_LINKS: readonly NavigationLink[] = decodedBundle.NAVIGATION_LINKS;
