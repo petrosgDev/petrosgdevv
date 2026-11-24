@@ -1,10 +1,12 @@
 'use client';
 
 import { ArrowUpRight } from 'lucide-react';
-import { PROJECTS, SITE_PROFILE } from '@/data/portfolio';
+import { usePortfolio } from '@/components/PortfolioContext';
 import { WorkGallery } from '@/components/WorkGallery';
 
 export function WorkView() {
+  const { data } = usePortfolio();
+  const { PROJECTS, SITE_PROFILE } = data;
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-12 md:px-10 md:py-16">
       {/* Page Header */}

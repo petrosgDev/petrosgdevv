@@ -9,7 +9,7 @@ import {
   Mail,
   Send,
 } from 'lucide-react';
-import { SITE_PROFILE, SOCIAL_LINKS } from '@/data/portfolio';
+import { usePortfolio } from '@/components/PortfolioContext';
 import {
   buildPlainTextMessage,
   hasValidationErrors,
@@ -28,6 +28,8 @@ const INITIAL_VALUES: ContactFormValues = {
 };
 
 export function ContactForm() {
+  const { data } = usePortfolio();
+  const { SITE_PROFILE, SOCIAL_LINKS } = data;
   const [values, setValues] = useState<ContactFormValues>(INITIAL_VALUES);
   const [errors, setErrors] = useState<ContactValidationErrors>({});
   const [submitting, setSubmitting] = useState(false);

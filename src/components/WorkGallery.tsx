@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowUpRight, Search, X } from 'lucide-react';
-import { PROJECT_CATEGORIES, PROJECTS } from '@/data/portfolio';
+import { usePortfolio } from '@/components/PortfolioContext';
 import {
   filterProjects,
   getCategoryCounts,
@@ -14,13 +14,15 @@ import { ProjectCard } from '@/components/ProjectCard';
 import { Reveal } from '@/components/Reveal';
 
 export function WorkGallery() {
+  const { data } = usePortfolio();
+  const { PROJECT_CATEGORIES, PROJECTS } = data;
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const categoryCounts = useMemo(() => getCategoryCounts(PROJECTS), []);
+  const categoryCounts = useMemo(() => getCategoryCounts(PROJECTS), [PROJECTS]);
   const filteredProjects = useMemo(
     () => filterProjects(PROJECTS, activeCategory, searchQuery),
-    [activeCategory, searchQuery]
+    [PROJECTS, activeCategory, searchQuery]
   );
 
   const spotlightProject = PROJECTS[0];

@@ -2,19 +2,21 @@
 
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import {
-  EXPERIENCES,
-  PHILOSOPHY_PILLARS,
-  SITE_PROFILE,
-  SKILL_CATEGORIES,
-  TECHNICAL_INTERESTS,
-} from '@/data/portfolio';
+import { usePortfolio } from '@/components/PortfolioContext';
 import { EditorialImage } from '@/components/EditorialImage';
 import { ExperienceShowcase } from '@/components/ExperienceShowcase';
 import { Reveal } from '@/components/Reveal';
 import { SkillShowcase } from '@/components/SkillShowcase';
 
 export function AboutView() {
+  const { data } = usePortfolio();
+  const {
+    EXPERIENCES,
+    PHILOSOPHY_PILLARS,
+    SITE_PROFILE,
+    SKILL_CATEGORIES,
+    TECHNICAL_INTERESTS,
+  } = data;
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-12 md:px-10 md:py-16">
       {/* Header & Left-Side Borderless Portrait */}

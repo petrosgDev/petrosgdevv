@@ -9,11 +9,25 @@
       "headers": [
         {
           "key": "X-Robots-Tag",
-          "value": "noai, noimageai, noindex, nofollow, noarchive, nosnippet"
-        },
+          "value": "index, follow"
+        }
+      ]
+    },
+    {
+      "source": "/admin/(.*)",
+      "headers": [
         {
-          "key": "TDM-Reservation",
-          "value": "1"
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
+        }
+      ]
+    },
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "X-Robots-Tag",
+          "value": "noindex, nofollow"
         }
       ]
     }

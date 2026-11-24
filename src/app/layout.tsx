@@ -1,6 +1,12 @@
 import type { Metadata, Viewport } from 'next';
 import { Barlow_Condensed, JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 import { AppShell } from '@/components/AppShell';
+import {
+  buildRootJsonLd,
+  buildSafeJsonLdString,
+  resolveSiteUrl,
+  SEO_CONFIG,
+} from '@/lib/seo';
 import './globals.css';
 
 const barlowCondensed = Barlow_Condensed({
@@ -25,6 +31,8 @@ const jetBrainsMono = JetBrains_Mono({
   display: 'swap',
 });
 
+const SITE_URL = resolveSiteUrl();
+
 export const viewport: Viewport = {
   themeColor: [
     { media: '(prefers-color-scheme: light)', color: '#FFFFFF' },
@@ -33,44 +41,73 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'PETROS G DEV',
-    template: '%s — PETROS G DEV',
+    default: SEO_CONFIG.defaultTitle,
+    template: SEO_CONFIG.titleTemplate,
   },
-  description: 'PETROS G DEV',
+  description: SEO_CONFIG.defaultDescription,
+  applicationName: SEO_CONFIG.siteName,
+  authors: [{ name: SEO_CONFIG.siteName, url: SITE_URL }],
+  creator: SEO_CONFIG.siteName,
+  publisher: SEO_CONFIG.siteName,
+  keywords: [...SEO_CONFIG.keywords],
+  category: 'technology',
+  alternates: {
+    canonical: '/',
+  },
   robots: {
-    index: false,
-    follow: false,
-    nocache: true,
-    noarchive: true,
-    nosnippet: true,
-    noimageindex: true,
+    index: true,
+    follow: true,
     googleBot: {
-      index: false,
-      follow: false,
-      noarchive: true,
-      nosnippet: true,
-      noimageindex: true,
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
     },
   },
+  openGraph: {
+    type: 'website',
+    locale: SEO_CONFIG.locale,
+    url: '/',
+    siteName: SEO_CONFIG.siteName,
+    title: SEO_CONFIG.defaultTitle,
+    description: SEO_CONFIG.defaultDescription,
+    images: [
+      {
+        url: '/og-card/',
+        width: 1200,
+        height: 630,
+        alt: SEO_CONFIG.defaultTitle,
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: SEO_CONFIG.defaultTitle,
+    description: SEO_CONFIG.defaultDescription,
+    creator: SEO_CONFIG.twitterCreator,
+    images: ['/og-card/'],
+  },
   other: {
-    robots: 'noai, noimageai, noindex, nofollow, noarchive, nosnippet',
     GPTBot: 'noindex, nofollow',
     ClaudeBot: 'noindex, nofollow',
     CCBot: 'nofollow',
-    'tdm-reservation': '1',
   },
 };
 
 const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('petros-portfolio-theme');var d=window.matchMedia('(prefers-color-scheme: dark)').matches;if(s==='dark'||(!s&&d)){document.documentElement.classList.add('dark');}}catch(e){}})();`;
 
-const SPLASH_INIT_SCRIPT = `(function(){try{var seen=sessionStorage.getItem('petros-splash-seen')==='1';var rm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var q=new URLSearchParams(window.location.search);var skip=q.get('nosplash')==='1'||q.get('autostart')==='1';if(!seen&&!rm&&!skip){document.documentElement.setAttribute('data-splash','active');window.setTimeout(function(){document.documentElement.removeAttribute('data-splash');},3000);}}catch(e){}})();`;
+const SPLASH_INIT_SCRIPT = `(function(){try{var bot=/Googlebot|Bingbot|DuckDuckBot|Applebot|YandexBot|Slurp/i.test(navigator.userAgent||'');var seen=sessionStorage.getItem('petros-splash-seen')==='1';var rm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var q=new URLSearchParams(window.location.search);var skip=bot||q.get('nosplash')==='1'||q.get('autostart')==='1';if(!seen&&!rm&&!skip){document.documentElement.setAttribute('data-splash','active');window.setTimeout(function(){document.documentElement.removeAttribute('data-splash');},3000);}}catch(e){}})();`;
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const rootJsonLd = buildSafeJsonLdString(buildRootJsonLd(undefined, resolveSiteUrl()));
+
   return (
     <html
       lang="en"
@@ -79,6 +116,10 @@ export default function RootLayout({
       className={`${barlowCondensed.variable} ${plusJakartaSans.variable} ${jetBrainsMono.variable}`}
     >
       <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: rootJsonLd }}
+        />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         <script dangerouslySetInnerHTML={{ __html: SPLASH_INIT_SCRIPT }} />
       </head>

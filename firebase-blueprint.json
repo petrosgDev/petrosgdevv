@@ -1,0 +1,97 @@
+{
+  "entities": {
+    "PortfolioDocument": {
+      "title": "PortfolioDocument",
+      "description": "Published portfolio configuration document managed exclusively by the verified portfolio owner (petrosgeto7@gmail.com) and read by public visitors.",
+      "type": "object",
+      "properties": {
+        "SITE_PROFILE": {
+          "type": "object",
+          "description": "Core portfolio identity, hero text, portrait URL, metrics, and public contact links."
+        },
+        "NAVIGATION_LINKS": {
+          "type": "array",
+          "description": "Primary navigation link entries (maximum 10 items)."
+        },
+        "SOCIAL_LINKS": {
+          "type": "array",
+          "description": "Public social and contact channel entries (maximum 16 items)."
+        },
+        "PHILOSOPHY_PILLARS": {
+          "type": "array",
+          "description": "Engineering philosophy statements shown on the About page (maximum 12 items)."
+        },
+        "TECHNICAL_INTERESTS": {
+          "type": "array",
+          "description": "Areas of technical focus shown on the About page (maximum 16 items)."
+        },
+        "SKILL_CATEGORIES": {
+          "type": "array",
+          "description": "Categorized technical skills showcase (maximum 20 categories)."
+        },
+        "EXPERIENCES": {
+          "type": "array",
+          "description": "Work, training, and academic experience timeline entries (maximum 25 items)."
+        },
+        "PROJECT_CATEGORIES": {
+          "type": "array",
+          "description": "Filter categories for the Work gallery (maximum 10 items)."
+        },
+        "PROJECTS": {
+          "type": "array",
+          "description": "Case studies and software projects shown on Home, Work, and /work/[slug] (maximum 40 items)."
+        },
+        "BLOG_SETTINGS": {
+          "type": "object",
+          "description": "Telegram blog channel username and editorial subtitle."
+        },
+        "updatedByUid": {
+          "type": "string",
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$",
+          "description": "Firebase Auth UID of the verified admin who saved the document."
+        },
+        "updatedByEmail": {
+          "type": "string",
+          "format": "email",
+          "maxLength": 160,
+          "description": "Verified email address of the admin owner."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server timestamp set when the portfolio document is first created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp updated on every admin save."
+        }
+      },
+      "required": [
+        "SITE_PROFILE",
+        "NAVIGATION_LINKS",
+        "SOCIAL_LINKS",
+        "PHILOSOPHY_PILLARS",
+        "TECHNICAL_INTERESTS",
+        "SKILL_CATEGORIES",
+        "EXPERIENCES",
+        "PROJECT_CATEGORIES",
+        "PROJECTS",
+        "BLOG_SETTINGS",
+        "updatedByUid",
+        "updatedByEmail",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/portfolio/{docId}": {
+      "schema": {
+        "$ref": "#/entities/PortfolioDocument"
+      },
+      "description": "Single published portfolio document at /portfolio/published. Public get access on 'published'; create, update, and delete restricted strictly to verified Google account petrosgeto7@gmail.com."
+    }
+  }
+}

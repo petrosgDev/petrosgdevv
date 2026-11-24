@@ -379,5 +379,99 @@ test('telegramParser parses @abysiniyatech posts, skips service messages, and sa
   assert.equal(post.permalink, 'https://t.me/abysiniyatech/2');
 });
 
+test('SEO metadata config, canonical URL resolver, and Schema.org JSON-LD support Google Search discovery for Petros Geto', async () => {
+  const {
+    buildCanonicalUrl,
+    buildProjectJsonLd,
+    buildRootJsonLd,
+    buildSafeJsonLdString,
+    buildWorkCollectionJsonLd,
+    resolveSiteUrl,
+    SEO_CONFIG,
+  } = await import('./seo');
+  const { isAiCrawlerUserAgent } = await import('./dataShield');
+
+  // Title (30-60 chars) & Description (120-160 chars) follow Google Search snippet guidelines
+  assert.ok(SEO_CONFIG.defaultTitle.includes('Petros Geto'));
+  assert.ok(
+    SEO_CONFIG.defaultTitle.length >= 30 && SEO_CONFIG.defaultTitle.length <= 60,
+    `Title length ${SEO_CONFIG.defaultTitle.length} outside 30-60 range`
+  );
+  assert.ok(SEO_CONFIG.defaultDescription.includes('Petros Geto'));
+  assert.ok(
+    SEO_CONFIG.defaultDescription.length >= 120 && SEO_CONFIG.defaultDescription.length <= 160,
+    `Description length ${SEO_CONFIG.defaultDescription.length} outside 120-160 range`
+  );
+
+  // Environment origin precedence: NEXT_PUBLIC_SITE_URL -> APP_URL -> VERCEL_PROJECT_PRODUCTION_URL -> VERCEL_URL
+  assert.equal(
+    resolveSiteUrl({
+      NEXT_PUBLIC_SITE_URL: 'https://petrosgeto.vercel.app/',
+      VERCEL_PROJECT_PRODUCTION_URL: 'ignored.vercel.app',
+    }),
+    'https://petrosgeto.vercel.app'
+  );
+  assert.equal(
+    resolveSiteUrl({
+      VERCEL_PROJECT_PRODUCTION_URL: 'petros-portfolio.vercel.app',
+    }),
+    'https://petros-portfolio.vercel.app'
+  );
+  assert.equal(resolveSiteUrl({}), 'http://localhost:3000');
+
+  assert.equal(
+    buildCanonicalUrl('/work/lock-in', 'https://petrosgeto.vercel.app'),
+    'https://petrosgeto.vercel.app/work/lock-in/'
+  );
+  assert.equal(
+    buildCanonicalUrl('/', 'https://petrosgeto.vercel.app'),
+    'https://petrosgeto.vercel.app/'
+  );
+
+  // Root JSON-LD contains WebSite, Person (Petros Geto), and ProfilePage
+  const rootLd = buildRootJsonLd(undefined, 'https://petrosgeto.vercel.app') as {
+    '@graph': Array<Record<string, unknown>>;
+  };
+  const types = rootLd['@graph'].map((node) => node['@type']);
+  assert.deepEqual(types, ['WebSite', 'Person', 'ProfilePage']);
+  const person = rootLd['@graph'][1];
+  assert.equal(person.name, 'Petros Geto');
+  assert.equal(person.jobTitle, 'Software Engineer & AI Developer');
+  assert.ok(Array.isArray(person.sameAs) && person.sameAs.length >= 3);
+
+  // Safe JSON-LD serializer escapes script-breaking characters
+  const safeJson = buildSafeJsonLdString({ note: '</script><img onerror=1>&' });
+  assert.equal(safeJson.includes('<'), false);
+  assert.equal(safeJson.includes('>'), false);
+  assert.equal(safeJson.includes('&'), false);
+
+  // Work collection & project case study JSON-LD
+  const workLd = buildWorkCollectionJsonLd(PROJECTS, 'https://petrosgeto.vercel.app') as {
+    '@graph': Array<Record<string, unknown>>;
+  };
+  assert.equal(workLd['@graph'][0]['@type'], 'CollectionPage');
+
+  const lockIn = getProjectBySlug(PROJECTS, 'lock-in');
+  assert.ok(lockIn);
+  const projectLd = buildProjectJsonLd(lockIn, 'https://petrosgeto.vercel.app') as {
+    '@graph': Array<Record<string, unknown>>;
+  };
+  assert.equal(projectLd['@graph'][0]['@type'], 'SoftwareApplication');
+  assert.equal(projectLd['@graph'][0].name, 'LOCK IN');
+  assert.equal(projectLd['@graph'][0].sameAs, 'https://lockin-7-ruby.vercel.app/');
+
+  // Search engine crawlers are explicitly NOT blocked by AI scraper filter
+  assert.equal(
+    isAiCrawlerUserAgent('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'),
+    false
+  );
+  assert.equal(isAiCrawlerUserAgent('Googlebot-Image/1.0'), false);
+  assert.equal(
+    isAiCrawlerUserAgent('Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)'),
+    false
+  );
+  assert.equal(isAiCrawlerUserAgent('Google-Site-Verification/1.0'), false);
+});
+
 
 

@@ -2,12 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowRight, ArrowUpRight } from 'lucide-react';
-import {
-  EXPERIENCES,
-  PROJECTS,
-  SITE_PROFILE,
-  SKILL_CATEGORIES,
-} from '@/data/portfolio';
+import { usePortfolio } from '@/components/PortfolioContext';
 import { getFeaturedProjects } from '@/lib/portfolioLogic';
 import { EditorialImage } from '@/components/EditorialImage';
 import { ExperienceShowcase } from '@/components/ExperienceShowcase';
@@ -17,6 +12,8 @@ import { SkillShowcase } from '@/components/SkillShowcase';
 import { TelegramBlogPreview } from '@/components/TelegramBlogPreview';
 
 export function HomeView() {
+  const { data } = usePortfolio();
+  const { EXPERIENCES, PROJECTS, SITE_PROFILE, SKILL_CATEGORIES } = data;
   const featuredProjects = getFeaturedProjects(PROJECTS);
 
   return (
@@ -41,6 +38,9 @@ export function HomeView() {
           {/* Right Column: Minimalist Editorial Intro */}
           <div className="lg:col-span-7 flex flex-col justify-center space-y-6 md:space-y-7">
             <h1 className="font-display text-[2.5rem] sm:text-[3.1rem] font-extrabold uppercase leading-[0.98] tracking-[-0.01em] text-[#1A1A1A] dark:text-[#F0F0EE]">
+              <span className="mb-3 block font-mono text-[11px] font-medium tracking-[0.2em] text-[#666666] dark:text-[#9A9A96]">
+                {SITE_PROFILE.fullName}
+              </span>
               {SITE_PROFILE.heroGreeting}
             </h1>
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react';
-import { PROJECTS } from '@/data/portfolio';
+import { usePortfolio } from '@/components/PortfolioContext';
 import {
   getAdjacentProjects,
   getProjectBySlug,
@@ -18,6 +18,8 @@ interface ProjectDetailViewProps {
 }
 
 export function ProjectDetailView({ slug }: ProjectDetailViewProps) {
+  const { data } = usePortfolio();
+  const { PROJECTS } = data;
   const project = getProjectBySlug(PROJECTS, slug);
 
   if (!project) {

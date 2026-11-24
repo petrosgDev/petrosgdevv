@@ -10,13 +10,16 @@ import React, {
 } from 'react';
 import type { PortfolioBundle } from '@/data/portfolio';
 import { getDefaultPortfolioBundle } from '@/data/portfolio';
+import {
+  subscribePublishedPortfolio,
+  testFirestoreConnection,
+} from '@/lib/firebase';
 
 interface PortfolioContextValue {
   data: PortfolioBundle;
   updatedAt: string | null;
   isCustomized: boolean;
   loadedFromServer: boolean;
-  refreshPortfolio: () => Promise<void>;
   applyPortfolio: (
     nextData: PortfolioBundle,
     meta?: { updatedAt?: string | null; isCustomized?: boolean }
@@ -31,30 +34,32 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [isCustomized, setIsCustomized] = useState(false);
   const [loadedFromServer, setLoadedFromServer] = useState(false);
 
-  const refreshPortfolio = useCallback(async () => {
-    try {
-      const res = await fetch('/api/portfolio/', { cache: 'no-store' });
-      if (!res.ok) return;
-      const json = (await res.json()) as {
-        data?: PortfolioBundle;
-        updatedAt?: string | null;
-        isCustomized?: boolean;
-      };
-      if (json && json.data && json.data.SITE_PROFILE && Array.isArray(json.data.PROJECTS)) {
-        setData(json.data);
-        setUpdatedAt(typeof json.updatedAt === 'string' ? json.updatedAt : null);
-        setIsCustomized(Boolean(json.isCustomized));
-      }
-    } catch {
-      // Keep decoded vault defaults when offline
-    } finally {
-      setLoadedFromServer(true);
-    }
-  }, []);
-
   useEffect(() => {
-    void refreshPortfolio();
-  }, [refreshPortfolio]);
+    void testFirestoreConnection();
+
+    const unsubscribe = subscribePublishedPortfolio(
+      (snapshot) => {
+        if (snapshot) {
+          setData(snapshot.data);
+          setUpdatedAt(snapshot.updatedAt);
+          setIsCustomized(snapshot.isCustomized);
+        } else {
+          setData(getDefaultPortfolioBundle());
+          setUpdatedAt(null);
+          setIsCustomized(false);
+        }
+        setLoadedFromServer(true);
+      },
+      () => {
+        // Keep built-in defaults if offline or unavailable
+        setLoadedFromServer(true);
+      }
+    );
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
 
   const applyPortfolio = useCallback(
     (
@@ -78,10 +83,9 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       updatedAt,
       isCustomized,
       loadedFromServer,
-      refreshPortfolio,
       applyPortfolio,
     }),
-    [data, updatedAt, isCustomized, loadedFromServer, refreshPortfolio, applyPortfolio]
+    [data, updatedAt, isCustomized, loadedFromServer, applyPortfolio]
   );
 
   return (
@@ -99,7 +103,6 @@ export function usePortfolio(): PortfolioContextValue {
       updatedAt: null,
       isCustomized: false,
       loadedFromServer: false,
-      refreshPortfolio: async () => {},
       applyPortfolio: () => {},
     };
   }

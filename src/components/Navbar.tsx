@@ -23,7 +23,7 @@ import {
   X,
 } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { SITE_PROFILE } from '@/data/portfolio';
+import { usePortfolio } from '@/components/PortfolioContext';
 import { useTheme } from '@/components/ThemeContext';
 import { BlogDockItem } from '@/components/BlogDockItem';
 
@@ -92,22 +92,24 @@ const MOBILE_DRAWER_NAV = [
   { label: 'Contact', href: '/contact', matchPath: '/contact' },
 ];
 
-const DRAWER_SOCIALS = [
-  { label: 'GitHub', href: SITE_PROFILE.githubUrl, icon: Github, external: true },
-  { label: 'LinkedIn', href: SITE_PROFILE.linkedinUrl, icon: Linkedin, external: true },
-  { label: 'Telegram', href: SITE_PROFILE.telegramUrl, icon: Send, external: true },
-  { label: 'WhatsApp', href: SITE_PROFILE.whatsappUrl, icon: MessageCircle, external: true },
-  { label: 'Email', href: `mailto:${SITE_PROFILE.email}`, icon: Mail, external: false },
-];
-
 export function Navbar() {
   const pathname = usePathname() || '/';
   const router = useRouter();
+  const { data } = usePortfolio();
+  const { SITE_PROFILE } = data;
   const { theme, toggleTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [activeHash, setActiveHash] = useState('');
   const prefersReducedMotion = useReducedMotion();
+
+  const drawerSocials = [
+    { label: 'GitHub', href: SITE_PROFILE.githubUrl, icon: Github, external: true },
+    { label: 'LinkedIn', href: SITE_PROFILE.linkedinUrl, icon: Linkedin, external: true },
+    { label: 'Telegram', href: SITE_PROFILE.telegramUrl, icon: Send, external: true },
+    { label: 'WhatsApp', href: SITE_PROFILE.whatsappUrl, icon: MessageCircle, external: true },
+    { label: 'Email', href: `mailto:${SITE_PROFILE.email}`, icon: Mail, external: false },
+  ];
 
   useEffect(() => {
     const onScroll = () => {
@@ -439,7 +441,7 @@ export function Navbar() {
                   <span>Socials</span>
                 </div>
                 <div className="flex items-center justify-between rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4] dark:bg-[#1C1F24] p-1">
-                  {DRAWER_SOCIALS.map((social) => {
+                  {drawerSocials.map((social) => {
                     const Icon = social.icon;
                     return (
                       <a

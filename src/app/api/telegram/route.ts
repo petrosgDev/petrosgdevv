@@ -5,8 +5,8 @@ import {
   sanitizeTelegramBeforeParam,
   TELEGRAM_CHANNEL_USERNAME,
 } from '@/lib/telegramParser';
-import { readPortfolioRecord } from '@/lib/portfolioStore';
-import { sanitizeTelegramUsername } from '@/lib/portfolioSchema';
+import { extractFirestoreTelegramChannel } from '@/lib/adminAccess';
+import firebaseConfig from '../../../../firebase-applet-config.json';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +16,28 @@ const SECURITY_HEADERS: Record<string, string> = {
   'X-Robots-Tag': 'noai, noimageai, noindex, nofollow, noarchive, nosnippet',
   'TDM-Reservation': '1',
 };
+
+async function resolveConfiguredTelegramChannel(): Promise<string> {
+  try {
+    const restUrl = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(
+      firebaseConfig.projectId
+    )}/databases/${encodeURIComponent(
+      firebaseConfig.firestoreDatabaseId
+    )}/documents/portfolio/published`;
+
+    const res = await fetch(restUrl, {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      signal: AbortSignal.timeout(2500),
+    });
+    if (!res.ok) return TELEGRAM_CHANNEL_USERNAME;
+    const json = await res.json();
+    return extractFirestoreTelegramChannel(json) ?? TELEGRAM_CHANNEL_USERNAME;
+  } catch {
+    return TELEGRAM_CHANNEL_USERNAME;
+  }
+}
 
 export async function GET(req: NextRequest) {
   const userAgent = req.headers.get('user-agent') ?? '';
@@ -35,10 +57,7 @@ export async function GET(req: NextRequest) {
     );
   }
 
-  const { data } = readPortfolioRecord();
-  const configuredChannel =
-    sanitizeTelegramUsername(data.BLOG_SETTINGS?.telegramChannel) ??
-    TELEGRAM_CHANNEL_USERNAME;
+  const configuredChannel = await resolveConfiguredTelegramChannel();
 
   // Strictly locked to the allowlisted Telegram public channel endpoint (no SSRF surface)
   const channelWebUrl = `https://t.me/s/${configuredChannel}`;

@@ -15,30 +15,27 @@ interface AppShellProps {
 }
 
 /**
- * Client-only application shell.
- * Ensures static HTML exports and SSR responses contain an empty #root shell
- * with zero portfolio data, preventing non-JS AI URL readers and HTML scrapers
- * from extracting site content while rendering identically for real browsers.
+ * Application shell with SSR-first rendering so search engines (Googlebot, Bingbot)
+ * immediately receive full semantic HTML, headings, and internal links on initial crawl.
  */
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname() || '/';
-  const [ready, setReady] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
 
   useEffect(() => {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';
     if (isAiCrawlerUserAgent(ua)) {
-      return;
+      setBlocked(true);
     }
-    setReady(true);
   }, []);
 
-  if (!ready) {
+  if (blocked) {
     return (
       <div
         id="root"
         className="min-h-screen bg-white dark:bg-[#0A0A0A]"
-        aria-busy="true"
+        aria-hidden="true"
       />
     );
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { Github, Linkedin, MessageCircle, Send } from 'lucide-react';
-import { SITE_PROFILE } from '@/data/portfolio';
+import { usePortfolio } from '@/components/PortfolioContext';
 
 interface SocialRailItem {
   id: string;
@@ -11,44 +11,47 @@ interface SocialRailItem {
   icon: typeof Github;
 }
 
-const RAIL_SOCIALS: SocialRailItem[] = [
-  {
-    id: 'github',
-    label: 'GitHub',
-    handle: SITE_PROFILE.githubHandle,
-    href: SITE_PROFILE.githubUrl,
-    icon: Github,
-  },
-  {
-    id: 'linkedin',
-    label: 'LinkedIn',
-    handle: SITE_PROFILE.linkedinHandle,
-    href: SITE_PROFILE.linkedinUrl,
-    icon: Linkedin,
-  },
-  {
-    id: 'telegram',
-    label: 'Telegram',
-    handle: SITE_PROFILE.telegramHandle,
-    href: SITE_PROFILE.telegramUrl,
-    icon: Send,
-  },
-  {
-    id: 'whatsapp',
-    label: 'WhatsApp',
-    handle: SITE_PROFILE.phoneDisplay,
-    href: SITE_PROFILE.whatsappUrl,
-    icon: MessageCircle,
-  },
-];
-
 export function SocialRail() {
+  const { data } = usePortfolio();
+  const { SITE_PROFILE } = data;
+
+  const railSocials: SocialRailItem[] = [
+    {
+      id: 'github',
+      label: 'GitHub',
+      handle: SITE_PROFILE.githubHandle,
+      href: SITE_PROFILE.githubUrl,
+      icon: Github,
+    },
+    {
+      id: 'linkedin',
+      label: 'LinkedIn',
+      handle: SITE_PROFILE.linkedinHandle,
+      href: SITE_PROFILE.linkedinUrl,
+      icon: Linkedin,
+    },
+    {
+      id: 'telegram',
+      label: 'Telegram',
+      handle: SITE_PROFILE.telegramHandle,
+      href: SITE_PROFILE.telegramUrl,
+      icon: Send,
+    },
+    {
+      id: 'whatsapp',
+      label: 'WhatsApp',
+      handle: SITE_PROFILE.phoneDisplay,
+      href: SITE_PROFILE.whatsappUrl,
+      icon: MessageCircle,
+    },
+  ];
+
   return (
     <aside
       aria-label="Social media accounts"
       className="fixed right-5 top-24 z-40 hidden xl:flex flex-col items-center gap-1.5 rounded-full border border-black/[0.08] dark:border-white/[0.1] bg-[#F5F5F4]/92 dark:bg-[#17191C]/92 p-1.5 backdrop-blur-xl shadow-[0_12px_32px_rgba(0,0,0,0.07)] dark:shadow-[0_16px_40px_rgba(0,0,0,0.5)]"
     >
-      {RAIL_SOCIALS.map((item) => {
+      {railSocials.map((item) => {
         const Icon = item.icon;
         return (
           <a

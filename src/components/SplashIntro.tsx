@@ -65,11 +65,16 @@ export function SplashIntro() {
       sessionSeen = false;
     }
 
-    const skip = shouldSkipSplash({
-      search: window.location.search,
-      sessionSeen,
-      prefersReducedMotion,
-    });
+    const isSearchBot = /Googlebot|Bingbot|DuckDuckBot|Applebot|YandexBot|Slurp/i.test(
+      typeof navigator !== 'undefined' ? navigator.userAgent : ''
+    );
+    const skip =
+      isSearchBot ||
+      shouldSkipSplash({
+        search: window.location.search,
+        sessionSeen,
+        prefersReducedMotion,
+      });
 
     if (skip) {
       document.documentElement.removeAttribute('data-splash');

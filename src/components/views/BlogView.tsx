@@ -18,6 +18,7 @@ import {
   type TelegramPost,
 } from '@/lib/telegramParser';
 import { Reveal } from '@/components/Reveal';
+import { usePortfolio } from '@/components/PortfolioContext';
 
 function formatDispatchDate(isoDate: string | null): string {
   if (!isoDate) return 'Recent';
@@ -41,6 +42,8 @@ function formatDispatchTime(isoDate: string | null): string {
 }
 
 export function BlogView() {
+  const { data: portfolioData } = usePortfolio();
+  const blogSettings = portfolioData.BLOG_SETTINGS;
   const [channel, setChannel] = useState<TelegramChannelInfo | null>(null);
   const [posts, setPosts] = useState<TelegramPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -133,9 +136,10 @@ export function BlogView() {
     });
   }, [posts, query]);
 
+  const configuredUsername = blogSettings?.telegramChannel || 'abysiniyatech';
   const channelName = channel?.title || 'Abyssinia Tech';
-  const channelHandle = channel?.username || '@abysiniyatech';
-  const channelUrl = channel?.url || TELEGRAM_CHANNEL_URL;
+  const channelHandle = channel?.username || `@${configuredUsername}`;
+  const channelUrl = channel?.url || `https://t.me/${configuredUsername}` || TELEGRAM_CHANNEL_URL;
 
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-12 md:px-10 md:py-16">
@@ -150,7 +154,8 @@ export function BlogView() {
               {channelName}
             </h1>
             <p className="max-w-[58ch] text-[13.5px] leading-[1.8] text-[#666666] dark:text-[#9A9A96]">
-              {channel?.description ||
+              {blogSettings?.subtitle ||
+                channel?.description ||
                 'Engineering notes, tech industry dispatches, and software updates synced directly from my Telegram channel.'}
             </p>
           </div>

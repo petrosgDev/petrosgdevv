@@ -1,9 +1,11 @@
 'use client';
 
-import { SITE_PROFILE } from '@/data/portfolio';
+import { usePortfolio } from '@/components/PortfolioContext';
 import { ContactForm } from '@/components/ContactForm';
 
 export function ContactView() {
+  const { data } = usePortfolio();
+  const { SITE_PROFILE } = data;
   return (
     <div className="mx-auto max-w-[1200px] px-6 py-12 md:px-10 md:py-16">
       <header className="pb-12 border-b border-[#EAEAEA] dark:border-[#222220]">

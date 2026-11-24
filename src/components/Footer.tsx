@@ -1,10 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { ArrowUp, ArrowUpRight } from 'lucide-react';
-import { NAVIGATION_LINKS, SITE_PROFILE, SOCIAL_LINKS } from '@/data/portfolio';
+import { ArrowUp, ArrowUpRight, Lock } from 'lucide-react';
+import { usePortfolio } from '@/components/PortfolioContext';
 
 export function Footer() {
+  const { data } = usePortfolio();
+  const { NAVIGATION_LINKS, SITE_PROFILE, SOCIAL_LINKS } = data;
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -84,9 +86,19 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-6 border-t border-[#EAEAEA] dark:border-[#222220] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <p className="text-[12px] text-[#666666] dark:text-[#9A9A96]">
-            © {SITE_PROFILE.copyrightYear} {SITE_PROFILE.fullName}. All rights reserved.
-          </p>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px] text-[#666666] dark:text-[#9A9A96]">
+            <p>
+              © {SITE_PROFILE.copyrightYear} {SITE_PROFILE.fullName}. All rights reserved.
+            </p>
+            <span aria-hidden="true" className="opacity-40">·</span>
+            <Link
+              href="/admin"
+              className="inline-flex items-center gap-1 font-mono text-[11px] text-[#666666] dark:text-[#9A9A96] hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE] transition-colors"
+            >
+              <Lock className="h-3 w-3 opacity-70" aria-hidden="true" />
+              <span>Admin</span>
+            </Link>
+          </div>
           <button
             type="button"
             onClick={scrollToTop}
