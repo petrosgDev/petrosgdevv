@@ -97,10 +97,19 @@ export function handleFirestoreError(
   throw new Error(JSON.stringify(errInfo));
 }
 
+export function isFirebaseConfigured(): boolean {
+  return (
+    Boolean(firebaseConfig?.apiKey) &&
+    firebaseConfig.apiKey !== 'mock-api-key' &&
+    Boolean(firebaseConfig?.projectId) &&
+    firebaseConfig.projectId !== 'petros-portfolio-mock'
+  );
+}
+
 let connectionTested = false;
 
 export async function testFirestoreConnection(): Promise<void> {
-  if (connectionTested || typeof window === 'undefined') {
+  if (connectionTested || typeof window === 'undefined' || !isFirebaseConfigured()) {
     return;
   }
   connectionTested = true;
@@ -162,6 +171,11 @@ export function subscribePublishedPortfolio(
   onUpdate: (snapshot: PublishedPortfolioSnapshot | null) => void,
   onError?: (error: Error) => void
 ): Unsubscribe {
+  if (!isFirebaseConfigured()) {
+    onUpdate(null);
+    return () => {};
+  }
+
   const ref = doc(db, PORTFOLIO_COLLECTION, PORTFOLIO_DOC_ID);
   return onSnapshot(
     ref,

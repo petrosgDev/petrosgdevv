@@ -18,6 +18,10 @@ const SECURITY_HEADERS: Record<string, string> = {
 };
 
 async function resolveConfiguredTelegramChannel(): Promise<string> {
+  if (!firebaseConfig.projectId || firebaseConfig.projectId.includes('mock')) {
+    return TELEGRAM_CHANNEL_USERNAME;
+  }
+
   try {
     const restUrl = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(
       firebaseConfig.projectId
