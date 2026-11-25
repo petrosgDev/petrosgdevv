@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isAiCrawlerUserAgent } from '@/lib/dataShield';
-import { verifyAdminAuthorizationHeader } from '@/lib/adminAuth';
+import { isAdminRequestAuthorized } from '@/lib/adminAuth';
 import { readPortfolioRecord, writePortfolioRecord } from '@/lib/portfolioStore';
 
 export const dynamic = 'force-dynamic';
@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!verifyAdminAuthorizationHeader(req.headers.get('authorization'))) {
+  if (!isAdminRequestAuthorized(req.headers.get('authorization'))) {
     return NextResponse.json(
       { error: 'Unauthorized. Please sign in to the admin studio.' },
       { status: 401, headers: RESPONSE_HEADERS }

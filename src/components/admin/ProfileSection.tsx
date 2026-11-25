@@ -11,13 +11,19 @@ import {
   TextAreaField,
   TextInput,
 } from '@/components/admin/AdminFields';
+import { ImagePickerCropper } from '@/components/admin/ImagePickerCropper';
 
 interface ProfileSectionProps {
   profile: SiteProfile;
   onChange: (next: SiteProfile) => void;
+  authHeaders?: Record<string, string>;
 }
 
-export function ProfileSection({ profile, onChange }: ProfileSectionProps) {
+export function ProfileSection({
+  profile,
+  onChange,
+  authHeaders = {},
+}: ProfileSectionProps) {
   const update = <K extends keyof SiteProfile>(key: K, value: SiteProfile[K]) => {
     onChange({ ...profile, [key]: value });
   };
@@ -42,26 +48,18 @@ export function ProfileSection({ profile, onChange }: ProfileSectionProps) {
         description="Update your header wordmark, portrait, hero headline, introduction, availability message, and bottom metric bar."
       />
 
-      {/* Core Identity & Live Portrait Preview */}
-      <div className={`${CARD_CLASS} grid grid-cols-1 gap-6 lg:grid-cols-12`}>
-        <div className="lg:col-span-4 flex flex-col items-center justify-center rounded-xl border border-[#EAEAEA] dark:border-[#222220] bg-white dark:bg-[#0A0A0A] p-5 space-y-3">
-          <div className="w-full max-w-[200px] aspect-square flex items-center justify-center overflow-hidden rounded-xl bg-[#F7F7F6] dark:bg-[#141413]">
-            {profile.portraitSrc ? (
-              <img
-                src={profile.portraitSrc}
-                alt={`Preview of ${profile.fullName}`}
-                className="h-full w-full object-contain"
-              />
-            ) : (
-              <span className="text-[11px] font-mono text-[#666666]">No portrait</span>
-            )}
-          </div>
-          <p className="text-[11px] font-mono text-[#666666] dark:text-[#9A9A96] text-center">
-            Live Portrait Preview
-          </p>
-        </div>
+      {/* Core Identity & Live Portrait Picker */}
+      <div className={`${CARD_CLASS} space-y-6`}>
+        <ImagePickerCropper
+          id="profile-portrait"
+          label="Portrait Image (Upload, Pick, Crop or URL)"
+          value={profile.portraitSrc}
+          aspectHint="square"
+          authHeaders={authHeaders}
+          onChange={(v) => update('portraitSrc', v)}
+        />
 
-        <div className="lg:col-span-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <TextInput
             id="profile-brand"
             label="Brand Wordmark"
@@ -98,15 +96,6 @@ export function ProfileSection({ profile, onChange }: ProfileSectionProps) {
             onChange={(v) => update('location', v)}
             placeholder="Addis Ababa, Ethiopia"
           />
-          <div className="sm:col-span-2">
-            <TextInput
-              id="profile-portrait"
-              label="Portrait Image Path or HTTPS URL"
-              value={profile.portraitSrc}
-              onChange={(v) => update('portraitSrc', v)}
-              placeholder="/images/portrait-petros.png"
-            />
-          </div>
           <TextInput
             id="profile-greeting"
             label="Hero Headline"

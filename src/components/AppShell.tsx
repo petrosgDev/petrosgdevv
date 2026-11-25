@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { isAiCrawlerUserAgent } from '@/lib/dataShield';
 import { ThemeProvider } from '@/components/ThemeContext';
 import { PortfolioProvider } from '@/components/PortfolioContext';
+import { ThemeTokenStyle } from '@/components/ThemeTokenStyle';
 import { Navbar } from '@/components/Navbar';
 import { SocialRail } from '@/components/SocialRail';
 import { Footer } from '@/components/Footer';
@@ -52,9 +53,11 @@ export function AppShell({ children }: AppShellProps) {
           </div>
         ) : (
           <>
+            <ThemeTokenStyle />
             <SplashIntro />
             <div
               id="root"
+              data-portfolio-surface="public"
               className="min-h-screen flex flex-col bg-white dark:bg-[#0A0A0A] text-[#1A1A1A] dark:text-[#F0F0EE]"
             >
               <a

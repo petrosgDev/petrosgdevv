@@ -9,12 +9,18 @@ import type {
   ProjectCategory,
   ProjectImage,
   ProjectItem,
+  SeoSettings,
   SiteProfile,
   SkillCategory,
   SocialLink,
   TechnicalInterest,
 } from '@/data/portfolio';
-import { DEFAULT_BLOG_SETTINGS, getDefaultPortfolioBundle } from '@/data/portfolio';
+import {
+  DEFAULT_BLOG_SETTINGS,
+  DEFAULT_SEO_SETTINGS,
+  getDefaultPortfolioBundle,
+} from '@/data/portfolio';
+import { DEFAULT_THEME_TOKENS, sanitizeThemeTokens } from '@/lib/themeSystem';
 
 export const ALLOWED_PROJECT_CATEGORIES: readonly ProjectCategory[] = [
   'Web Applications',
@@ -261,230 +267,230 @@ export function validatePortfolioBundle(input: unknown): PortfolioValidationResu
   const seenSlugs = new Set<string>();
   const PROJECTS: ProjectItem[] = Array.isArray(raw.PROJECTS)
     ? raw.PROJECTS.slice(0, 40).map((item, idx) => {
-        const obj = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
-        const title = cleanText(obj.title, 120);
-        const slug = sanitizeSlug(obj.slug || title);
-        if (!title) {
-          errors.push(`Project #${idx + 1} is missing a title.`);
-        }
-        if (!slug) {
-          errors.push(`Project "${title || `#${idx + 1}`}" needs a valid URL slug.`);
-        } else if (seenSlugs.has(slug)) {
-          errors.push(`Duplicate project slug "${slug}". Each project slug must be unique.`);
-        } else {
-          seenSlugs.add(slug);
-        }
+      const obj = (item && typeof item === 'object' ? item : {}) as Record<string, unknown>;
+      const title = cleanText(obj.title, 120);
+      const slug = sanitizeSlug(obj.slug || title);
+      if (!title) {
+        errors.push(`Project #${idx + 1} is missing a title.`);
+      }
+      if (!slug) {
+        errors.push(`Project "${title || `#${idx + 1}`}" needs a valid URL slug.`);
+      } else if (seenSlugs.has(slug)) {
+        errors.push(`Duplicate project slug "${slug}". Each project slug must be unique.`);
+      } else {
+        seenSlugs.add(slug);
+      }
 
-        const rawCategory = cleanText(obj.category, 60);
-        const category: ProjectCategory = ALLOWED_PROJECT_CATEGORIES.includes(
-          rawCategory as ProjectCategory
-        )
-          ? (rawCategory as ProjectCategory)
-          : 'Web Applications';
+      const rawCategory = cleanText(obj.category, 60);
+      const category: ProjectCategory = ALLOWED_PROJECT_CATEGORIES.includes(
+        rawCategory as ProjectCategory
+      )
+        ? (rawCategory as ProjectCategory)
+        : 'Web Applications';
 
-        const defaultHero: ProjectImage = {
-          src: '/images/project-aman-pay.png',
-          alt: `${title || 'Project'} preview`,
-          caption: title || 'Project preview',
-          aspect: 'wide',
-        };
-        const heroImage = sanitizeImage(obj.heroImage, defaultHero);
+      const defaultHero: ProjectImage = {
+        src: '/images/project-aman-pay.png',
+        alt: `${title || 'Project'} preview`,
+        caption: title || 'Project preview',
+        aspect: 'wide',
+      };
+      const heroImage = sanitizeImage(obj.heroImage, defaultHero);
 
-        const rawGallery = Array.isArray(obj.gallery) ? obj.gallery : [];
-        const gallery = rawGallery
-          .slice(0, 10)
-          .map((img) => sanitizeImage(img, heroImage))
-          .filter((img) => Boolean(img.src));
+      const rawGallery = Array.isArray(obj.gallery) ? obj.gallery : [];
+      const gallery = rawGallery
+        .slice(0, 10)
+        .map((img) => sanitizeImage(img, heroImage))
+        .filter((img) => Boolean(img.src));
 
-        const rawLive = cleanText(obj.liveUrl, 500);
-        const liveUrl = rawLive ? sanitizeSafeUrl(rawLive) ?? undefined : undefined;
-        if (rawLive && !liveUrl) {
-          errors.push(`Project "${title || slug}" has an invalid Live URL.`);
-        }
+      const rawLive = cleanText(obj.liveUrl, 500);
+      const liveUrl = rawLive ? sanitizeSafeUrl(rawLive) ?? undefined : undefined;
+      if (rawLive && !liveUrl) {
+        errors.push(`Project "${title || slug}" has an invalid Live URL.`);
+      }
 
-        const rawGithub = cleanText(obj.githubUrl, 500);
-        const githubUrlVal = rawGithub ? sanitizeSafeUrl(rawGithub) ?? undefined : undefined;
-        if (rawGithub && !githubUrlVal) {
-          errors.push(`Project "${title || slug}" has an invalid GitHub URL.`);
-        }
+      const rawGithub = cleanText(obj.githubUrl, 500);
+      const githubUrlVal = rawGithub ? sanitizeSafeUrl(rawGithub) ?? undefined : undefined;
+      if (rawGithub && !githubUrlVal) {
+        errors.push(`Project "${title || slug}" has an invalid GitHub URL.`);
+      }
 
-        const challengesRaw = Array.isArray(obj.challengesAndSolutions)
-          ? obj.challengesAndSolutions
-          : [];
-        const challengesAndSolutions = challengesRaw
-          .slice(0, 12)
-          .map((c) => {
-            const cObj = (c && typeof c === 'object' ? c : {}) as Record<string, unknown>;
-            return {
-              challenge: cleanText(cObj.challenge, 600),
-              solution: cleanText(cObj.solution, 600),
-            };
-          })
-          .filter((c) => c.challenge && c.solution);
+      const challengesRaw = Array.isArray(obj.challengesAndSolutions)
+        ? obj.challengesAndSolutions
+        : [];
+      const challengesAndSolutions = challengesRaw
+        .slice(0, 12)
+        .map((c) => {
+          const cObj = (c && typeof c === 'object' ? c : {}) as Record<string, unknown>;
+          return {
+            challenge: cleanText(cObj.challenge, 600),
+            solution: cleanText(cObj.solution, 600),
+          };
+        })
+        .filter((c) => c.challenge && c.solution);
 
-        const architecture = sanitizeStringArray(obj.architecture, 15, 300);
+      const architecture = sanitizeStringArray(obj.architecture, 15, 300);
 
-        return {
-          id: cleanText(obj.id, 80) || slug || `project-${idx + 1}`,
-          slug: slug || `project-${idx + 1}`,
-          title: title || 'Untitled Project',
-          subtitle: cleanText(obj.subtitle, 220),
-          category,
-          originalTag: cleanText(obj.originalTag, 80, category),
-          year: cleanText(obj.year, 16, String(copyrightYear)),
-          status: cleanText(obj.status, 60, 'Live Deployment'),
-          featured: Boolean(obj.featured),
-          featuredSpan: obj.featuredSpan === 'wide' ? 'wide' : 'standard',
-          role: cleanText(obj.role, 100, 'Full-Stack Developer'),
-          summary: cleanText(obj.summary, 600),
-          overview: cleanText(obj.overview, 1600),
-          problemStatement: cleanText(obj.problemStatement, 1000),
-          objectives: sanitizeStringArray(obj.objectives, 12, 300),
-          contribution: cleanText(obj.contribution, 1000),
-          technologies: sanitizeStringArray(obj.technologies, 24, 50),
-          keyFeatures: sanitizeStringArray(obj.keyFeatures, 15, 300),
-          ...(architecture.length > 0 ? { architecture } : {}),
-          ...(challengesAndSolutions.length > 0 ? { challengesAndSolutions } : {}),
-          heroImage,
-          gallery: gallery.length > 0 ? gallery : [heroImage],
-          ...(liveUrl ? { liveUrl } : {}),
-          ...(githubUrlVal ? { githubUrl: githubUrlVal } : {}),
-        };
-      })
+      return {
+        id: cleanText(obj.id, 80) || slug || `project-${idx + 1}`,
+        slug: slug || `project-${idx + 1}`,
+        title: title || 'Untitled Project',
+        subtitle: cleanText(obj.subtitle, 220),
+        category,
+        originalTag: cleanText(obj.originalTag, 80, category),
+        year: cleanText(obj.year, 16, String(copyrightYear)),
+        status: cleanText(obj.status, 60, 'Live Deployment'),
+        featured: Boolean(obj.featured),
+        featuredSpan: obj.featuredSpan === 'wide' ? 'wide' : 'standard',
+        role: cleanText(obj.role, 100, 'Full-Stack Developer'),
+        summary: cleanText(obj.summary, 600),
+        overview: cleanText(obj.overview, 1600),
+        problemStatement: cleanText(obj.problemStatement, 1000),
+        objectives: sanitizeStringArray(obj.objectives, 12, 300),
+        contribution: cleanText(obj.contribution, 1000),
+        technologies: sanitizeStringArray(obj.technologies, 24, 50),
+        keyFeatures: sanitizeStringArray(obj.keyFeatures, 15, 300),
+        ...(architecture.length > 0 ? { architecture } : {}),
+        ...(challengesAndSolutions.length > 0 ? { challengesAndSolutions } : {}),
+        heroImage,
+        gallery: gallery.length > 0 ? gallery : [heroImage],
+        ...(liveUrl ? { liveUrl } : {}),
+        ...(githubUrlVal ? { githubUrl: githubUrlVal } : {}),
+      };
+    })
     : defaults.PROJECTS;
 
   // 3. SKILL_CATEGORIES
   const SKILL_CATEGORIES: SkillCategory[] = Array.isArray(raw.SKILL_CATEGORIES)
     ? raw.SKILL_CATEGORIES.slice(0, 20)
-        .map((cat, idx) => {
-          const obj = (cat && typeof cat === 'object' ? cat : {}) as Record<string, unknown>;
-          const name = cleanText(obj.name, 80);
-          return {
-            id: sanitizeSlug(obj.id || name) || `skill-cat-${idx + 1}`,
-            index: cleanText(obj.index, 12, String(idx + 1).padStart(2, '0')),
-            name,
-            description: cleanText(obj.description, 300),
-            items: sanitizeStringArray(obj.items, 30, 60),
-          };
-        })
-        .filter((cat) => Boolean(cat.name))
+      .map((cat, idx) => {
+        const obj = (cat && typeof cat === 'object' ? cat : {}) as Record<string, unknown>;
+        const name = cleanText(obj.name, 80);
+        return {
+          id: sanitizeSlug(obj.id || name) || `skill-cat-${idx + 1}`,
+          index: cleanText(obj.index, 12, String(idx + 1).padStart(2, '0')),
+          name,
+          description: cleanText(obj.description, 300),
+          items: sanitizeStringArray(obj.items, 30, 60),
+        };
+      })
+      .filter((cat) => Boolean(cat.name))
     : defaults.SKILL_CATEGORIES;
 
   // 4. EXPERIENCES
   const EXPERIENCES: ExperienceItem[] = Array.isArray(raw.EXPERIENCES)
     ? raw.EXPERIENCES.slice(0, 25)
-        .map((exp, idx) => {
-          const obj = (exp && typeof exp === 'object' ? exp : {}) as Record<string, unknown>;
-          const organization = cleanText(obj.organization, 140);
-          const roleVal = cleanText(obj.role, 140);
-          const rawOrgUrl = cleanText(obj.organizationUrl, 400);
-          const organizationUrl = rawOrgUrl
-            ? sanitizeSafeUrl(rawOrgUrl) ?? undefined
-            : undefined;
-          if (rawOrgUrl && !organizationUrl) {
-            errors.push(`Experience "${organization || `#${idx + 1}`}" has an invalid URL.`);
-          }
-          const pointsRaw = Array.isArray(obj.points) ? obj.points : [];
-          const points: ExperiencePoint[] = pointsRaw
-            .slice(0, 12)
-            .map((pt) => {
-              const pObj = (pt && typeof pt === 'object' ? pt : {}) as Record<string, unknown>;
-              const lead = cleanText(pObj.lead, 100);
-              return {
-                ...(lead ? { lead } : {}),
-                text: cleanText(pObj.text, 450),
-              };
-            })
-            .filter((pt) => Boolean(pt.text));
+      .map((exp, idx) => {
+        const obj = (exp && typeof exp === 'object' ? exp : {}) as Record<string, unknown>;
+        const organization = cleanText(obj.organization, 140);
+        const roleVal = cleanText(obj.role, 140);
+        const rawOrgUrl = cleanText(obj.organizationUrl, 400);
+        const organizationUrl = rawOrgUrl
+          ? sanitizeSafeUrl(rawOrgUrl) ?? undefined
+          : undefined;
+        if (rawOrgUrl && !organizationUrl) {
+          errors.push(`Experience "${organization || `#${idx + 1}`}" has an invalid URL.`);
+        }
+        const pointsRaw = Array.isArray(obj.points) ? obj.points : [];
+        const points: ExperiencePoint[] = pointsRaw
+          .slice(0, 12)
+          .map((pt) => {
+            const pObj = (pt && typeof pt === 'object' ? pt : {}) as Record<string, unknown>;
+            const lead = cleanText(pObj.lead, 100);
+            return {
+              ...(lead ? { lead } : {}),
+              text: cleanText(pObj.text, 450),
+            };
+          })
+          .filter((pt) => Boolean(pt.text));
 
-          return {
-            id: sanitizeSlug(obj.id || organization) || `exp-${idx + 1}`,
-            organization,
-            ...(organizationUrl ? { organizationUrl } : {}),
-            ...(cleanText(obj.organizationUrlLabel, 80)
-              ? { organizationUrlLabel: cleanText(obj.organizationUrlLabel, 80) }
-              : {}),
-            role: roleVal,
-            period: cleanText(obj.period, 60),
-            shortYear: cleanText(obj.shortYear, 32),
-            location: cleanText(obj.location, 120),
-            summary: cleanText(obj.summary, 600),
-            points,
-            stack: sanitizeStringArray(obj.stack, 20, 50),
-          };
-        })
-        .filter((exp) => Boolean(exp.organization && exp.role))
+        return {
+          id: sanitizeSlug(obj.id || organization) || `exp-${idx + 1}`,
+          organization,
+          ...(organizationUrl ? { organizationUrl } : {}),
+          ...(cleanText(obj.organizationUrlLabel, 80)
+            ? { organizationUrlLabel: cleanText(obj.organizationUrlLabel, 80) }
+            : {}),
+          role: roleVal,
+          period: cleanText(obj.period, 60),
+          shortYear: cleanText(obj.shortYear, 32),
+          location: cleanText(obj.location, 120),
+          summary: cleanText(obj.summary, 600),
+          points,
+          stack: sanitizeStringArray(obj.stack, 20, 50),
+        };
+      })
+      .filter((exp) => Boolean(exp.organization && exp.role))
     : defaults.EXPERIENCES;
 
   // 5. PHILOSOPHY_PILLARS
   const PHILOSOPHY_PILLARS: PhilosophyPillar[] = Array.isArray(raw.PHILOSOPHY_PILLARS)
     ? raw.PHILOSOPHY_PILLARS.slice(0, 12)
-        .map((pillar, idx) => {
-          const obj = (pillar && typeof pillar === 'object' ? pillar : {}) as Record<
-            string,
-            unknown
-          >;
-          return {
-            index: cleanText(obj.index, 10, String(idx + 1).padStart(2, '0')),
-            title: cleanText(obj.title, 120),
-            description: cleanText(obj.description, 500),
-          };
-        })
-        .filter((p) => Boolean(p.title && p.description))
+      .map((pillar, idx) => {
+        const obj = (pillar && typeof pillar === 'object' ? pillar : {}) as Record<
+          string,
+          unknown
+        >;
+        return {
+          index: cleanText(obj.index, 10, String(idx + 1).padStart(2, '0')),
+          title: cleanText(obj.title, 120),
+          description: cleanText(obj.description, 500),
+        };
+      })
+      .filter((p) => Boolean(p.title && p.description))
     : defaults.PHILOSOPHY_PILLARS;
 
   // 6. TECHNICAL_INTERESTS
   const TECHNICAL_INTERESTS: TechnicalInterest[] = Array.isArray(raw.TECHNICAL_INTERESTS)
     ? raw.TECHNICAL_INTERESTS.slice(0, 16)
-        .map((interest) => {
-          const obj = (interest && typeof interest === 'object' ? interest : {}) as Record<
-            string,
-            unknown
-          >;
-          return {
-            title: cleanText(obj.title, 120),
-            description: cleanText(obj.description, 500),
-          };
-        })
-        .filter((i) => Boolean(i.title && i.description))
+      .map((interest) => {
+        const obj = (interest && typeof interest === 'object' ? interest : {}) as Record<
+          string,
+          unknown
+        >;
+        return {
+          title: cleanText(obj.title, 120),
+          description: cleanText(obj.description, 500),
+        };
+      })
+      .filter((i) => Boolean(i.title && i.description))
     : defaults.TECHNICAL_INTERESTS;
 
   // 7. SOCIAL_LINKS
   const SOCIAL_LINKS: SocialLink[] = Array.isArray(raw.SOCIAL_LINKS)
     ? raw.SOCIAL_LINKS.slice(0, 16)
-        .map((link, idx) => {
-          const obj = (link && typeof link === 'object' ? link : {}) as Record<string, unknown>;
-          const label = cleanText(obj.label, 60);
-          const href = sanitizeSafeUrl(obj.href, {
-            allowMailto: true,
-            allowTel: true,
-          });
-          if (label && !href) {
-            errors.push(`Social link "${label}" has an invalid URL.`);
-          }
-          return {
-            id: sanitizeSlug(obj.id || label) || `social-${idx + 1}`,
-            label,
-            handle: cleanText(obj.handle, 120),
-            href: href || '',
-            external: Boolean(obj.external),
-          };
-        })
-        .filter((s) => Boolean(s.label && s.href))
+      .map((link, idx) => {
+        const obj = (link && typeof link === 'object' ? link : {}) as Record<string, unknown>;
+        const label = cleanText(obj.label, 60);
+        const href = sanitizeSafeUrl(obj.href, {
+          allowMailto: true,
+          allowTel: true,
+        });
+        if (label && !href) {
+          errors.push(`Social link "${label}" has an invalid URL.`);
+        }
+        return {
+          id: sanitizeSlug(obj.id || label) || `social-${idx + 1}`,
+          label,
+          handle: cleanText(obj.handle, 120),
+          href: href || '',
+          external: Boolean(obj.external),
+        };
+      })
+      .filter((s) => Boolean(s.label && s.href))
     : defaults.SOCIAL_LINKS;
 
   // 8. NAVIGATION_LINKS
   const NAVIGATION_LINKS: NavigationLink[] = Array.isArray(raw.NAVIGATION_LINKS)
     ? raw.NAVIGATION_LINKS.slice(0, 10)
-        .map((nav) => {
-          const obj = (nav && typeof nav === 'object' ? nav : {}) as Record<string, unknown>;
-          const pathVal = sanitizeSafeUrl(obj.path, { allowRelative: true });
-          return {
-            label: cleanText(obj.label, 40),
-            path: pathVal || '/',
-          };
-        })
-        .filter((n) => Boolean(n.label))
+      .map((nav) => {
+        const obj = (nav && typeof nav === 'object' ? nav : {}) as Record<string, unknown>;
+        const pathVal = sanitizeSafeUrl(obj.path, { allowRelative: true });
+        return {
+          label: cleanText(obj.label, 40),
+          path: pathVal || '/',
+        };
+      })
+      .filter((n) => Boolean(n.label))
     : defaults.NAVIGATION_LINKS;
 
   // 9. BLOG_SETTINGS
@@ -514,6 +520,46 @@ export function validatePortfolioBundle(input: unknown): PortfolioValidationResu
     ),
   };
 
+  // 10. THEME_TOKENS
+  const THEME_TOKENS = raw.THEME_TOKENS
+    ? sanitizeThemeTokens(raw.THEME_TOKENS)
+    : sanitizeThemeTokens(DEFAULT_THEME_TOKENS);
+
+  // 11. SEO_SETTINGS
+  const rawSeo =
+    raw.SEO_SETTINGS && typeof raw.SEO_SETTINGS === 'object'
+      ? (raw.SEO_SETTINGS as Record<string, unknown>)
+      : null;
+
+  const SEO_SETTINGS: SeoSettings = {
+    defaultTitle: cleanText(
+      rawSeo?.defaultTitle,
+      120,
+      DEFAULT_SEO_SETTINGS.defaultTitle
+    ),
+    titleTemplate: cleanText(
+      rawSeo?.titleTemplate,
+      80,
+      DEFAULT_SEO_SETTINGS.titleTemplate
+    ),
+    defaultDescription: cleanText(
+      rawSeo?.defaultDescription,
+      320,
+      DEFAULT_SEO_SETTINGS.defaultDescription
+    ),
+    keywords: rawSeo && Array.isArray(rawSeo.keywords)
+      ? sanitizeStringArray(rawSeo.keywords, 30, 60)
+      : [...DEFAULT_SEO_SETTINGS.keywords],
+    twitterCreator: cleanText(
+      rawSeo?.twitterCreator,
+      50,
+      DEFAULT_SEO_SETTINGS.twitterCreator
+    ),
+    ogImage:
+      sanitizeSafeUrl(rawSeo?.ogImage, { allowRelative: true }) ??
+      DEFAULT_SEO_SETTINGS.ogImage,
+  };
+
   if (errors.length > 0) {
     return { ok: false, errors };
   }
@@ -532,6 +578,8 @@ export function validatePortfolioBundle(input: unknown): PortfolioValidationResu
       PROJECT_CATEGORIES: ['All', ...ALLOWED_PROJECT_CATEGORIES],
       PROJECTS,
       BLOG_SETTINGS,
+      THEME_TOKENS,
+      SEO_SETTINGS,
     },
   };
 }
@@ -542,7 +590,12 @@ export type AdminSectionKey =
   | 'skills'
   | 'experience'
   | 'about'
-  | 'contact';
+  | 'contact'
+  | 'navigation'
+  | 'appearance'
+  | 'media'
+  | 'seo'
+  | 'settings';
 
 export function getDirtySections(
   saved: PortfolioBundle,
@@ -558,9 +611,7 @@ export function getDirtySections(
     portraitSrc: b.SITE_PROFILE.portraitSrc,
     heroGreeting: b.SITE_PROFILE.heroGreeting,
     heroIntro: b.SITE_PROFILE.heroIntro,
-    shortPhilosophy: b.SITE_PROFILE.shortPhilosophy,
     availabilityNote: b.SITE_PROFILE.availabilityNote,
-    copyrightYear: b.SITE_PROFILE.copyrightYear,
     heroMetrics: b.SITE_PROFILE.heroMetrics,
   });
 
@@ -599,6 +650,31 @@ export function getDirtySections(
 
   if (JSON.stringify(contactPick(saved)) !== JSON.stringify(contactPick(draft))) {
     dirty.push('contact');
+  }
+
+  const navPick = (b: PortfolioBundle) => ({
+    NAVIGATION_LINKS: b.NAVIGATION_LINKS,
+    PROJECT_CATEGORIES: b.PROJECT_CATEGORIES,
+    shortPhilosophy: b.SITE_PROFILE.shortPhilosophy,
+    copyrightYear: b.SITE_PROFILE.copyrightYear,
+  });
+
+  if (JSON.stringify(navPick(saved)) !== JSON.stringify(navPick(draft))) {
+    dirty.push('navigation');
+  }
+
+  if (
+    JSON.stringify(saved.THEME_TOKENS ?? DEFAULT_THEME_TOKENS) !==
+    JSON.stringify(draft.THEME_TOKENS ?? DEFAULT_THEME_TOKENS)
+  ) {
+    dirty.push('appearance');
+  }
+
+  if (
+    JSON.stringify(saved.SEO_SETTINGS ?? DEFAULT_SEO_SETTINGS) !==
+    JSON.stringify(draft.SEO_SETTINGS ?? DEFAULT_SEO_SETTINGS)
+  ) {
+    dirty.push('seo');
   }
 
   return dirty;

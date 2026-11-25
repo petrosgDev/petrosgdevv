@@ -11,6 +11,7 @@ import React, {
 import type { PortfolioBundle } from '@/data/portfolio';
 import { getDefaultPortfolioBundle } from '@/data/portfolio';
 import {
+  isFirebaseConfigured,
   subscribePublishedPortfolio,
   testFirestoreConnection,
 } from '@/lib/firebase';
@@ -35,28 +36,61 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
   const [loadedFromServer, setLoadedFromServer] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
+    const loadLocalRecord = async () => {
+      try {
+        const res = await fetch('/api/portfolio/', { cache: 'no-store' });
+        if (!res.ok || cancelled) return;
+        const json = (await res.json()) as {
+          data?: PortfolioBundle;
+          updatedAt?: string | null;
+          isCustomized?: boolean;
+        };
+        if (json?.data?.SITE_PROFILE && Array.isArray(json.data.PROJECTS)) {
+          setData(json.data);
+          setUpdatedAt(typeof json.updatedAt === 'string' ? json.updatedAt : null);
+          setIsCustomized(Boolean(json.isCustomized));
+        }
+      } catch {
+        // Keep built-in defaults if offline or unavailable
+      } finally {
+        if (!cancelled) {
+          setLoadedFromServer(true);
+        }
+      }
+    };
+
+    if (!isFirebaseConfigured()) {
+      void loadLocalRecord();
+      return () => {
+        cancelled = true;
+      };
+    }
+
     void testFirestoreConnection();
 
     const unsubscribe = subscribePublishedPortfolio(
       (snapshot) => {
+        if (cancelled) return;
         if (snapshot) {
           setData(snapshot.data);
           setUpdatedAt(snapshot.updatedAt);
           setIsCustomized(snapshot.isCustomized);
+          setLoadedFromServer(true);
         } else {
-          setData(getDefaultPortfolioBundle());
-          setUpdatedAt(null);
-          setIsCustomized(false);
+          void loadLocalRecord();
         }
-        setLoadedFromServer(true);
       },
       () => {
-        // Keep built-in defaults if offline or unavailable
-        setLoadedFromServer(true);
+        if (!cancelled) {
+          void loadLocalRecord();
+        }
       }
     );
 
     return () => {
+      cancelled = true;
       unsubscribe();
     };
   }, []);

@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export type AdminAuthMode = 'env' | 'claimed' | 'claim';
+export type AdminAuthMode = 'open' | 'env' | 'claimed' | 'claim';
 
 interface StoredAdminCredential {
   algorithm: 'scrypt';
@@ -84,7 +84,14 @@ function readClaimedCredential(): StoredAdminCredential | null {
   }
 }
 
+export function isLocalDevBypassEnabled(): boolean {
+  return process.env.NODE_ENV === 'development' && !getConfiguredEnvPasscode();
+}
+
 export function getAdminAuthMode(): AdminAuthMode {
+  if (isLocalDevBypassEnabled()) {
+    return 'open';
+  }
   if (getConfiguredEnvPasscode()) {
     return 'env';
   }
@@ -228,6 +235,10 @@ export function verifyAdminAuthorizationHeader(authHeader: string | null): boole
   } catch {
     return false;
   }
+}
+
+export function isAdminRequestAuthorized(authHeader: string | null): boolean {
+  return isLocalDevBypassEnabled() || verifyAdminAuthorizationHeader(authHeader);
 }
 
 export function checkLoginRateLimit(clientKey: string): {

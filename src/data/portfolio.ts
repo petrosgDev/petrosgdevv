@@ -1,5 +1,6 @@
 import { decodeVault } from '@/lib/dataShield';
 import { PORTFOLIO_VAULT } from '@/data/portfolioVault';
+import { DEFAULT_THEME_TOKENS, type ThemeTokensConfig } from '@/lib/themeSystem';
 
 export type ProjectCategory =
   | 'Web Applications'
@@ -128,6 +129,15 @@ export interface BlogSettings {
   subtitle: string;
 }
 
+export interface SeoSettings {
+  defaultTitle: string;
+  titleTemplate: string;
+  defaultDescription: string;
+  keywords: string[];
+  twitterCreator: string;
+  ogImage: string;
+}
+
 export interface PortfolioBundle {
   SITE_PROFILE: SiteProfile;
   NAVIGATION_LINKS: NavigationLink[];
@@ -139,12 +149,31 @@ export interface PortfolioBundle {
   PROJECT_CATEGORIES: readonly ('All' | ProjectCategory)[];
   PROJECTS: ProjectItem[];
   BLOG_SETTINGS?: BlogSettings;
+  THEME_TOKENS?: ThemeTokensConfig;
+  SEO_SETTINGS?: SeoSettings;
 }
 
 export const DEFAULT_BLOG_SETTINGS: BlogSettings = {
   telegramChannel: 'abysiniyatech',
   subtitle:
     'Engineering notes, tech industry dispatches, and software updates synced directly from my Telegram channel.',
+};
+
+export const DEFAULT_SEO_SETTINGS: SeoSettings = {
+  defaultTitle: 'Petros Geto | Software Engineer & AI Developer',
+  titleTemplate: '%s | Petros Geto',
+  defaultDescription:
+    'Petros Geto — Software Engineer & AI Developer in Addis Ababa specializing in AI-powered systems, full-stack web apps, and scalable digital products.',
+  keywords: [
+    'Petros Geto',
+    'PETROS G DEV',
+    'Software Engineer Ethiopia',
+    'Full-Stack Developer Addis Ababa',
+    'AI Developer Ethiopia',
+    'Next.js Developer Ethiopia',
+  ],
+  twitterCreator: '@petrosgdev',
+  ogImage: '/og-card/',
 };
 
 const decodedBundle = decodeVault<PortfolioBundle>(PORTFOLIO_VAULT);
@@ -154,6 +183,12 @@ export function getDefaultPortfolioBundle(): PortfolioBundle {
   cloned.BLOG_SETTINGS = {
     ...DEFAULT_BLOG_SETTINGS,
     ...(cloned.BLOG_SETTINGS ?? {}),
+  };
+  cloned.THEME_TOKENS = JSON.parse(JSON.stringify(DEFAULT_THEME_TOKENS)) as ThemeTokensConfig;
+  cloned.SEO_SETTINGS = {
+    ...DEFAULT_SEO_SETTINGS,
+    ...(cloned.SEO_SETTINGS ?? {}),
+    keywords: [...(cloned.SEO_SETTINGS?.keywords ?? DEFAULT_SEO_SETTINGS.keywords)],
   };
   return cloned;
 }

@@ -45,12 +45,12 @@ export function OverviewSection({
 
   const formattedUpdated = updatedAt
     ? new Intl.DateTimeFormat('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      }).format(new Date(updatedAt))
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    }).format(new Date(updatedAt))
     : 'Default seed';
 
   const sectionCards: Array<{
@@ -102,6 +102,27 @@ export function OverviewSection({
       summary: 'Direct email, phone, social channels, and Telegram blog source.',
       count: `${draft.SOCIAL_LINKS.length} channels · @${draft.BLOG_SETTINGS?.telegramChannel || 'abysiniyatech'}`,
     },
+    {
+      key: 'navigation',
+      index: '07',
+      title: 'Navigation & Footer',
+      summary: 'Footer routes, copyright year, and closing site philosophy.',
+      count: `${draft.NAVIGATION_LINKS.length} routes`,
+    },
+    {
+      key: 'appearance',
+      index: '08',
+      title: 'UI Colors & Theme',
+      summary: 'Customize header, nav bar, text, card, button, and footer colors.',
+      count: 'Light & Dark tokens',
+    },
+    {
+      key: 'media',
+      index: '09',
+      title: 'Media Library',
+      summary: 'Upload images, inspect asset usage, and manage stored media.',
+      count: 'Upload & Browse',
+    },
   ];
 
   return (
@@ -109,7 +130,7 @@ export function OverviewSection({
       <SectionHeader
         eyebrow="00. Studio Overview"
         title="Portfolio Control Center"
-        description="Every section of your live portfolio is editable below. Save changes to publish immediately to Firestore across all pages."
+        description="Every text block, image, link, blog setting, and UI color token across your portfolio is editable below. Publish changes to update all live pages immediately."
       />
 
       {/* Live Metrics Strip */}

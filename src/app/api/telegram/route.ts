@@ -6,6 +6,8 @@ import {
   TELEGRAM_CHANNEL_USERNAME,
 } from '@/lib/telegramParser';
 import { extractFirestoreTelegramChannel } from '@/lib/adminAccess';
+import { sanitizeTelegramUsername } from '@/lib/portfolioSchema';
+import { readPortfolioRecord } from '@/lib/portfolioStore';
 import firebaseConfig from '../../../../firebase-applet-config.json';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +21,11 @@ const SECURITY_HEADERS: Record<string, string> = {
 
 async function resolveConfiguredTelegramChannel(): Promise<string> {
   if (!firebaseConfig.projectId || firebaseConfig.projectId.includes('mock')) {
-    return TELEGRAM_CHANNEL_USERNAME;
+    const { data } = readPortfolioRecord();
+    return (
+      sanitizeTelegramUsername(data.BLOG_SETTINGS?.telegramChannel) ??
+      TELEGRAM_CHANNEL_USERNAME
+    );
   }
 
   try {
