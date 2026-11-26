@@ -2,11 +2,14 @@
 
 import React, { useRef, useState } from 'react';
 import { Download, RotateCcw, Shield, Upload } from 'lucide-react';
-import { isFirebaseConfigured } from '@/lib/firebase';
+import {
+  AUTHORIZED_ADMIN_EMAIL,
+  getFirebaseProjectInfo,
+} from '@/lib/firebase';
 import { CARD_CLASS, SectionHeader } from '@/components/admin/AdminFields';
 
 interface SettingsSectionProps {
-  authMode: 'open' | 'env' | 'claimed' | 'claim';
+  userEmail: string | null;
   isCustomized: boolean;
   updatedAt: string | null;
   resetting: boolean;
@@ -16,7 +19,7 @@ interface SettingsSectionProps {
 }
 
 export function SettingsSection({
-  authMode,
+  userEmail,
   isCustomized,
   updatedAt,
   resetting,
@@ -26,14 +29,14 @@ export function SettingsSection({
 }: SettingsSectionProps) {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [confirmReset, setConfirmReset] = useState(false);
-  const firebaseActive = isFirebaseConfigured();
+  const fb = getFirebaseProjectInfo();
 
   return (
     <div className="space-y-8">
       <SectionHeader
         eyebrow="11. System & Recovery"
-        title="Backup, Security & Storage"
-        description="Export full portfolio snapshots, restore defaults, and review active storage and authentication settings."
+        title="Backup, Security & Firebase"
+        description="Export full portfolio snapshots, restore defaults, and review active Google authentication and Firebase Firestore settings."
       />
 
       {/* Environment & Storage Diagnostics */}
@@ -41,33 +44,33 @@ export function SettingsSection({
         <div className={`${CARD_CLASS} space-y-2.5`}>
           <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.14em] text-[#666666] dark:text-[#9A9A96]">
             <Shield className="h-3.5 w-3.5" />
-            <span>Authentication State</span>
+            <span>Owner Google Auth</span>
           </div>
           <p className="font-display text-[22px] font-bold uppercase text-[#1A1A1A] dark:text-[#F0F0EE]">
-            {authMode === 'open'
-              ? 'Local Dev Mode (Open)'
-              : authMode === 'env'
-                ? 'Env Passcode Active'
-                : 'Claimed Passcode'}
+            Verified Google Sign-In
           </p>
           <p className="text-[12.5px] leading-relaxed text-[#666666] dark:text-[#9A9A96]">
-            {authMode === 'open'
-              ? 'Password prompts are skipped while running locally in development mode. Setting ADMIN_PASSCODE or building for production re-enables strict authentication.'
-              : 'Administrative write routes require a signed session bearer token.'}
+            Access is restricted strictly to verified Google account{' '}
+            <span className="font-mono text-[#1A1A1A] dark:text-[#F0F0EE]">
+              {AUTHORIZED_ADMIN_EMAIL}
+            </span>
+            {userEmail ? ` (signed in as ${userEmail})` : ''}.
           </p>
         </div>
 
         <div className={`${CARD_CLASS} space-y-2.5`}>
           <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#666666] dark:text-[#9A9A96]">
-            Persistence Layer
+            Firebase Database
           </p>
           <p className="font-display text-[22px] font-bold uppercase text-[#1A1A1A] dark:text-[#F0F0EE]">
-            {firebaseActive ? 'Firestore + Local CMS' : 'Local Disk Store (.data)'}
+            {fb.configured ? `Firestore (${fb.projectId})` : 'Firestore Pending Config'}
           </p>
           <p className="text-[12.5px] leading-relaxed text-[#666666] dark:text-[#9A9A96]">
             {isCustomized
-              ? `Customized configuration saved (${updatedAt ? new Date(updatedAt).toLocaleString() : 'Active'}).`
-              : 'Serving built-in portfolio defaults from src/data/portfolioVault.ts.'}
+              ? `Published document /portfolio/published active (${
+                  updatedAt ? new Date(updatedAt).toLocaleString() : 'Live'
+                }).`
+              : 'Serving built-in portfolio defaults until changes are published to Firestore.'}
           </p>
         </div>
       </div>
@@ -79,7 +82,7 @@ export function SettingsSection({
             JSON Backup, Import &amp; Factory Reset
           </h3>
           <p className="text-[12.5px] leading-relaxed text-[#666666] dark:text-[#9A9A96] max-w-[64ch]">
-            Export every text, image path, link, blog setting, SEO setting, and UI color palette into a portable JSON file, or reset back to the shipped defaults.
+            Export every text, image path, link, blog setting, SEO setting, and UI color palette into a portable JSON file, or delete `/portfolio/published` in Firestore to restore defaults.
           </p>
         </div>
 

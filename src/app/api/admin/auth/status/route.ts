@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getAdminAuthMode,
-  isAdminRequestAuthorized,
+  verifyAdminAuthorizationHeader,
 } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ const PRIVATE_HEADERS: Record<string, string> = {
 
 export async function GET(req: NextRequest) {
   const mode = getAdminAuthMode();
-  const authenticated = isAdminRequestAuthorized(
+  const authenticated = verifyAdminAuthorizationHeader(
     req.headers.get('authorization')
   );
 

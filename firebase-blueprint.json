@@ -45,6 +45,14 @@
           "type": "object",
           "description": "Telegram blog channel username and editorial subtitle."
         },
+        "THEME_TOKENS": {
+          "type": "object",
+          "description": "Optional Light and Dark UI color override tokens managed in Admin Appearance."
+        },
+        "SEO_SETTINGS": {
+          "type": "object",
+          "description": "Optional search engine metadata, OpenGraph image, and keyword settings."
+        },
         "updatedByUid": {
           "type": "string",
           "maxLength": 128,

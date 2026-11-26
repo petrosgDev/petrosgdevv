@@ -77,14 +77,17 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           setData(snapshot.data);
           setUpdatedAt(snapshot.updatedAt);
           setIsCustomized(snapshot.isCustomized);
-          setLoadedFromServer(true);
         } else {
-          void loadLocalRecord();
+          setData(getDefaultPortfolioBundle());
+          setUpdatedAt(null);
+          setIsCustomized(false);
         }
+        setLoadedFromServer(true);
       },
       () => {
         if (!cancelled) {
-          void loadLocalRecord();
+          setData(getDefaultPortfolioBundle());
+          setLoadedFromServer(true);
         }
       }
     );
@@ -137,7 +140,7 @@ export function usePortfolio(): PortfolioContextValue {
       updatedAt: null,
       isCustomized: false,
       loadedFromServer: false,
-      applyPortfolio: () => {},
+      applyPortfolio: () => { },
     };
   }
   return ctx;

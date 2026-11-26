@@ -1,8 +1,16 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, Lock, ShieldCheck } from 'lucide-react';
+import type { User } from 'firebase/auth';
+import {
+  AlertTriangle,
+  ArrowLeft,
+  CheckCircle2,
+  LogOut,
+  ShieldAlert,
+  ShieldCheck,
+} from 'lucide-react';
 import type { PortfolioBundle } from '@/data/portfolio';
 import { getDefaultPortfolioBundle } from '@/data/portfolio';
 import {
@@ -11,12 +19,20 @@ import {
   validatePortfolioBundle,
 } from '@/lib/portfolioSchema';
 import { DEFAULT_THEME_TOKENS } from '@/lib/themeSystem';
-import { usePortfolio } from '@/components/PortfolioContext';
 import {
-  AdminErrorBoundary,
-  CARD_CLASS,
-  INPUT_CLASS,
-} from '@/components/admin/AdminFields';
+  AUTHORIZED_ADMIN_EMAIL,
+  getFirebaseAdminIdToken,
+  getFirebaseProjectInfo,
+  isAuthorizedAdminUser,
+  resetPublishedPortfolio,
+  savePublishedPortfolio,
+  signInAdminWithGoogle,
+  signOutAdmin,
+  subscribeAdminAuth,
+  subscribePublishedPortfolio,
+} from '@/lib/firebase';
+import { usePortfolio } from '@/components/PortfolioContext';
+import { AdminErrorBoundary, CARD_CLASS } from '@/components/admin/AdminFields';
 import { AdminSidebar, type AdminTabId } from '@/components/admin/AdminSidebar';
 import { AdminWorkspaceHeader } from '@/components/admin/AdminWorkspaceHeader';
 import { OverviewSection } from '@/components/admin/OverviewSection';
@@ -33,8 +49,6 @@ import { SeoSection } from '@/components/admin/SeoSection';
 import { SettingsSection } from '@/components/admin/SettingsSection';
 import { LivePreviewPane } from '@/components/admin/LivePreviewPane';
 
-type AuthMode = 'loading' | 'open' | 'env' | 'claimed' | 'claim';
-
 const TAB_TITLES: Record<AdminTabId, string> = {
   overview: '00 · Studio Overview',
   profile: '01 · Profile & Hero',
@@ -50,15 +64,38 @@ const TAB_TITLES: Record<AdminTabId, string> = {
   settings: '11 · Backup & Settings',
 };
 
+function GoogleMark() {
+  return (
+    <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        fill="#4285F4"
+        d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17Z"
+      />
+      <path
+        fill="#34A853"
+        d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.14C3.26 21.3 7.31 24 12 24Z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M5.28 14.24c-.24-.72-.38-1.49-.38-2.24s.14-1.52.38-2.24V6.62H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.38l3.99-3.14Z"
+      />
+      <path
+        fill="#EA4335"
+        d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.62l3.99 3.14c.95-2.85 3.6-4.96 6.72-4.96Z"
+      />
+    </svg>
+  );
+}
+
 function AdminStudioContent() {
   const { applyPortfolio } = usePortfolio();
+  const firebaseInfo = useMemo(() => getFirebaseProjectInfo(), []);
 
-  const [authMode, setAuthMode] = useState<AuthMode>('loading');
-  const [authorized, setAuthorized] = useState(false);
-  const [token, setToken] = useState<string | null>(null);
-  const [password, setPassword] = useState('');
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [idToken, setIdToken] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<AdminTabId>('overview');
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -78,117 +115,95 @@ function AdminStudioContent() {
     text: string;
   } | null>(null);
 
-  const loadPortfolioRecord = useCallback(async (activeToken: string | null) => {
-    const pRes = await fetch('/api/portfolio/', {
-      headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {},
-      cache: 'no-store',
+  const authorized = isAuthorizedAdminUser(user);
+
+  // Listen to Firebase Auth state
+  useEffect(() => {
+    const unsubscribe = subscribeAdminAuth(async (nextUser) => {
+      setUser(nextUser);
+      if (nextUser && isAuthorizedAdminUser(nextUser)) {
+        const token = await getFirebaseAdminIdToken();
+        setIdToken(token);
+      } else {
+        setIdToken(null);
+      }
+      setAuthReady(true);
     });
-    if (!pRes.ok) return;
-    const pData = await pRes.json();
-    if (pData?.data) {
-      const defaults = getDefaultPortfolioBundle();
-      const hydrated: PortfolioBundle = {
-        ...defaults,
-        ...pData.data,
-        THEME_TOKENS: pData.data.THEME_TOKENS ?? defaults.THEME_TOKENS,
-        SEO_SETTINGS: pData.data.SEO_SETTINGS ?? defaults.SEO_SETTINGS,
-        BLOG_SETTINGS: pData.data.BLOG_SETTINGS ?? defaults.BLOG_SETTINGS,
-      };
-      setDraft(hydrated);
-      setSavedBundle(hydrated);
-      setUpdatedAt(pData.updatedAt || null);
-      setIsCustomized(Boolean(pData.isCustomized));
-    }
+    return () => unsubscribe();
   }, []);
 
-  const checkStatus = useCallback(
-    async (existingToken?: string | null) => {
-      try {
-        const activeToken = existingToken ?? token;
-        const res = await fetch('/api/admin/auth/status/', {
-          headers: activeToken ? { Authorization: `Bearer ${activeToken}` } : {},
-          cache: 'no-store',
-        });
-        if (!res.ok) {
-          setAuthMode('claim');
-          setAuthorized(false);
-          return;
-        }
-        const data = (await res.json()) as {
-          mode: Exclude<AuthMode, 'loading'>;
-          authenticated: boolean;
-        };
-        setAuthMode(data.mode);
-        setAuthorized(Boolean(data.authenticated));
-        if (data.authenticated) {
-          await loadPortfolioRecord(activeToken);
-        }
-      } catch {
-        setAuthMode('claim');
-        setAuthorized(false);
-      }
-    },
-    [loadPortfolioRecord, token]
-  );
-
+  // Subscribe to Firestore /portfolio/published when verified owner is signed in
   useEffect(() => {
-    const savedToken =
-      typeof window !== 'undefined'
-        ? sessionStorage.getItem('petros_admin_token')
-        : null;
-    if (savedToken) {
-      setToken(savedToken);
-    }
-    void checkStatus(savedToken);
-  }, [checkStatus]);
+    if (!authorized) return;
+
+    const unsubscribe = subscribePublishedPortfolio(
+      (snapshot) => {
+        const defaults = getDefaultPortfolioBundle();
+        if (snapshot) {
+          const hydrated: PortfolioBundle = {
+            ...defaults,
+            ...snapshot.data,
+            THEME_TOKENS: snapshot.data.THEME_TOKENS ?? defaults.THEME_TOKENS,
+            SEO_SETTINGS: snapshot.data.SEO_SETTINGS ?? defaults.SEO_SETTINGS,
+            BLOG_SETTINGS: snapshot.data.BLOG_SETTINGS ?? defaults.BLOG_SETTINGS,
+          };
+          setDraft(hydrated);
+          setSavedBundle(hydrated);
+          setUpdatedAt(snapshot.updatedAt);
+          setIsCustomized(snapshot.isCustomized);
+        } else {
+          setDraft(defaults);
+          setSavedBundle(defaults);
+          setUpdatedAt(null);
+          setIsCustomized(false);
+        }
+      },
+      (err) => {
+        setStatusMessage({
+          type: 'error',
+          text: `Firestore read warning: ${err.message}`,
+        });
+      }
+    );
+
+    return () => unsubscribe();
+  }, [authorized]);
 
   const authHeaders = useMemo<Record<string, string>>(() => {
     const headers: Record<string, string> = {};
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
+    if (idToken) {
+      headers.Authorization = `Bearer ${idToken}`;
     }
     return headers;
-  }, [token]);
+  }, [idToken]);
 
-  const handleAuthSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleGoogleSignIn = async () => {
     setAuthError(null);
     setAuthLoading(true);
-
-    const endpoint =
-      authMode === 'claim' ? '/api/admin/auth/claim/' : '/api/admin/auth/login/';
-
     try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
-      });
-
-      const json = await res.json();
-      if (!res.ok) {
-        setAuthError(json.error || 'Authentication failed.');
-        return;
+      const signedInUser = await signInAdminWithGoogle();
+      if (!isAuthorizedAdminUser(signedInUser)) {
+        setAuthError(
+          `Signed in as ${signedInUser.email || 'unknown account'}. Only verified ${AUTHORIZED_ADMIN_EMAIL} is permitted.`
+        );
+      } else {
+        const token = await getFirebaseAdminIdToken();
+        setIdToken(token);
       }
-
-      if (json.token) {
-        setToken(json.token);
-        sessionStorage.setItem('petros_admin_token', json.token);
-        setPassword('');
-        await checkStatus(json.token);
-      }
-    } catch {
-      setAuthError('Connection error. Please try again.');
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Google Sign-In did not complete.';
+      setAuthError(message);
     } finally {
       setAuthLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem('petros_admin_token');
-    setToken(null);
-    setAuthorized(false);
-    setAuthMode('claimed');
+  const handleSignOut = async () => {
+    setAuthError(null);
+    await signOutAdmin();
+    setUser(null);
+    setIdToken(null);
     setActiveTab('overview');
   };
 
@@ -198,6 +213,14 @@ function AdminStudioContent() {
   );
 
   const handleSave = async () => {
+    if (!user || !isAuthorizedAdminUser(user)) {
+      setStatusMessage({
+        type: 'error',
+        text: `Only verified ${AUTHORIZED_ADMIN_EMAIL} can publish to Firestore.`,
+      });
+      return;
+    }
+
     setStatusMessage(null);
     const validation = validatePortfolioBundle(draft);
     if (!validation.ok) {
@@ -210,42 +233,28 @@ function AdminStudioContent() {
 
     setSaving(true);
     try {
-      const res = await fetch('/api/portfolio/', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          ...authHeaders,
-        },
-        body: JSON.stringify(validation.data),
-      });
-
-      const json = await res.json();
-      if (!res.ok) {
-        setStatusMessage({
-          type: 'error',
-          text: json.error || 'Failed to publish portfolio changes.',
-        });
-        return;
-      }
-
-      setDraft(validation.data);
-      setSavedBundle(validation.data);
-      setUpdatedAt(json.updatedAt || new Date().toISOString());
+      const saved = await savePublishedPortfolio(validation.data, user);
+      setDraft(saved.data);
+      setSavedBundle(saved.data);
+      setUpdatedAt(saved.updatedAt);
       setIsCustomized(true);
-      applyPortfolio(validation.data, {
-        updatedAt: json.updatedAt,
+      applyPortfolio(saved.data, {
+        updatedAt: saved.updatedAt,
         isCustomized: true,
       });
 
       setStatusMessage({
         type: 'success',
-        text: 'All portfolio text, images, links, blog settings, and UI colors published!',
+        text: 'Published live to Firebase Firestore (/portfolio/published)!',
       });
       setTimeout(() => setStatusMessage(null), 4500);
-    } catch {
+    } catch (err) {
       setStatusMessage({
         type: 'error',
-        text: 'Network error while saving portfolio.',
+        text:
+          err instanceof Error
+            ? err.message
+            : 'Failed to save portfolio to Firebase Firestore.',
       });
     } finally {
       setSaving(false);
@@ -253,23 +262,12 @@ function AdminStudioContent() {
   };
 
   const handleResetDefaults = async () => {
+    if (!user || !isAuthorizedAdminUser(user)) return;
+
     setResetting(true);
     setStatusMessage(null);
     try {
-      const res = await fetch('/api/portfolio/reset/', {
-        method: 'POST',
-        headers: authHeaders,
-      });
-
-      if (!res.ok) {
-        const json = await res.json();
-        setStatusMessage({
-          type: 'error',
-          text: json.error || 'Failed to reset portfolio.',
-        });
-        return;
-      }
-
+      await resetPublishedPortfolio(user);
       const defaults = getDefaultPortfolioBundle();
       setDraft(defaults);
       setSavedBundle(defaults);
@@ -278,11 +276,14 @@ function AdminStudioContent() {
       applyPortfolio(defaults, { updatedAt: null, isCustomized: false });
       setStatusMessage({
         type: 'success',
-        text: 'Portfolio restored to built-in default configuration.',
+        text: 'Deleted Firestore override and restored built-in portfolio defaults.',
       });
       setTimeout(() => setStatusMessage(null), 4500);
-    } catch {
-      setStatusMessage({ type: 'error', text: 'Failed to reset portfolio.' });
+    } catch (err) {
+      setStatusMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to reset Firestore document.',
+      });
     } finally {
       setResetting(false);
     }
@@ -319,7 +320,7 @@ function AdminStudioContent() {
           setDraft(validated.data);
           setStatusMessage({
             type: 'success',
-            text: 'Snapshot imported into draft! Click "Publish Changes" to apply live.',
+            text: 'Snapshot imported into draft! Click "Publish Changes" to write to Firestore.',
           });
         } else {
           setStatusMessage({
@@ -334,7 +335,7 @@ function AdminStudioContent() {
     reader.readAsText(file);
   };
 
-  if (authMode === 'loading') {
+  if (!authReady) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-[#0A0A0A] p-6">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-black/20 dark:border-white/20 border-t-black dark:border-t-white" />
@@ -342,9 +343,78 @@ function AdminStudioContent() {
     );
   }
 
-  if (!authorized && authMode !== 'open') {
-    const isClaim = authMode === 'claim';
+  // Gate 1: Signed in with an unauthorized Google account
+  if (user && !authorized) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4 sm:p-6 bg-[#FAFAFA] dark:bg-[#0A0A0A]">
+        <div className="w-full max-w-md space-y-6">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-[12px] font-mono uppercase tracking-[0.12em] text-[#666666] dark:text-[#9A9A96] hover:text-black dark:hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to Portfolio</span>
+          </Link>
 
+          <div
+            className={`${CARD_CLASS} border border-red-500/25 p-7 sm:p-8 space-y-5 shadow-xl`}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-red-600/10 text-red-700 dark:text-red-400">
+                <ShieldAlert className="h-6 w-6" />
+              </div>
+              <div>
+                <h1 className="font-display text-[24px] font-extrabold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
+                  Access Denied
+                </h1>
+                <p className="text-[12px] font-mono text-[#666666] dark:text-[#9A9A96]">
+                  Unauthorized Google Account
+                </p>
+              </div>
+            </div>
+
+            <p className="text-[13px] leading-relaxed text-[#666666] dark:text-[#9A9A96]">
+              Signed in as{' '}
+              <strong className="text-[#1A1A1A] dark:text-[#F0F0EE]">
+                {user.email || 'Unknown'}
+              </strong>
+              . Portfolio Studio is strictly restricted to verified owner account{' '}
+              <span className="font-mono text-[#1A1A1A] dark:text-[#F0F0EE]">
+                {AUTHORIZED_ADMIN_EMAIL}
+              </span>
+              .
+            </p>
+
+            <div className="flex flex-col gap-2.5">
+              <button
+                type="button"
+                onClick={async () => {
+                  await handleSignOut();
+                  await handleGoogleSignIn();
+                }}
+                className="w-full h-11 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE] text-white dark:text-[#0A0A0A] font-medium text-[13px] hover:opacity-85 transition-opacity flex items-center justify-center gap-2.5 cursor-pointer"
+              >
+                <GoogleMark />
+                <span>Switch Google Account</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => void handleSignOut()}
+                className="w-full h-10 rounded-full border border-black/[0.12] dark:border-white/[0.14] text-[12.5px] font-medium hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors flex items-center justify-center gap-2 cursor-pointer"
+              >
+                <LogOut className="h-3.5 w-3.5" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Gate 2: Not signed in — Google Sign-In screen
+  if (!user) {
     return (
       <div className="flex min-h-screen items-center justify-center p-4 sm:p-6 bg-[#FAFAFA] dark:bg-[#0A0A0A]">
         <div className="w-full max-w-md space-y-6">
@@ -368,50 +438,54 @@ function AdminStudioContent() {
                   Portfolio Studio
                 </h1>
                 <p className="text-[12px] text-[#666666] dark:text-[#9A9A96]">
-                  {isClaim
-                    ? 'Set up initial administrative password'
-                    : 'Administrative authentication'}
+                  Firebase Firestore CMS · Owner Access Only
                 </p>
               </div>
             </div>
 
-            <form onSubmit={handleAuthSubmit} className="space-y-4">
-              <div>
-                <label className="block text-[11px] font-mono uppercase tracking-[0.14em] text-[#666666] dark:text-[#9A9A96] mb-1.5">
-                  {isClaim ? 'New Admin Password (8+ chars)' : 'Admin Password'}
-                </label>
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••••"
-                  className={INPUT_CLASS}
-                  required
-                  autoFocus
-                />
+            <div className="rounded-xl border border-[#EAEAEA] dark:border-[#222220] bg-white dark:bg-[#0E0E0D] p-4 space-y-1.5">
+              <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#666666] dark:text-[#9A9A96]">
+                Authorized Account
+              </p>
+              <p className="text-[13px] font-mono font-medium text-[#1A1A1A] dark:text-[#F0F0EE]">
+                {AUTHORIZED_ADMIN_EMAIL}
+              </p>
+              <p className="text-[12px] leading-relaxed text-[#666666] dark:text-[#9A9A96]">
+                Sign in with your verified Google account to edit content, upload media, customize UI colors, and publish to Firestore.
+              </p>
+            </div>
+
+            {!firebaseInfo.configured ? (
+              <div className="rounded-xl border border-amber-500/35 bg-amber-50/70 dark:bg-amber-950/25 p-3.5 flex items-start gap-2.5 text-[12px] text-amber-800 dark:text-amber-300">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>
+                  Firebase project credentials are not connected yet. Add your Firebase Web App config to{' '}
+                  <code className="font-mono">firebase-applet-config.json</code> to enable Google Sign-In &amp; Firestore database sync.
+                </span>
               </div>
+            ) : null}
 
-              {authError ? (
-                <p className="text-[12px] text-red-600 dark:text-red-400 font-mono">
-                  {authError}
-                </p>
-              ) : null}
+            {authError ? (
+              <p className="text-[12px] text-red-600 dark:text-red-400 font-mono">
+                {authError}
+              </p>
+            ) : null}
 
-              <button
-                type="submit"
-                disabled={authLoading || !password.trim()}
-                className="w-full h-11 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE] text-white dark:text-[#0A0A0A] font-medium text-[13px] tracking-wide hover:opacity-85 disabled:opacity-40 transition-opacity flex items-center justify-center gap-2 cursor-pointer"
-              >
-                {authLoading ? (
-                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 dark:border-black/20 border-t-white dark:border-t-black" />
-                ) : (
-                  <>
-                    <Lock className="h-4 w-4" />
-                    <span>{isClaim ? 'Claim Admin Access' : 'Sign In to Studio'}</span>
-                  </>
-                )}
-              </button>
-            </form>
+            <button
+              type="button"
+              onClick={() => void handleGoogleSignIn()}
+              disabled={authLoading || !firebaseInfo.configured}
+              className="w-full h-11 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE] text-white dark:text-[#0A0A0A] font-medium text-[13px] tracking-wide hover:opacity-85 disabled:opacity-45 transition-opacity flex items-center justify-center gap-2.5 cursor-pointer disabled:cursor-not-allowed"
+            >
+              {authLoading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 dark:border-black/20 border-t-white dark:border-t-black" />
+              ) : (
+                <>
+                  <GoogleMark />
+                  <span>Sign in with Google</span>
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -420,7 +494,6 @@ function AdminStudioContent() {
 
   return (
     <div className="min-h-screen flex bg-white dark:bg-[#0A0A0A] text-[#1A1A1A] dark:text-[#F0F0EE]">
-      {/* Left Sidebar Navigation */}
       <AdminSidebar
         brand={draft.SITE_PROFILE.brand}
         activeTab={activeTab}
@@ -432,14 +505,14 @@ function AdminStudioContent() {
           navigation: draft.NAVIGATION_LINKS.length,
         }}
         isCustomized={isCustomized}
-        authMode={authMode}
+        userEmail={user.email}
+        firebaseConfigured={firebaseInfo.configured}
         mobileOpen={mobileSidebarOpen}
         onCloseMobile={() => setMobileSidebarOpen(false)}
         onSelectTab={(tab) => setActiveTab(tab)}
-        onLogout={handleLogout}
+        onLogout={() => void handleSignOut()}
       />
 
-      {/* Main Workspace Area */}
       <div className="flex-1 min-w-0 flex flex-col">
         <AdminWorkspaceHeader
           sectionTitle={TAB_TITLES[activeTab]}
@@ -456,11 +529,10 @@ function AdminStudioContent() {
           {statusMessage ? (
             <div
               role="status"
-              className={`mb-6 flex items-center gap-2.5 rounded-2xl p-4 text-[13px] border ${
-                statusMessage.type === 'success'
-                  ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
-                  : 'bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
-              }`}
+              className={`mb-6 flex items-center gap-2.5 rounded-2xl p-4 text-[13px] border ${statusMessage.type === 'success'
+                ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800'
+                : 'bg-red-50 dark:bg-red-950/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800'
+                }`}
             >
               <CheckCircle2 className="h-4 w-4 shrink-0" />
               <span>{statusMessage.text}</span>
@@ -468,9 +540,8 @@ function AdminStudioContent() {
           ) : null}
 
           <div
-            className={`grid grid-cols-1 gap-8 items-start ${
-              showPreview ? 'xl:grid-cols-12' : ''
-            }`}
+            className={`grid grid-cols-1 gap-8 items-start ${showPreview ? 'xl:grid-cols-12' : ''
+              }`}
           >
             <div className={showPreview ? 'xl:col-span-8 min-w-0' : 'max-w-5xl'}>
               {activeTab === 'overview' && (
@@ -584,7 +655,7 @@ function AdminStudioContent() {
 
               {activeTab === 'settings' && (
                 <SettingsSection
-                  authMode={authMode}
+                  userEmail={user.email}
                   isCustomized={isCustomized}
                   updatedAt={updatedAt}
                   resetting={resetting}

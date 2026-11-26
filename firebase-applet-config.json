@@ -1,10 +1,9 @@
 {
-  "apiKey": "mock-api-key",
-  "authDomain": "petros-portfolio-mock.firebaseapp.com",
-  "projectId": "petros-portfolio-mock",
-  "storageBucket": "petros-portfolio-mock.firebasestorage.app",
-  "messagingSenderId": "1234567890",
-  "appId": "1:1234567890:web:mock-app-id",
+  "apiKey": "AIzaSyCaVdlXpVcN1Pn_rKAZ5DVni5lpLQ93pkc",
+  "authDomain": "petrosgdev.firebaseapp.com",
+  "projectId": "petrosgdev",
+  "storageBucket": "petrosgdev.firebasestorage.app",
+  "messagingSenderId": "293058934654",
+  "appId": "1:293058934654:web:dad2f834807d5f1c8f252f",
   "firestoreDatabaseId": "(default)"
 }
-

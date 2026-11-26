@@ -24,6 +24,46 @@ export function isAuthorizedAdminIdentity(
 }
 
 /**
+ * Verifies a Firebase Auth ID token via Google Identity Toolkit REST API and
+ * enforces that it belongs to the single verified owner Google account.
+ */
+export async function verifyFirebaseAdminIdToken(
+  authHeader: string | null,
+  firebaseApiKey: string | undefined
+): Promise<boolean> {
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return false;
+  }
+  const idToken = authHeader.slice('Bearer '.length).trim();
+  if (!idToken || !firebaseApiKey || firebaseApiKey === 'mock-api-key') {
+    return false;
+  }
+
+  try {
+    const res = await fetch(
+      `https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(
+        firebaseApiKey
+      )}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken }),
+        cache: 'no-store',
+        signal: AbortSignal.timeout(4000),
+      }
+    );
+    if (!res.ok) return false;
+    const json = (await res.json()) as {
+      users?: Array<{ email?: string; emailVerified?: boolean }>;
+    };
+    const user = json.users?.[0];
+    return isAuthorizedAdminIdentity(user);
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Recursively strips `undefined` object properties because Firestore rejects
  * documents containing undefined field values.
  */

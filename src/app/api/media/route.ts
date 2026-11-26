@@ -2,7 +2,8 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { NextRequest, NextResponse } from 'next/server';
-import { isAdminRequestAuthorized } from '@/lib/adminAuth';
+import { verifyFirebaseAdminIdToken } from '@/lib/adminAccess';
+import firebaseConfig from '../../../../firebase-applet-config.json';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,9 +83,13 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAdminRequestAuthorized(req.headers.get('authorization'))) {
+  const allowed = await verifyFirebaseAdminIdToken(
+    req.headers.get('authorization'),
+    firebaseConfig.apiKey
+  );
+  if (!allowed) {
     return NextResponse.json(
-      { error: 'Unauthorized. Please sign in to the admin studio.' },
+      { error: 'Unauthorized. Sign in with the verified owner Google account.' },
       { status: 401, headers: RESPONSE_HEADERS }
     );
   }
@@ -158,9 +163,13 @@ export async function POST(req: NextRequest) {
 }
 
 export async function DELETE(req: NextRequest) {
-  if (!isAdminRequestAuthorized(req.headers.get('authorization'))) {
+  const allowed = await verifyFirebaseAdminIdToken(
+    req.headers.get('authorization'),
+    firebaseConfig.apiKey
+  );
+  if (!allowed) {
     return NextResponse.json(
-      { error: 'Unauthorized. Please sign in to the admin studio.' },
+      { error: 'Unauthorized. Sign in with the verified owner Google account.' },
       { status: 401, headers: RESPONSE_HEADERS }
     );
   }

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyFirebaseAdminIdToken } from '@/lib/adminAccess';
 import { isAiCrawlerUserAgent } from '@/lib/dataShield';
-import { isAdminRequestAuthorized } from '@/lib/adminAuth';
+import { verifyAdminAuthorizationHeader } from '@/lib/adminAuth';
 import { readPortfolioRecord, writePortfolioRecord } from '@/lib/portfolioStore';
+import firebaseConfig from '../../../../firebase-applet-config.json';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,9 +28,13 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PUT(req: NextRequest) {
-  if (!isAdminRequestAuthorized(req.headers.get('authorization'))) {
+  const authHeader = req.headers.get('authorization');
+  const allowed =
+    verifyAdminAuthorizationHeader(authHeader) ||
+    (await verifyFirebaseAdminIdToken(authHeader, firebaseConfig.apiKey));
+  if (!allowed) {
     return NextResponse.json(
-      { error: 'Unauthorized. Please sign in to the admin studio.' },
+      { error: 'Unauthorized. Please sign in with the owner Google account.' },
       { status: 401, headers: RESPONSE_HEADERS }
     );
   }

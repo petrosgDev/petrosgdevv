@@ -47,7 +47,8 @@ interface AdminSidebarProps {
     navigation: number;
   };
   isCustomized: boolean;
-  authMode: 'open' | 'env' | 'claimed' | 'claim';
+  userEmail?: string | null;
+  firebaseConfigured: boolean;
   mobileOpen: boolean;
   onCloseMobile: () => void;
   onSelectTab: (tab: AdminTabId) => void;
@@ -60,7 +61,8 @@ export function AdminSidebar({
   dirtySections,
   counts,
   isCustomized,
-  authMode,
+  userEmail,
+  firebaseConfigured,
   mobileOpen,
   onCloseMobile,
   onSelectTab,
@@ -228,13 +230,27 @@ export function AdminSidebar({
           <span className="flex items-center gap-1.5">
             <span
               className={`h-2 w-2 rounded-full ${
-                isCustomized ? 'bg-emerald-500' : 'bg-neutral-400'
+                firebaseConfigured
+                  ? isCustomized
+                    ? 'bg-emerald-500'
+                    : 'bg-sky-500'
+                  : 'bg-amber-500'
               }`}
             />
-            {isCustomized ? 'Custom Store' : 'Default Vault'}
+            {firebaseConfigured
+              ? isCustomized
+                ? 'Firestore Synced'
+                : 'Firestore Seed'
+              : 'Firebase Pending'}
           </span>
-          <span>{authMode === 'open' ? 'Local Dev' : 'Protected'}</span>
+          <span>Google Auth</span>
         </div>
+
+        {userEmail ? (
+          <p className="px-1 text-[10.5px] font-mono text-[#666666] dark:text-[#9A9A96] truncate">
+            {userEmail}
+          </p>
+        ) : null}
 
         <Link
           href="/"
@@ -246,16 +262,14 @@ export function AdminSidebar({
           <ArrowUpRight className="h-3.5 w-3.5 opacity-70" />
         </Link>
 
-        {authMode !== 'open' ? (
-          <button
-            type="button"
-            onClick={onLogout}
-            className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/25 px-3.5 py-2 text-[12px] font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span>Sign Out</span>
-          </button>
-        ) : null}
+        <button
+          type="button"
+          onClick={onLogout}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-red-500/25 px-3.5 py-2 text-[12px] font-medium text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span>Sign Out</span>
+        </button>
       </div>
     </div>
   );

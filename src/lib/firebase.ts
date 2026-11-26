@@ -135,6 +135,29 @@ export async function signOutAdmin(): Promise<void> {
   await signOut(auth);
 }
 
+export function getFirebaseProjectInfo(): {
+  configured: boolean;
+  projectId: string;
+  authDomain: string;
+  databaseId: string;
+} {
+  return {
+    configured: isFirebaseConfigured(),
+    projectId: firebaseConfig.projectId || '',
+    authDomain: firebaseConfig.authDomain || '',
+    databaseId: firebaseConfig.firestoreDatabaseId || '(default)',
+  };
+}
+
+export async function getFirebaseAdminIdToken(): Promise<string | null> {
+  if (!auth.currentUser) return null;
+  try {
+    return await auth.currentUser.getIdToken();
+  } catch {
+    return null;
+  }
+}
+
 export function subscribeAdminAuth(callback: (user: User | null) => void): Unsubscribe {
   return onAuthStateChanged(auth, callback);
 }
