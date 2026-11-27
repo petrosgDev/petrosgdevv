@@ -9,7 +9,6 @@ import {
   CheckCircle2,
   LogOut,
   ShieldAlert,
-  ShieldCheck,
 } from 'lucide-react';
 import type { PortfolioBundle } from '@/data/portfolio';
 import { getDefaultPortfolioBundle } from '@/data/portfolio';
@@ -378,11 +377,7 @@ function AdminStudioContent() {
               <strong className="text-[#1A1A1A] dark:text-[#F0F0EE]">
                 {user.email || 'Unknown'}
               </strong>
-              . Portfolio Studio is strictly restricted to verified owner account{' '}
-              <span className="font-mono text-[#1A1A1A] dark:text-[#F0F0EE]">
-                {AUTHORIZED_ADMIN_EMAIL}
-              </span>
-              .
+              . This account is not authorized to access Portfolio Studio.
             </p>
 
             <div className="flex flex-col gap-2.5">
@@ -427,40 +422,18 @@ function AdminStudioContent() {
           </Link>
 
           <div
-            className={`${CARD_CLASS} border border-black/10 dark:border-white/10 p-7 sm:p-8 space-y-6 shadow-xl`}
+            className={`${CARD_CLASS} border border-black/10 dark:border-white/10 p-7 sm:p-8 space-y-5 shadow-xl`}
           >
-            <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-[#1A1A1A] dark:bg-[#F0F0EE] text-white dark:text-[#0A0A0A]">
-                <ShieldCheck className="h-6 w-6" />
-              </div>
-              <div>
-                <h1 className="font-display text-[24px] font-extrabold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-                  Portfolio Studio
-                </h1>
-                <p className="text-[12px] text-[#666666] dark:text-[#9A9A96]">
-                  Firebase Firestore CMS · Owner Access Only
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-[#EAEAEA] dark:border-[#222220] bg-white dark:bg-[#0E0E0D] p-4 space-y-1.5">
-              <p className="text-[11px] font-mono uppercase tracking-[0.14em] text-[#666666] dark:text-[#9A9A96]">
-                Authorized Account
-              </p>
-              <p className="text-[13px] font-mono font-medium text-[#1A1A1A] dark:text-[#F0F0EE]">
-                {AUTHORIZED_ADMIN_EMAIL}
-              </p>
-              <p className="text-[12px] leading-relaxed text-[#666666] dark:text-[#9A9A96]">
-                Sign in with your verified Google account to edit content, upload media, customize UI colors, and publish to Firestore.
-              </p>
-            </div>
+            <h1 className="font-display text-[22px] font-extrabold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
+              Portfolio Studio
+            </h1>
 
             {!firebaseInfo.configured ? (
               <div className="rounded-xl border border-amber-500/35 bg-amber-50/70 dark:bg-amber-950/25 p-3.5 flex items-start gap-2.5 text-[12px] text-amber-800 dark:text-amber-300">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
                 <span>
-                  Firebase project credentials are not connected yet. Add your Firebase Web App config to{' '}
-                  <code className="font-mono">firebase-applet-config.json</code> to enable Google Sign-In &amp; Firestore database sync.
+                  Firebase is not configured. Check{' '}
+                  <code className="font-mono">firebase-applet-config.json</code>.
                 </span>
               </div>
             ) : null}

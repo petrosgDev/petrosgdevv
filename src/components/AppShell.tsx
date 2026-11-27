@@ -22,7 +22,7 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname() || '/';
   const [blocked, setBlocked] = useState(false);
-  const isAdminRoute = pathname === '/admin' || pathname.startsWith('/admin/');
+  const isAdminRoute = pathname === '/boss' || pathname.startsWith('/boss/');
 
   useEffect(() => {
     const ua = typeof navigator !== 'undefined' ? navigator.userAgent : '';

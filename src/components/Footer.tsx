@@ -92,7 +92,7 @@ export function Footer() {
             </p>
             <span aria-hidden="true" className="opacity-40">·</span>
             <Link
-              href="/admin"
+              href="/boss"
               className="inline-flex items-center gap-1 font-mono text-[11px] text-[#666666] dark:text-[#9A9A96] hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE] transition-colors"
             >
               <Lock className="h-3 w-3 opacity-70" aria-hidden="true" />

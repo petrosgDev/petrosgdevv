@@ -4,7 +4,7 @@
   Referrer-Policy: strict-origin-when-cross-origin
   X-Robots-Tag: index, follow
 
-/admin/*
+/boss/*
   X-Robots-Tag: noindex, nofollow
 
 /api/*

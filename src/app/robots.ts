@@ -44,7 +44,7 @@ export default function robots(): MetadataRoute.Robots {
           'Applebot',
         ],
         allow: '/',
-        disallow: ['/admin/', '/api/'],
+        disallow: ['/boss/', '/api/'],
       },
       ...AI_TRAINING_BOTS.map((bot) => ({
         userAgent: bot,
@@ -53,7 +53,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: '*',
         allow: '/',
-        disallow: ['/admin/', '/api/'],
+        disallow: ['/boss/', '/api/'],
       },
     ],
     sitemap: `${siteUrl}/sitemap.xml`,
