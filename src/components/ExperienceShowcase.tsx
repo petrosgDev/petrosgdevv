@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, ChevronUp } from 'lucide-react';
 import type { ExperienceItem } from '@/data/portfolio';
 import { getActiveExperienceId } from '@/lib/portfolioLogic';
 
@@ -19,22 +19,28 @@ export function ExperienceShowcase({
   idPrefix = 'exp',
 }: ExperienceShowcaseProps) {
   const [activeId, setActiveId] = useState<string>(items[0]?.id ?? '');
-  const cardRefs = useRef<Record<string, HTMLElement | null>>({});
+  const [expandedIds, setExpandedIds] = useState<string[]>(() =>
+    items[0]?.id ? [items[0].id] : []
+  );
+  const rowRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
     if (items.length === 0) {
       setActiveId('');
+      setExpandedIds([]);
       return;
     }
     setActiveId((prev) =>
       items.some((item) => item.id === prev) ? prev : items[0].id
     );
+    setExpandedIds((prev) => {
+      const valid = prev.filter((id) => items.some((item) => item.id === id));
+      return valid.length > 0 ? valid : [items[0].id];
+    });
   }, [items]);
 
   useEffect(() => {
-    if (items.length === 0) {
-      return;
-    }
+    if (items.length === 0) return;
 
     let rafId = 0;
 
@@ -42,25 +48,23 @@ export function ExperienceShowcase({
       rafId = 0;
       const positions = items
         .map((item) => {
-          const el = cardRefs.current[item.id];
+          const el = rowRefs.current[item.id];
           if (!el) return null;
           return { id: item.id, top: el.getBoundingClientRect().top };
         })
         .filter((entry): entry is { id: string; top: number } => entry !== null);
 
-      if (positions.length === 0) {
-        return;
-      }
+      if (positions.length === 0) return;
 
       const vh = window.innerHeight;
       const mobile = window.innerWidth < 768;
-      const lastCard = cardRefs.current[items[items.length - 1].id];
-      const lastCardVisible =
-        lastCard !== null &&
-        lastCard !== undefined &&
-        lastCard.getBoundingClientRect().top < vh * 0.92;
+      const lastRow = rowRefs.current[items[items.length - 1].id];
+      const lastVisible =
+        lastRow !== null &&
+        lastRow !== undefined &&
+        lastRow.getBoundingClientRect().top < vh * 0.92;
       const isAtPageBottom =
-        lastCardVisible &&
+        lastVisible &&
         vh + window.scrollY >= document.documentElement.scrollHeight - 28;
 
       const activationOffset = mobile ? Math.min(260, Math.round(vh * 0.34)) : 240;
@@ -88,9 +92,17 @@ export function ExperienceShowcase({
     };
   }, [items]);
 
+  const toggleRow = (id: string) => {
+    setActiveId(id);
+    setExpandedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
   const handleSelectRole = (id: string) => {
     setActiveId(id);
-    const el = cardRefs.current[id];
+    setExpandedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    const el = rowRefs.current[id];
     if (el) {
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       el.scrollIntoView({
@@ -103,7 +115,7 @@ export function ExperienceShowcase({
   return (
     <div
       data-testid="experience-showcase"
-      className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,0.82fr)_minmax(0,1.58fr)] lg:gap-14"
+      className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.6fr)] lg:gap-14"
     >
       {/* Left Column: Sticky Editorial Index */}
       <aside className="lg:sticky lg:top-[104px]">
@@ -129,7 +141,7 @@ export function ExperienceShowcase({
         {/* Desktop Sticky Timeline Index */}
         <ol
           aria-label="Experience roles"
-          className="mt-7 hidden lg:grid gap-1 border-l border-[#EAEAEA] dark:border-[#222220]"
+          className="mt-7 hidden lg:grid gap-0.5 border-l border-[#EAEAEA] dark:border-[#222220]"
         >
           {items.map((item, idx) => {
             const isActive = activeId === item.id;
@@ -171,87 +183,107 @@ export function ExperienceShowcase({
         </ol>
       </aside>
 
-      {/* Right Column: Boxless Clean Editorial Timeline */}
-      <div className="divide-y divide-[#EAEAEA] dark:divide-[#222220]">
+      {/* Right Column: Clean Boxless Accordion Rows */}
+      <div className="divide-y divide-[#EAEAEA] dark:divide-[#1E1E1C]">
         {items.map((item, idx) => {
           const isActive = activeId === item.id;
-          const concisePoints = item.points.slice(0, 2);
-          const conciseStack = item.stack.slice(0, 5);
+          const isExpanded = expandedIds.includes(item.id);
+          const conciseStack = item.stack.slice(0, 6);
 
           return (
             <article
               key={item.id}
               id={`${idPrefix}-${item.id}`}
               ref={(node) => {
-                cardRefs.current[item.id] = node;
+                rowRefs.current[item.id] = node;
               }}
               data-xp-card="true"
               data-active={isActive ? 'true' : 'false'}
               className="scroll-mt-24 lg:scroll-mt-28 py-6 first:pt-0 last:pb-0"
             >
-              {/* Role & Metadata Header */}
-              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
-                    <span className="font-mono text-[11px] text-[#666666] dark:text-[#9A9A96] tabular-nums">
-                      {String(idx + 1).padStart(2, '0')}
-                    </span>
-                    <h3 className="font-display text-[19px] sm:text-[21px] font-bold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-                      {item.role}
-                    </h3>
-                  </div>
-                  <p className="mt-0.5 text-[13px] font-medium text-[#666666] dark:text-[#9A9A96]">
-                    {item.organization}
-                    <span aria-hidden="true" className="mx-1.5 opacity-45">
-                      ·
-                    </span>
-                    <span className="font-normal">{item.location}</span>
-                  </p>
-                </div>
+              <div className="flex items-start gap-3 sm:gap-4">
+                <span className="pt-1 font-mono text-[11px] text-[#888884] dark:text-[#686864] tabular-nums select-none">
+                  {idx + 1}
+                </span>
 
-                <div className="flex items-center gap-3 shrink-0">
-                  <span className="font-mono text-[11.5px] text-[#666666] dark:text-[#9A9A96] tabular-nums">
-                    {item.period}
-                  </span>
-                  {item.organizationUrl ? (
-                    <a
-                      href={item.organizationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[11.5px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 decoration-black/25 dark:decoration-white/25 hover:opacity-65 transition-opacity whitespace-nowrap"
-                    >
-                      <span>{item.organizationUrlLabel ?? 'Site'}</span>
-                      <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden="true" />
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-
-              {/* Concise 2-Point Highlights */}
-              <ul className="mt-3 space-y-1.5">
-                {concisePoints.map((point) => (
-                  <li
-                    key={`${item.id}-${point.lead ?? point.text.slice(0, 24)}`}
-                    className="relative pl-4 text-[13px] leading-[1.6] text-[#454542] dark:text-[#B8B8B3]"
+                <div className="min-w-0 flex-1">
+                  {/* Clickable Header Row */}
+                  <button
+                    type="button"
+                    onClick={() => toggleRow(item.id)}
+                    aria-expanded={isExpanded}
+                    className="group flex w-full items-start justify-between gap-4 text-left cursor-pointer focus-visible:outline-none"
                   >
+                    <div className="min-w-0 space-y-1">
+                      <h3 className="text-[16px] sm:text-[18px] leading-snug tracking-[-0.01em]">
+                        <span className="font-semibold text-[#1A1A1A] dark:text-[#F5F5F3]">
+                          {item.role}
+                        </span>
+                        <span
+                          aria-hidden="true"
+                          className="mx-2 font-normal text-[#888884] dark:text-[#555552]"
+                        >
+                          /
+                        </span>
+                        <span className="font-normal text-[#666666] dark:text-[#A3A39E]">
+                          {item.organization}
+                        </span>
+                      </h3>
+
+                      <p className="text-[12px] font-mono">
+                        <span className="text-[#991B1B] dark:text-[#B91C1C]">
+                          {item.location}
+                        </span>
+                        <span aria-hidden="true" className="mx-2 text-[#888884] dark:text-[#555552]">
+                          ·
+                        </span>
+                        <span className="text-[#666666] dark:text-[#9A9A96] tabular-nums">
+                          {item.period}
+                        </span>
+                      </p>
+                    </div>
+
                     <span
                       aria-hidden="true"
-                      className="absolute left-0 top-[0.6em] h-1 w-1 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE]"
-                    />
-                    {point.lead ? (
-                      <strong className="font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]">
-                        {point.lead}{' '}
-                      </strong>
-                    ) : null}
-                    <span>{point.text}</span>
-                  </li>
-                ))}
-              </ul>
+                      className="mt-1 shrink-0 text-[#666666] dark:text-[#9A9A96] group-hover:text-[#1A1A1A] dark:group-hover:text-[#F0F0EE] transition-colors"
+                    >
+                      {isExpanded ? (
+                        <ChevronUp className="h-4 w-4 text-[#991B1B] dark:text-[#B91C1C]" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </span>
+                  </button>
 
-              {/* Minimal Inline Stack Line */}
-              <p className="mt-3 font-mono text-[11px] text-[#666666] dark:text-[#9A9A96]">
-                {conciseStack.join(' · ')}
-              </p>
+                  {/* Expandable Clean Summary + Optional Link */}
+                  {isExpanded ? (
+                    <div className="mt-4 border-l border-[#D4D4D0] dark:border-[#2C2C2A] pl-4 space-y-2.5">
+                      <p className="max-w-[62ch] text-[13.5px] leading-[1.7] text-[#3A3A37] dark:text-[#C8C8C4]">
+                        {item.summary}
+                      </p>
+
+                      {item.organizationUrl ? (
+                        <a
+                          href={item.organizationUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 decoration-black/25 dark:decoration-white/25 hover:opacity-70 transition-opacity"
+                        >
+                          <span>{item.organizationUrlLabel ?? 'Official Site'}</span>
+                          <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden="true" />
+                        </a>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {/* Clean Plain-Text Tech Stack Row */}
+                  <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#666666] dark:text-[#8E8E8A]">
+                    {conciseStack.map((tech) => (
+                      <span key={tech}>{tech}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </article>
           );
         })}
