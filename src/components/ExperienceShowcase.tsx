@@ -21,7 +21,6 @@ export function ExperienceShowcase({
   const [activeId, setActiveId] = useState<string>(items[0]?.id ?? '');
   const cardRefs = useRef<Record<string, HTMLElement | null>>({});
 
-  // Keep activeId synchronized when the experiences list updates dynamically
   useEffect(() => {
     if (items.length === 0) {
       setActiveId('');
@@ -142,10 +141,10 @@ export function ExperienceShowcase({
                   data-xp-item="true"
                   data-active={isActive ? 'true' : 'false'}
                   aria-current={isActive ? 'true' : undefined}
-                  className={`group relative -ml-px grid w-full grid-cols-[24px_minmax(0,1fr)] items-baseline gap-2.5 border-l-2 py-2.5 pl-4 pr-3 text-left transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] dark:focus-visible:ring-white/60 ${
+                  className={`group relative -ml-px grid w-full grid-cols-[24px_minmax(0,1fr)] items-baseline gap-2.5 border-l-2 py-2 pl-4 pr-3 text-left transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] dark:focus-visible:ring-white/60 ${
                     isActive
-                      ? 'border-[#1A1A1A] dark:border-[#F0F0EE] bg-[#F7F7F5] dark:bg-[#141413] text-[#1A1A1A] dark:text-[#F0F0EE]'
-                      : 'border-transparent text-[#666666] dark:text-[#9A9A96] hover:border-black/25 dark:hover:border-white/25 hover:bg-black/[0.02] dark:hover:bg-white/[0.025] hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE]'
+                      ? 'border-[#1A1A1A] dark:border-[#F0F0EE] text-[#1A1A1A] dark:text-[#F0F0EE]'
+                      : 'border-transparent text-[#666666] dark:text-[#9A9A96] hover:border-black/25 dark:hover:border-white/25 hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE]'
                   }`}
                 >
                   <span className="font-mono text-[11px] tabular-nums opacity-60">
@@ -172,10 +171,12 @@ export function ExperienceShowcase({
         </ol>
       </aside>
 
-      {/* Right Column: Unified Architectural Timeline Cards (zero hydration layout jump across all viewports) */}
-      <div className="grid gap-5 md:gap-6">
+      {/* Right Column: Boxless Clean Editorial Timeline */}
+      <div className="divide-y divide-[#EAEAEA] dark:divide-[#222220]">
         {items.map((item, idx) => {
           const isActive = activeId === item.id;
+          const concisePoints = item.points.slice(0, 2);
+          const conciseStack = item.stack.slice(0, 5);
 
           return (
             <article
@@ -186,65 +187,56 @@ export function ExperienceShowcase({
               }}
               data-xp-card="true"
               data-active={isActive ? 'true' : 'false'}
-              className={`scroll-mt-24 lg:scroll-mt-28 rounded-2xl border p-5 sm:p-7 transition-colors duration-200 ${
-                isActive
-                  ? 'border-[#1A1A1A]/35 dark:border-white/25 bg-white dark:bg-[#131312] shadow-sm'
-                  : 'border-[#EAEAEA] dark:border-[#222220] bg-[#FAFAFA]/75 dark:bg-[#0E0E0D] hover:border-black/20 dark:hover:border-white/20'
-              }`}
+              className="scroll-mt-24 lg:scroll-mt-28 py-6 first:pt-0 last:pb-0"
             >
-              {/* Top Metadata Strip: Index, Period Pill, Location & External Link */}
-              <div className="flex flex-wrap items-center justify-between gap-2.5">
-                <div className="flex flex-wrap items-center gap-2 text-[12px] text-[#666666] dark:text-[#9A9A96]">
-                  <span className="font-mono text-[10.5px] uppercase tracking-[0.12em] opacity-65 tabular-nums">
-                    {String(idx + 1).padStart(2, '0')}
-                  </span>
-                  <span className="inline-flex items-center rounded-full border border-[#E2E2DE] dark:border-[#2B2B28] bg-[#F7F7F5] dark:bg-[#161615] px-2.5 py-0.5 font-mono text-[11px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] tabular-nums">
-                    {item.period}
-                  </span>
-                  <span aria-hidden="true" className="opacity-40">
-                    ·
-                  </span>
-                  <span>{item.location}</span>
+              {/* Role & Metadata Header */}
+              <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-baseline gap-x-2.5 gap-y-0.5">
+                    <span className="font-mono text-[11px] text-[#666666] dark:text-[#9A9A96] tabular-nums">
+                      {String(idx + 1).padStart(2, '0')}
+                    </span>
+                    <h3 className="font-display text-[19px] sm:text-[21px] font-bold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
+                      {item.role}
+                    </h3>
+                  </div>
+                  <p className="mt-0.5 text-[13px] font-medium text-[#666666] dark:text-[#9A9A96]">
+                    {item.organization}
+                    <span aria-hidden="true" className="mx-1.5 opacity-45">
+                      ·
+                    </span>
+                    <span className="font-normal">{item.location}</span>
+                  </p>
                 </div>
 
-                {item.organizationUrl ? (
-                  <a
-                    href={item.organizationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full border border-[#E2E2DE] dark:border-[#2B2B28] px-3 py-1 text-[11.5px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors whitespace-nowrap"
-                  >
-                    <span>{item.organizationUrlLabel ?? 'Official Site'}</span>
-                    <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden="true" />
-                  </a>
-                ) : null}
+                <div className="flex items-center gap-3 shrink-0">
+                  <span className="font-mono text-[11.5px] text-[#666666] dark:text-[#9A9A96] tabular-nums">
+                    {item.period}
+                  </span>
+                  {item.organizationUrl ? (
+                    <a
+                      href={item.organizationUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11.5px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 decoration-black/25 dark:decoration-white/25 hover:opacity-65 transition-opacity whitespace-nowrap"
+                    >
+                      <span>{item.organizationUrlLabel ?? 'Site'}</span>
+                      <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden="true" />
+                    </a>
+                  ) : null}
+                </div>
               </div>
 
-              {/* Role Title & Organization */}
-              <div className="mt-3.5 space-y-1">
-                <h3 className="font-display text-[20px] sm:text-[22px] font-bold uppercase tracking-tight leading-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-                  {item.role}
-                </h3>
-                <p className="text-[13.5px] font-medium text-[#666666] dark:text-[#9A9A96]">
-                  {item.organization}
-                </p>
-              </div>
-
-              {/* Executive Summary */}
-              <p className="mt-3 max-w-[64ch] text-[13.5px] sm:text-[14px] leading-[1.75] text-[#2A2A2A] dark:text-[#D4D4D0]">
-                {item.summary}
-              </p>
-
-              {/* Key Engineering Contributions */}
-              <ul className="mt-4 grid gap-2.5 border-t border-[#EAEAEA] dark:border-[#222220] pt-4">
-                {item.points.map((point) => (
+              {/* Concise 2-Point Highlights */}
+              <ul className="mt-3 space-y-1.5">
+                {concisePoints.map((point) => (
                   <li
                     key={`${item.id}-${point.lead ?? point.text.slice(0, 24)}`}
-                    className="relative pl-4 text-[13px] sm:text-[13.5px] leading-[1.68] text-[#52524E] dark:text-[#B5B5B0]"
+                    className="relative pl-4 text-[13px] leading-[1.6] text-[#454542] dark:text-[#B8B8B3]"
                   >
                     <span
                       aria-hidden="true"
-                      className="absolute left-0 top-[0.62em] h-1.5 w-1.5 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE]"
+                      className="absolute left-0 top-[0.6em] h-1 w-1 rounded-full bg-[#1A1A1A] dark:bg-[#F0F0EE]"
                     />
                     {point.lead ? (
                       <strong className="font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]">
@@ -256,17 +248,10 @@ export function ExperienceShowcase({
                 ))}
               </ul>
 
-              {/* Stack Tags */}
-              <div className="mt-4 flex flex-wrap gap-1.5">
-                {item.stack.map((tech) => (
-                  <span
-                    key={tech}
-                    className="inline-flex items-center rounded-md border border-[#E5E5E3] dark:border-[#262624] bg-[#F7F7F5] dark:bg-[#161615] px-2.5 py-0.5 font-mono text-[11px] text-[#3A3A37] dark:text-[#D4D4D0]"
-                  >
-                    {tech}
-                  </span>
-                ))}
-              </div>
+              {/* Minimal Inline Stack Line */}
+              <p className="mt-3 font-mono text-[11px] text-[#666666] dark:text-[#9A9A96]">
+                {conciseStack.join(' · ')}
+              </p>
             </article>
           );
         })}
