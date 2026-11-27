@@ -56,7 +56,7 @@ const DESKTOP_PRIMARY_NAV: DockNavItem[] = [
     icon: GitBranch,
   },
   { id: 'blog', label: 'Blog', href: '/blog', matchPath: '/blog', icon: Newspaper },
-  { id: 'resume', label: 'Resume', href: '/resume', matchPath: '/resume', icon: FileText },
+  { id: 'resume', label: 'Resume (PDF)', href: '/api/resume/', matchPath: '/resume', icon: FileText },
 ];
 
 const MOBILE_DOCK_PRIMARY_NAV: DockNavItem[] = [
@@ -79,7 +79,7 @@ const MOBILE_DOCK_PRIMARY_NAV: DockNavItem[] = [
     icon: GitBranch,
   },
   { id: 'blog', label: 'Blog', href: '/blog', matchPath: '/blog', icon: Newspaper },
-  { id: 'resume', label: 'Resume', href: '/resume', matchPath: '/resume', icon: FileText },
+  { id: 'resume', label: 'Resume (PDF)', href: '/api/resume/', matchPath: '/resume', icon: FileText },
 ];
 
 const MOBILE_DRAWER_NAV = [
@@ -88,7 +88,7 @@ const MOBILE_DRAWER_NAV = [
   { label: 'Skills', href: '/#skills', matchPath: '/', hash: '#skills' },
   { label: 'Experience', href: '/#experience', matchPath: '/', hash: '#experience' },
   { label: 'Blog', href: '/blog', matchPath: '/blog' },
-  { label: 'Resume', href: '/resume', matchPath: '/resume' },
+  { label: 'Resume (PDF)', href: '/api/resume/', matchPath: '/resume' },
   { label: 'Contact', href: '/contact', matchPath: '/contact' },
 ];
 
@@ -258,6 +258,26 @@ export function Navbar() {
                 );
               }
               const Icon = item.icon;
+              if (item.id === 'resume') {
+                return (
+                  <a
+                    key={item.id}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={item.label}
+                    className="group relative flex h-10 w-10 items-center justify-center rounded-full text-[#686864] dark:text-[#A3A6AB] hover:text-[#111110] dark:hover:text-[#F5F5F3] hover:bg-black/[0.04] dark:hover:bg-white/[0.06] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] dark:focus-visible:ring-white/60"
+                  >
+                    <Icon className="relative z-10 h-[17px] w-[17px]" aria-hidden="true" />
+                    <span
+                      role="tooltip"
+                      className="pointer-events-none absolute top-[calc(100%+10px)] left-1/2 -translate-x-1/2 translate-y-1 opacity-0 whitespace-nowrap rounded-lg border border-black/[0.08] dark:border-white/[0.1] bg-white/95 dark:bg-[#17191C]/95 px-2.5 py-1 text-[11px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] shadow-md backdrop-blur-md transition-all duration-150 group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100"
+                    >
+                      {item.label}
+                    </span>
+                  </a>
+                );
+              }
               return (
                 <Link
                   key={item.id}
@@ -403,6 +423,26 @@ export function Navbar() {
               <div className="flex flex-col gap-1">
                 {MOBILE_DRAWER_NAV.map((item, idx) => {
                   const active = isRouteActive(item.matchPath, item.hash);
+                  if (item.href === '/api/resume/') {
+                    return (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMobileOpen(false)}
+                        className="flex min-h-[44px] items-center justify-between rounded-xl px-3.5 py-2 text-[14px] text-[#555553] dark:text-[#A3A6AB] hover:bg-[#F8F8F7] dark:hover:bg-[#1C1F24] transition-colors"
+                      >
+                        <span className="flex items-center gap-3">
+                          <span className="font-mono text-[10.5px] opacity-55 tabular-nums">
+                            0{idx + 1}
+                          </span>
+                          <span>{item.label}</span>
+                        </span>
+                        <ArrowUpRight className="h-3.5 w-3.5 opacity-45" aria-hidden="true" />
+                      </a>
+                    );
+                  }
                   return (
                     <Link
                       key={item.href}
@@ -482,6 +522,20 @@ export function Navbar() {
             );
           }
           const Icon = item.icon;
+          if (item.id === 'resume') {
+            return (
+              <a
+                key={item.id}
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={item.label}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full text-[#686864] dark:text-[#A3A6AB] transition-colors duration-200"
+              >
+                <Icon className="relative z-10 h-[17px] w-[17px]" aria-hidden="true" />
+              </a>
+            );
+          }
           return (
             <Link
               key={item.id}

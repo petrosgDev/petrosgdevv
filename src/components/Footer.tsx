@@ -61,12 +61,14 @@ export function Footer() {
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/resume"
+                <a
+                  href="/api/resume/"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-[#1A1A1A] dark:text-[#F0F0EE] hover:underline underline-offset-4 transition-colors"
                 >
-                  Resume
-                </Link>
+                  Resume (PDF)
+                </a>
               </li>
             </ul>
           </div>
