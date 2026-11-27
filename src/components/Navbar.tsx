@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   ArrowUpRight,
-  BookOpen,
   Briefcase,
   Code2,
   GitBranch,
@@ -56,7 +55,6 @@ const DESKTOP_PRIMARY_NAV: DockNavItem[] = [
     icon: GitBranch,
   },
   { id: 'blog', label: 'Blog', href: '/blog', matchPath: '/blog', icon: Newspaper },
-  { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
 ];
 
 const MOBILE_DOCK_PRIMARY_NAV: DockNavItem[] = [
@@ -79,7 +77,6 @@ const MOBILE_DOCK_PRIMARY_NAV: DockNavItem[] = [
     icon: GitBranch,
   },
   { id: 'blog', label: 'Blog', href: '/blog', matchPath: '/blog', icon: Newspaper },
-  { id: 'about', label: 'About', href: '/about', matchPath: '/about', icon: BookOpen },
 ];
 
 const MOBILE_DRAWER_NAV = [
@@ -88,7 +85,6 @@ const MOBILE_DRAWER_NAV = [
   { label: 'Skills', href: '/#skills', matchPath: '/', hash: '#skills' },
   { label: 'Experience', href: '/#experience', matchPath: '/', hash: '#experience' },
   { label: 'Blog', href: '/blog', matchPath: '/blog' },
-  { label: 'About', href: '/about', matchPath: '/about' },
   { label: 'Contact', href: '/contact', matchPath: '/contact' },
 ];
 

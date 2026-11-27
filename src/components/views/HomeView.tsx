@@ -191,15 +191,6 @@ export function HomeView() {
                   systems, my focus stays consistent: understand the real workflow first, structure
                   the architecture cleanly, and deliver calm interfaces people enjoy using.
                 </p>
-                <div className="pt-1">
-                  <Link
-                    href="/about"
-                    className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 hover:opacity-65 transition-opacity"
-                  >
-                    <span>Read full background &amp; philosophy</span>
-                    <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                  </Link>
-                </div>
               </div>
             </div>
           </Reveal>

@@ -42,7 +42,7 @@ export function Footer() {
               Navigation
             </h2>
             <ul className="space-y-2 text-[13px]">
-              {NAVIGATION_LINKS.map((item) => (
+              {NAVIGATION_LINKS.filter((item) => item.path !== '/about').map((item) => (
                 <li key={item.path}>
                   <Link
                     href={item.path}

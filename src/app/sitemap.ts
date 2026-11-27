@@ -23,12 +23,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.9,
     },
     {
-      url: buildCanonicalUrl('/about', siteUrl),
-      lastModified,
-      changeFrequency: 'monthly',
-      priority: 0.9,
-    },
-    {
       url: buildCanonicalUrl('/blog', siteUrl),
       lastModified,
       changeFrequency: 'daily',

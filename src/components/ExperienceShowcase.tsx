@@ -215,18 +215,6 @@ export function ExperienceShowcase({
             );
           })}
         </ol>
-
-        {showAboutLink && (
-          <div className="mt-6 hidden lg:block pl-3.5">
-            <Link
-              href="/about"
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 hover:opacity-65 transition-opacity whitespace-nowrap"
-            >
-              <span>Full background &amp; skills</span>
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </div>
-        )}
       </aside>
 
       {/* Right Column: Tablet & Desktop stay fully expanded as before; Mobile animates reduced -> full detail on scroll */}
@@ -460,18 +448,6 @@ export function ExperienceShowcase({
             </article>
           );
         })}
-
-        {showAboutLink && (
-          <div className="pt-1 lg:hidden">
-            <Link
-              href="/about"
-              className="inline-flex items-center gap-1.5 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 hover:opacity-65 transition-opacity whitespace-nowrap"
-            >
-              <span>Full background &amp; skills</span>
-              <ArrowUpRight className="h-3.5 w-3.5" aria-hidden="true" />
-            </Link>
-          </div>
-        )}
       </div>
     </div>
   );
