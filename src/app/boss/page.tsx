@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import type { User } from 'firebase/auth';
 import {
@@ -106,6 +106,7 @@ function AdminStudioContent() {
   );
   const [updatedAt, setUpdatedAt] = useState<string | null>(null);
   const [isCustomized, setIsCustomized] = useState(false);
+  const [bundleReady, setBundleReady] = useState(false);
 
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
@@ -115,6 +116,12 @@ function AdminStudioContent() {
   } | null>(null);
 
   const authorized = isAuthorizedAdminUser(user);
+  const savingRef = useRef(false);
+  const hasDirtyRef = useRef(false);
+
+  useEffect(() => {
+    savingRef.current = saving;
+  }, [saving]);
 
   // Listen to Firebase Auth state
   useEffect(() => {
@@ -133,10 +140,19 @@ function AdminStudioContent() {
 
   // Subscribe to Firestore /portfolio/published when verified owner is signed in
   useEffect(() => {
-    if (!authorized) return;
+    if (!authorized) {
+      setBundleReady(false);
+      return;
+    }
 
     const unsubscribe = subscribePublishedPortfolio(
       (snapshot) => {
+        // Ignore snapshot echoes while saving or while the user has unsaved edits in the editor
+        if (savingRef.current) {
+          setBundleReady(true);
+          return;
+        }
+
         const defaults = getDefaultPortfolioBundle();
         if (snapshot) {
           const hydrated: PortfolioBundle = {
@@ -146,18 +162,28 @@ function AdminStudioContent() {
             SEO_SETTINGS: snapshot.data.SEO_SETTINGS ?? defaults.SEO_SETTINGS,
             BLOG_SETTINGS: snapshot.data.BLOG_SETTINGS ?? defaults.BLOG_SETTINGS,
           };
-          setDraft(hydrated);
           setSavedBundle(hydrated);
-          setUpdatedAt(snapshot.updatedAt);
+          if (!hasDirtyRef.current) {
+            setDraft(hydrated);
+          }
+          setUpdatedAt(snapshot.updatedAt ?? new Date().toISOString());
           setIsCustomized(snapshot.isCustomized);
+          applyPortfolio(hydrated, {
+            updatedAt: snapshot.updatedAt ?? new Date().toISOString(),
+            isCustomized: snapshot.isCustomized,
+          });
         } else {
-          setDraft(defaults);
           setSavedBundle(defaults);
+          if (!hasDirtyRef.current) {
+            setDraft(defaults);
+          }
           setUpdatedAt(null);
           setIsCustomized(false);
         }
+        setBundleReady(true);
       },
       (err) => {
+        setBundleReady(true);
         setStatusMessage({
           type: 'error',
           text: `Firestore read warning: ${err.message}`,
@@ -166,7 +192,7 @@ function AdminStudioContent() {
     );
 
     return () => unsubscribe();
-  }, [authorized]);
+  }, [authorized, applyPortfolio]);
 
   const authHeaders = useMemo<Record<string, string>>(() => {
     const headers: Record<string, string> = {};
@@ -210,6 +236,10 @@ function AdminStudioContent() {
     () => getDirtySections(savedBundle, draft),
     [savedBundle, draft]
   );
+
+  useEffect(() => {
+    hasDirtyRef.current = dirtySections.length > 0;
+  }, [dirtySections]);
 
   const handleSave = async () => {
     if (!user || !isAuthorizedAdminUser(user)) {
@@ -334,7 +364,7 @@ function AdminStudioContent() {
     reader.readAsText(file);
   };
 
-  if (!authReady) {
+  if (!authReady || (authorized && !bundleReady)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-white dark:bg-[#0A0A0A] p-6">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-black/20 dark:border-white/20 border-t-black dark:border-t-white" />
