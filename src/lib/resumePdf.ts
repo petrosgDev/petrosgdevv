@@ -14,19 +14,18 @@ import { resolveSiteUrl } from '@/lib/seo';
 
 const PAGE_WIDTH = 595.28; // A4 pt
 const PAGE_HEIGHT = 841.89;
-const MARGIN_X = 42;
+const MARGIN_X = 44;
 const MARGIN_TOP = 38;
-const MARGIN_BOTTOM = 44;
+const MARGIN_BOTTOM = 38;
 const CONTENT_WIDTH = PAGE_WIDTH - MARGIN_X * 2;
 const MAX_PAGES = 2;
 
-// Clean blue-led editorial palette (color & spacing replace heavy bold ink)
-const COLOR_NAVY = rgb(0.118, 0.227, 0.541); // #1E3A8A — Name, Headings, Titles
-const COLOR_COBALT = rgb(0.145, 0.388, 0.922); // #2563EB — Secondary accents, bullet leads, links
-const COLOR_BLUE_RULE = rgb(0.749, 0.859, 0.996); // #BFDBFE — Hairline dividers
-const COLOR_ICE_BG = rgb(0.937, 0.965, 1.0); // #EFF6FF — Soft blue tint header & highlights card
-const COLOR_INK = rgb(0.2, 0.255, 0.333); // #334155 — Readable body copy
-const COLOR_MUTED = rgb(0.392, 0.455, 0.545); // #64748B — Dates, metadata, stack
+// Clean blue-led academic/executive palette (blue color contrast instead of heavy bold)
+const COLOR_NAVY = rgb(0.118, 0.227, 0.541); // #1E3A8A — Name, Section Headings, Role/Project Titles
+const COLOR_COBALT = rgb(0.145, 0.388, 0.922); // #2563EB — Subtitle, Italic Org/Tag, Links, Bullet Leads
+const COLOR_RULE = rgb(0.68, 0.78, 0.95); // #ADC7F2 — Clean full-width horizontal rules
+const COLOR_INK = rgb(0.16, 0.21, 0.29); // #29364A — Crisp body copy
+const COLOR_MUTED = rgb(0.36, 0.43, 0.53); // #5C6E87 — Footer & secondary metadata
 
 function sanitizeWinAnsi(input: string): string {
   return input
@@ -113,15 +112,16 @@ function addUriAnnotation(
   }
 }
 
-function isEducationOrCert(item: ExperienceItem): boolean {
-  if (
-    item.id === 'software-engineering-education' ||
-    item.id === 'insa-summer-camp'
-  ) {
-    return true;
-  }
+function isEducationItem(item: ExperienceItem): boolean {
+  if (item.id === 'software-engineering-education') return true;
   const combined = `${item.role} ${item.organization}`.toLowerCase();
-  return /\bb\.?sc\b|university|certified|summer camp/i.test(combined);
+  return /\bb\.?sc\b|university/i.test(combined);
+}
+
+function isProgramOrCertItem(item: ExperienceItem): boolean {
+  if (item.id === 'insa-summer-camp') return true;
+  const combined = `${item.role} ${item.organization}`.toLowerCase();
+  return /certified|summer camp/i.test(combined);
 }
 
 function resolvePublicSiteUrl(preferredUrl?: string): string {
@@ -145,8 +145,9 @@ export async function generateResumePdfBytes(
   doc.setSubject(sanitizeWinAnsi(`${SITE_PROFILE.role} Resume`));
   doc.setCreator('Petros Geto Portfolio Studio');
 
-  // Crisp regular Helvetica — color hierarchy handles scannability without heavy bold slabs
-  const font = await doc.embedFont(StandardFonts.Helvetica);
+  // Classic LaTeX-style serif fonts (regular + italic, zero heavy bold slabs)
+  const serif = await doc.embedFont(StandardFonts.TimesRoman);
+  const serifItalic = await doc.embedFont(StandardFonts.TimesRomanItalic);
 
   let page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
   let pageCount = 1;
@@ -165,555 +166,443 @@ export async function generateResumePdfBytes(
     return false;
   };
 
-  const forcePageTwo = (): boolean => {
-    if (pageCount >= MAX_PAGES) return false;
-    page = doc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
-    pageCount += 1;
-    y = PAGE_HEIGHT - MARGIN_TOP;
-    return true;
-  };
-
-  const drawSectionHeading = (title: string, gapTop = 8): boolean => {
-    if (!ensureSpace(gapTop + 24)) return false;
+  const drawSectionHeading = (title: string, gapTop = 9, minContentAfter = 26): boolean => {
+    if (!ensureSpace(gapTop + 20 + minContentAfter)) return false;
     y -= gapTop;
     page.drawText(sanitizeWinAnsi(title), {
       x: MARGIN_X,
       y,
-      size: 10,
-      font,
+      size: 11,
+      font: serif,
       color: COLOR_NAVY,
     });
-    page.drawRectangle({
-      x: MARGIN_X,
-      y: y - 5,
-      width: 28,
-      height: 1.5,
-      color: COLOR_COBALT,
-    });
     page.drawLine({
-      start: { x: MARGIN_X + 30, y: y - 4.25 },
-      end: { x: PAGE_WIDTH - MARGIN_X, y: y - 4.25 },
-      thickness: 0.65,
-      color: COLOR_BLUE_RULE,
+      start: { x: MARGIN_X, y: y - 4 },
+      end: { x: PAGE_WIDTH - MARGIN_X, y: y - 4 },
+      thickness: 0.7,
+      color: COLOR_RULE,
     });
     y -= 16;
     return true;
   };
 
-  // =========================================================================
-  // 1. HEADER BAND
-  // =========================================================================
-  const headerHeight = 80;
-  const headerTop = y;
-  const headerBottom = headerTop - headerHeight;
-
-  page.drawRectangle({
-    x: MARGIN_X,
-    y: headerBottom,
-    width: CONTENT_WIDTH,
-    height: headerHeight,
-    color: COLOR_ICE_BG,
-  });
-  page.drawRectangle({
-    x: MARGIN_X,
-    y: headerBottom,
-    width: 3.5,
-    height: headerHeight,
-    color: COLOR_COBALT,
-  });
-
-  const padLeft = MARGIN_X + 14;
-  page.drawText(sanitizeWinAnsi(SITE_PROFILE.fullName.toUpperCase()), {
-    x: padLeft,
-    y: headerTop - 24,
-    size: 20.5,
-    font,
-    color: COLOR_NAVY,
-  });
-
-  page.drawText(
-    sanitizeWinAnsi(`${SITE_PROFILE.role}  ·  Full-Stack, Backend & Applied AI`),
-    {
-      x: padLeft,
-      y: headerTop - 39,
-      size: 9.5,
-      font,
-      color: COLOR_COBALT,
-    }
-  );
-
-  const phoneClean = SITE_PROFILE.phoneDisplay.replace(/[^+\d]/g, '');
-  const contactRow1: Array<{ text: string; url?: string }> = [
-    { text: sanitizeWinAnsi(SITE_PROFILE.location) },
-    { text: sanitizeWinAnsi(SITE_PROFILE.phoneDisplay), url: `tel:${phoneClean}` },
-    { text: sanitizeWinAnsi(SITE_PROFILE.email), url: `mailto:${SITE_PROFILE.email}` },
-  ];
-  const contactRow2: Array<{ text: string; url?: string }> = [
-    { text: formatLiveHost(siteUrl) || 'petrosgdevv.vercel.app', url: siteUrl },
-    {
-      text: `GitHub (${sanitizeWinAnsi(SITE_PROFILE.githubHandle)})`,
-      url: SITE_PROFILE.githubUrl,
-    },
-    {
-      text: `LinkedIn (${sanitizeWinAnsi(SITE_PROFILE.linkedinHandle)})`,
-      url: SITE_PROFILE.linkedinUrl,
-    },
-  ];
-
-  const drawContactRow = (
-    segments: Array<{ text: string; url?: string }>,
+  const drawCenteredText = (
+    raw: string,
+    fontObj: PDFFont,
+    size: number,
+    color: ReturnType<typeof rgb>,
     rowY: number
   ) => {
-    let cursorX = padLeft;
-    segments.forEach((seg, idx) => {
-      if (idx > 0) {
-        const sep = '   ·   ';
-        page.drawText(sep, { x: cursorX, y: rowY, size: 8.2, font, color: COLOR_MUTED });
-        cursorX += font.widthOfTextAtSize(sep, 8.2);
-      }
-      const w = font.widthOfTextAtSize(seg.text, 8.2);
-      page.drawText(seg.text, {
-        x: cursorX,
-        y: rowY,
-        size: 8.2,
-        font,
-        color: seg.url ? COLOR_NAVY : COLOR_INK,
-      });
-      if (seg.url) {
-        addUriAnnotation(doc, page, cursorX, rowY, w, 9, seg.url);
-      }
-      cursorX += w;
+    const text = sanitizeWinAnsi(raw);
+    const w = fontObj.widthOfTextAtSize(text, size);
+    page.drawText(text, {
+      x: (PAGE_WIDTH - w) / 2,
+      y: rowY,
+      size,
+      font: fontObj,
+      color,
     });
   };
 
-  drawContactRow(contactRow1, headerTop - 54);
-  drawContactRow(contactRow2, headerTop - 68);
+  // =========================================================================
+  // 1. CENTERED CLEAN HEADER (matches classic LaTeX serif template)
+  // =========================================================================
+  drawCenteredText(SITE_PROFILE.fullName.toUpperCase(), serif, 19.5, COLOR_NAVY, y);
+  y -= 16;
 
-  y = headerBottom - 10;
+  drawCenteredText(
+    `${SITE_PROFILE.role.toUpperCase()}  ·  FULL-STACK DEVELOPER  ·  AI & AUTOMATION`,
+    serif,
+    8.8,
+    COLOR_COBALT,
+    y
+  );
+  y -= 15;
+
+  const phoneClean = SITE_PROFILE.phoneDisplay.replace(/[^+\d]/g, '');
+  const siteHost = formatLiveHost(siteUrl) || 'petrosgdevv.vercel.app';
+  const contactSegments: Array<{ text: string; url?: string }> = [
+    { text: sanitizeWinAnsi(SITE_PROFILE.location) },
+    { text: sanitizeWinAnsi(SITE_PROFILE.phoneDisplay), url: `tel:${phoneClean}` },
+    { text: sanitizeWinAnsi(SITE_PROFILE.email), url: `mailto:${SITE_PROFILE.email}` },
+    { text: siteHost, url: siteUrl },
+    { text: sanitizeWinAnsi(SITE_PROFILE.githubHandle), url: SITE_PROFILE.githubUrl },
+  ];
+
+  const sepText = '  ·  ';
+  const contactFontSize = 8.6;
+  const sepW = serif.widthOfTextAtSize(sepText, contactFontSize);
+  const totalContactW =
+    contactSegments.reduce(
+      (acc, seg) => acc + serif.widthOfTextAtSize(seg.text, contactFontSize),
+      0
+    ) +
+    sepW * (contactSegments.length - 1);
+
+  let cx = (PAGE_WIDTH - totalContactW) / 2;
+  contactSegments.forEach((seg, idx) => {
+    if (idx > 0) {
+      page.drawText(sepText, {
+        x: cx,
+        y,
+        size: contactFontSize,
+        font: serif,
+        color: COLOR_MUTED,
+      });
+      cx += sepW;
+    }
+    const w = serif.widthOfTextAtSize(seg.text, contactFontSize);
+    page.drawText(seg.text, {
+      x: cx,
+      y,
+      size: contactFontSize,
+      font: serif,
+      color: seg.url ? COLOR_COBALT : COLOR_INK,
+    });
+    if (seg.url) {
+      addUriAnnotation(doc, page, cx, y, w, 9.5, seg.url);
+    }
+    cx += w;
+  });
+  y -= 10;
 
   // =========================================================================
   // 2. PROFILE
   // =========================================================================
-  drawSectionHeading('PROFILE', 2);
+  drawSectionHeading('PROFILE', 4);
   const profileLines = wrapText(
     `${SITE_PROFILE.heroIntro} ${SITE_PROFILE.shortPhilosophy}`,
-    font,
-    8.7,
+    serif,
+    9.2,
     CONTENT_WIDTH
   );
   for (const line of profileLines) {
-    page.drawText(line, { x: MARGIN_X, y, size: 8.7, font, color: COLOR_INK });
-    y -= 11.8;
+    page.drawText(line, { x: MARGIN_X, y, size: 9.2, font: serif, color: COLOR_INK });
+    y -= 12.2;
   }
 
   // =========================================================================
-  // 3. EXPERIENCE (Career, Remote & Internships)
+  // 3. EXPERIENCE
   // =========================================================================
-  const careerExperiences = EXPERIENCES.filter((item) => !isEducationOrCert(item));
-  const educationAndCerts = EXPERIENCES.filter((item) => isEducationOrCert(item));
+  const careerExperiences = EXPERIENCES.filter(
+    (item) => !isEducationItem(item) && !isProgramOrCertItem(item)
+  );
+  const programItems = EXPERIENCES.filter(isProgramOrCertItem);
+  const educationItems = EXPERIENCES.filter(isEducationItem);
 
-  drawSectionHeading('EXPERIENCE', 7);
-
-  const drawRoleHeader = (
-    roleRaw: string,
-    orgRaw: string,
-    metaRaw: string,
-    orgUrl?: string
-  ) => {
-    const role = sanitizeWinAnsi(roleRaw);
-    const org = sanitizeWinAnsi(orgRaw);
-    const meta = sanitizeWinAnsi(metaRaw);
-    const sep = '  ·  ';
-
-    const metaW = font.widthOfTextAtSize(meta, 8.1);
-    const roleW = font.widthOfTextAtSize(role, 9.6);
-    const sepW = font.widthOfTextAtSize(sep, 9);
-    const orgW = font.widthOfTextAtSize(org, 9);
-    const leftAvailable = CONTENT_WIDTH - metaW - 14;
-
-    page.drawText(role, { x: MARGIN_X, y, size: 9.6, font, color: COLOR_NAVY });
-    page.drawText(meta, {
-      x: PAGE_WIDTH - MARGIN_X - metaW,
-      y: y + 0.5,
-      size: 8.1,
-      font,
-      color: COLOR_MUTED,
-    });
-
-    if (roleW + sepW + orgW <= leftAvailable) {
-      page.drawText(sep, {
-        x: MARGIN_X + roleW,
-        y,
-        size: 9,
-        font,
-        color: COLOR_MUTED,
-      });
-      page.drawText(org, {
-        x: MARGIN_X + roleW + sepW,
-        y,
-        size: 9,
-        font,
-        color: COLOR_COBALT,
-      });
-      if (orgUrl) {
-        addUriAnnotation(doc, page, MARGIN_X + roleW + sepW, y, orgW, 9.5, orgUrl);
-      }
-      y -= 12.5;
-    } else {
-      y -= 11.5;
-      page.drawText(org, {
-        x: MARGIN_X,
-        y,
-        size: 8.7,
-        font,
-        color: COLOR_COBALT,
-      });
-      if (orgUrl) {
-        addUriAnnotation(doc, page, MARGIN_X, y, font.widthOfTextAtSize(org, 8.7), 9, orgUrl);
-      }
-      y -= 11.5;
-    }
-  };
+  drawSectionHeading('EXPERIENCE', 6);
 
   for (const exp of careerExperiences) {
     const bullets = exp.points.slice(0, 3);
-    const summaryLines = wrapText(exp.summary, font, 8.3, CONTENT_WIDTH);
-    const sep = '  ·  ';
-    const fitsInline =
-      font.widthOfTextAtSize(sanitizeWinAnsi(exp.role), 9.6) +
-        font.widthOfTextAtSize(sep, 9) +
-        font.widthOfTextAtSize(sanitizeWinAnsi(exp.organization), 9) <=
-      CONTENT_WIDTH -
-        font.widthOfTextAtSize(sanitizeWinAnsi(`${exp.period}  |  ${exp.location}`), 8.1) -
-        14;
-
-    let estHeight = (fitsInline ? 13 : 24) + summaryLines.length * 11 + 2;
+    let est = 14;
     for (const pt of bullets) {
       const full = pt.lead ? `${pt.lead} ${pt.text}` : pt.text;
-      estHeight += wrapText(full, font, 8.2, CONTENT_WIDTH - 11).length * 10.9 + 1.5;
+      est += wrapText(full, serif, 9.1, CONTENT_WIDTH - 12).length * 11.8 + 2;
     }
-    if (exp.stack.length > 0) estHeight += 11;
+    if (!ensureSpace(est + 4)) break;
 
-    if (!ensureSpace(estHeight + 5)) {
-      break;
+    const roleText = sanitizeWinAnsi(exp.role);
+    const rightMeta = sanitizeWinAnsi(`${exp.organization} · ${exp.location} — ${exp.period}`);
+    const rightW = serifItalic.widthOfTextAtSize(rightMeta, 8.8);
+    const roleW = serif.widthOfTextAtSize(roleText, 9.8);
+
+    page.drawText(roleText, { x: MARGIN_X, y, size: 9.8, font: serif, color: COLOR_NAVY });
+    if (roleW + rightW + 14 <= CONTENT_WIDTH) {
+      page.drawText(rightMeta, {
+        x: PAGE_WIDTH - MARGIN_X - rightW,
+        y,
+        size: 8.8,
+        font: serifItalic,
+        color: COLOR_COBALT,
+      });
+      y -= 13;
+    } else {
+      y -= 11.5;
+      page.drawText(rightMeta, {
+        x: MARGIN_X,
+        y,
+        size: 8.7,
+        font: serifItalic,
+        color: COLOR_COBALT,
+      });
+      y -= 12;
     }
-
-    drawRoleHeader(
-      exp.role,
-      exp.organization,
-      `${exp.period}  |  ${exp.location}`,
-      exp.organizationUrl
-    );
-
-    for (const line of summaryLines) {
-      page.drawText(line, { x: MARGIN_X, y, size: 8.3, font, color: COLOR_INK });
-      y -= 11;
-    }
-    y -= 1;
 
     for (const pt of bullets) {
       page.drawCircle({
         x: MARGIN_X + 4,
-        y: y + 2.7,
+        y: y + 2.8,
         size: 1.5,
         color: COLOR_COBALT,
       });
 
       const lead = pt.lead ? `${sanitizeWinAnsi(pt.lead)} ` : '';
       const rest = sanitizeWinAnsi(pt.text);
-      const bulletX = MARGIN_X + 11;
-      const bulletWidth = CONTENT_WIDTH - 11;
+      const bx = MARGIN_X + 12;
+      const bw = CONTENT_WIDTH - 12;
 
       if (lead) {
-        const leadW = font.widthOfTextAtSize(lead, 8.2);
-        const firstLineRestMax = bulletWidth - leadW;
-        if (firstLineRestMax > 60) {
+        const leadW = serif.widthOfTextAtSize(lead, 8.9);
+        const firstMax = bw - leadW;
+        if (firstMax > 60) {
           const words = rest.split(' ');
           let firstLine = '';
           let idx = 0;
           while (idx < words.length) {
             const next = firstLine ? `${firstLine} ${words[idx]}` : words[idx];
-            if (font.widthOfTextAtSize(next, 8.2) <= firstLineRestMax) {
+            if (serif.widthOfTextAtSize(next, 8.9) <= firstMax) {
               firstLine = next;
               idx += 1;
             } else {
               break;
             }
           }
-          page.drawText(lead, { x: bulletX, y, size: 8.2, font, color: COLOR_COBALT });
+          page.drawText(lead, { x: bx, y, size: 8.9, font: serif, color: COLOR_COBALT });
           if (firstLine) {
             page.drawText(firstLine, {
-              x: bulletX + leadW,
+              x: bx + leadW,
               y,
-              size: 8.2,
-              font,
+              size: 8.9,
+              font: serif,
               color: COLOR_INK,
             });
           }
-          y -= 10.9;
-          const remainingText = words.slice(idx).join(' ');
-          if (remainingText) {
-            for (const line of wrapText(remainingText, font, 8.2, bulletWidth)) {
-              page.drawText(line, { x: bulletX, y, size: 8.2, font, color: COLOR_INK });
-              y -= 10.9;
+          y -= 11.4;
+          const remaining = words.slice(idx).join(' ');
+          if (remaining) {
+            for (const line of wrapText(remaining, serif, 8.9, bw)) {
+              page.drawText(line, { x: bx, y, size: 8.9, font: serif, color: COLOR_INK });
+              y -= 11.4;
             }
           }
         } else {
-          for (const line of wrapText(`${lead}${rest}`, font, 8.2, bulletWidth)) {
-            page.drawText(line, { x: bulletX, y, size: 8.2, font, color: COLOR_INK });
-            y -= 10.9;
+          for (const line of wrapText(`${lead}${rest}`, serif, 8.9, bw)) {
+            page.drawText(line, { x: bx, y, size: 8.9, font: serif, color: COLOR_INK });
+            y -= 11.4;
           }
         }
       } else {
-        for (const line of wrapText(rest, font, 8.2, bulletWidth)) {
-          page.drawText(line, { x: bulletX, y, size: 8.2, font, color: COLOR_INK });
-          y -= 10.9;
+        for (const line of wrapText(rest, serif, 8.9, bw)) {
+          page.drawText(line, { x: bx, y, size: 8.9, font: serif, color: COLOR_INK });
+          y -= 11.4;
         }
       }
-      y -= 1;
+      y -= 1.2;
     }
 
-    if (exp.stack.length > 0) {
-      page.drawText(sanitizeWinAnsi(`Stack: ${exp.stack.slice(0, 6).join(' · ')}`), {
-        x: MARGIN_X + 11,
-        y,
-        size: 7.8,
-        font,
-        color: COLOR_MUTED,
-      });
-      y -= 10.5;
-    }
-
-    y -= 5;
+    y -= 4;
   }
 
   // =========================================================================
-  // PAGE 2 TRANSITION
+  // 4. SELECTED SOFTWARE & AI PROJECTS (Single-column clean layout matching template)
   // =========================================================================
-  if (pageCount === 1) {
-    forcePageTwo();
-  }
-
-  // =========================================================================
-  // 4. SELECTED ENGINEERING & AI PROJECTS
-  // =========================================================================
-  if (drawSectionHeading(`SELECTED PROJECTS (${String(PROJECTS.length).padStart(2, '0')})`, 0)) {
-    const colGap = 18;
-    const colWidth = (CONTENT_WIDTH - colGap) / 2;
-    const maxProjects = PROJECTS.slice(0, 10);
-
-    for (let i = 0; i < maxProjects.length; i += 2) {
-      const leftProj = maxProjects[i];
-      const rightProj = maxProjects[i + 1];
-
-      const measureProj = (p: (typeof maxProjects)[number] | undefined) => {
-        if (!p) return 0;
-        const subLines = wrapText(p.subtitle, font, 8.1, colWidth).slice(0, 2);
-        return 13 + subLines.length * 10.6 + 11 + 8;
-      };
-
-      const rowHeight = Math.max(measureProj(leftProj), measureProj(rightProj));
-      if (y - rowHeight < 225) {
-        break;
-      }
-
-      const drawProjectCell = (p: (typeof maxProjects)[number], cellX: number) => {
-        const title = sanitizeWinAnsi(p.title);
-        const cat = sanitizeWinAnsi(`${p.category} · ${p.year}`);
-        const catW = font.widthOfTextAtSize(cat, 7.6);
-        const titleW = font.widthOfTextAtSize(title, 9.3);
-
-        page.drawText(title, {
-          x: cellX,
-          y,
-          size: 9.3,
-          font,
-          color: COLOR_NAVY,
-        });
-        addUriAnnotation(
-          doc,
-          page,
-          cellX,
-          y,
-          titleW,
-          9.5,
-          `${siteUrl}/work/${p.slug}/`
-        );
-
-        if (titleW + catW + 8 <= colWidth) {
-          page.drawText(cat, {
-            x: cellX + colWidth - catW,
-            y: y + 0.5,
-            size: 7.6,
-            font,
-            color: COLOR_COBALT,
-          });
-        }
-
-        let cellY = y - 11.5;
-        const subLines = wrapText(p.subtitle, font, 8.1, colWidth).slice(0, 2);
-        for (const sl of subLines) {
-          page.drawText(sl, { x: cellX, y: cellY, size: 8.1, font, color: COLOR_INK });
-          cellY -= 10.6;
-        }
-
-        const tech = sanitizeWinAnsi(p.technologies.slice(0, 4).join(' · '));
-        const techLines = wrapText(tech, font, 7.6, colWidth).slice(0, 1);
-        if (techLines[0]) {
-          page.drawText(techLines[0], {
-            x: cellX,
-            y: cellY,
-            size: 7.6,
-            font,
-            color: COLOR_MUTED,
-          });
-        }
-      };
-
-      drawProjectCell(leftProj, MARGIN_X);
-      if (rightProj) {
-        drawProjectCell(rightProj, MARGIN_X + colWidth + colGap);
-      }
-
-      y -= rowHeight;
-    }
-  }
-
-  // =========================================================================
-  // 5. EDUCATION & CERTIFICATIONS
-  // =========================================================================
-  if (educationAndCerts.length > 0 && drawSectionHeading('EDUCATION & CERTIFICATIONS', 6)) {
-    for (const item of educationAndCerts) {
-      const summaryLines = wrapText(item.summary, font, 8.2, CONTENT_WIDTH).slice(0, 2);
-      const est = 24 + summaryLines.length * 10.8 + 14;
+  if (drawSectionHeading('SELECTED SOFTWARE & AI PROJECTS', 6)) {
+    for (const project of PROJECTS) {
+      const descLines = wrapText(project.subtitle, serif, 8.9, CONTENT_WIDTH).slice(0, 2);
+      const est = 13 + descLines.length * 11.3 + 5;
       if (!ensureSpace(est)) break;
 
-      drawRoleHeader(
-        item.role,
-        item.organization,
-        `${item.period}  |  ${item.location}`,
-        item.organizationUrl
+      const title = sanitizeWinAnsi(project.title);
+      const rightTag = sanitizeWinAnsi(
+        `${project.category} · ${project.technologies.slice(0, 3).join(' · ')}`
+      );
+      const titleW = serif.widthOfTextAtSize(title, 9.6);
+      const tagW = serifItalic.widthOfTextAtSize(rightTag, 8.6);
+
+      page.drawText(title, {
+        x: MARGIN_X,
+        y,
+        size: 9.6,
+        font: serif,
+        color: COLOR_NAVY,
+      });
+      addUriAnnotation(
+        doc,
+        page,
+        MARGIN_X,
+        y,
+        titleW,
+        10,
+        `${siteUrl}/work/${project.slug}/`
       );
 
-      for (const sl of summaryLines) {
-        page.drawText(sl, { x: MARGIN_X, y, size: 8.2, font, color: COLOR_INK });
-        y -= 10.8;
-      }
-
-      if (item.stack.length > 0) {
-        page.drawText(sanitizeWinAnsi(`Focus: ${item.stack.join(' · ')}`), {
-          x: MARGIN_X,
+      if (titleW + tagW + 14 <= CONTENT_WIDTH) {
+        page.drawText(rightTag, {
+          x: PAGE_WIDTH - MARGIN_X - tagW,
           y,
-          size: 7.8,
-          font,
+          size: 8.6,
+          font: serifItalic,
           color: COLOR_COBALT,
         });
-        y -= 12;
+      }
+      y -= 12;
+
+      for (const line of descLines) {
+        page.drawText(line, { x: MARGIN_X, y, size: 8.9, font: serif, color: COLOR_INK });
+        y -= 11.3;
+      }
+      y -= 4;
+    }
+  }
+
+  // =========================================================================
+  // 5. CERTIFICATIONS & PROGRAMS
+  // =========================================================================
+  if (programItems.length > 0 && drawSectionHeading('CERTIFICATIONS & PROGRAMS', 6, 48)) {
+    for (const item of programItems) {
+      const summaryLines = wrapText(item.summary, serif, 8.9, CONTENT_WIDTH - 12).slice(0, 2);
+      if (!ensureSpace(summaryLines.length * 11.4 + 14)) break;
+
+      page.drawCircle({
+        x: MARGIN_X + 4,
+        y: y + 2.8,
+        size: 1.5,
+        color: COLOR_COBALT,
+      });
+
+      const title = sanitizeWinAnsi(`${item.organization} — ${item.role}`);
+      const period = sanitizeWinAnsi(`${item.period}`);
+      const periodW = serifItalic.widthOfTextAtSize(period, 8.7);
+      const titleW = serif.widthOfTextAtSize(title, 9.3);
+
+      page.drawText(title, {
+        x: MARGIN_X + 12,
+        y,
+        size: 9.3,
+        font: serif,
+        color: COLOR_NAVY,
+      });
+      if (item.organizationUrl) {
+        addUriAnnotation(doc, page, MARGIN_X + 12, y, titleW, 9.5, item.organizationUrl);
+      }
+      page.drawText(period, {
+        x: PAGE_WIDTH - MARGIN_X - periodW,
+        y,
+        size: 8.7,
+        font: serifItalic,
+        color: COLOR_COBALT,
+      });
+      y -= 12;
+
+      for (const sl of summaryLines) {
+        page.drawText(sl, {
+          x: MARGIN_X + 12,
+          y,
+          size: 8.9,
+          font: serif,
+          color: COLOR_INK,
+        });
+        y -= 11.3;
       }
       y -= 3;
     }
   }
 
   // =========================================================================
-  // 6. TECHNICAL SKILLS
+  // 6. EDUCATION
   // =========================================================================
-  if (drawSectionHeading('TECHNICAL SKILLS', 6)) {
-    const labelColW = 128;
-    const valueMaxW = CONTENT_WIDTH - labelColW;
+  if (educationItems.length > 0 && drawSectionHeading('EDUCATION', 6)) {
+    for (const item of educationItems) {
+      const focusLine = sanitizeWinAnsi(`Focus: ${item.stack.join(' · ')}`);
+      const focusLines = wrapText(focusLine, serif, 8.8, CONTENT_WIDTH);
+      if (!ensureSpace(14 + focusLines.length * 11.2 + 4)) break;
 
-    for (const cat of SKILL_CATEGORIES) {
-      const skillsText = sanitizeWinAnsi(cat.items.join('  ·  '));
-      const skillLines = wrapText(skillsText, font, 8.4, valueMaxW);
-      const blockH = Math.max(1, skillLines.length) * 11.4 + 3;
-      if (!ensureSpace(blockH)) break;
+      const role = sanitizeWinAnsi(item.role);
+      const rightOrg = sanitizeWinAnsi(`${item.organization} — ${item.period}`);
+      const rightW = serifItalic.widthOfTextAtSize(rightOrg, 8.8);
 
-      page.drawText(sanitizeWinAnsi(cat.name), {
-        x: MARGIN_X,
+      page.drawText(role, { x: MARGIN_X, y, size: 9.6, font: serif, color: COLOR_NAVY });
+      page.drawText(rightOrg, {
+        x: PAGE_WIDTH - MARGIN_X - rightW,
         y,
-        size: 8.5,
-        font,
-        color: COLOR_NAVY,
+        size: 8.8,
+        font: serifItalic,
+        color: COLOR_COBALT,
       });
+      y -= 12.5;
 
-      let lineY = y;
-      for (const sl of skillLines) {
-        page.drawText(sl, {
-          x: MARGIN_X + labelColW,
-          y: lineY,
-          size: 8.4,
-          font,
-          color: COLOR_INK,
-        });
-        lineY -= 11.4;
+      for (const fl of focusLines) {
+        page.drawText(fl, { x: MARGIN_X, y, size: 8.8, font: serif, color: COLOR_INK });
+        y -= 11.2;
       }
-      y -= Math.max(1, skillLines.length) * 11.4 + 3.5;
+      y -= 3;
     }
   }
 
   // =========================================================================
-  // 7. SUMMARY HIGHLIGHTS STRIP (wrapped cleanly inside each cell)
+  // 7. TECHNICAL SKILLS
   // =========================================================================
-  const metrics = SITE_PROFILE.heroMetrics.slice(0, 4);
-  if (metrics.length > 0 && ensureSpace(56)) {
-    y -= 8;
-    const barH = 44;
-    const barBottom = y - barH;
-    page.drawRectangle({
-      x: MARGIN_X,
-      y: barBottom,
-      width: CONTENT_WIDTH,
-      height: barH,
-      color: COLOR_ICE_BG,
-      borderColor: COLOR_BLUE_RULE,
-      borderWidth: 0.7,
-    });
+  if (drawSectionHeading('TECHNICAL SKILLS', 6)) {
+    for (const cat of SKILL_CATEGORIES) {
+      const label = `${sanitizeWinAnsi(cat.name)}: `;
+      const values = sanitizeWinAnsi(cat.items.join(' · '));
+      const labelW = serif.widthOfTextAtSize(label, 8.9);
+      const firstMax = CONTENT_WIDTH - labelW;
 
-    const cellW = CONTENT_WIDTH / metrics.length;
-    metrics.forEach((m, idx) => {
-      const cx = MARGIN_X + idx * cellW + 10;
-      const maxCellLabelW = cellW - 18;
-      page.drawText(sanitizeWinAnsi(m.value), {
-        x: cx,
-        y: barBottom + 27,
-        size: 10.5,
-        font,
-        color: COLOR_NAVY,
-      });
-      const labelLines = wrapText(m.label, font, 7.2, maxCellLabelW).slice(0, 2);
-      labelLines.forEach((line, lIdx) => {
-        page.drawText(line, {
-          x: cx,
-          y: barBottom + 16 - lIdx * 8.5,
-          size: 7.2,
-          font,
-          color: COLOR_COBALT,
+      const words = values.split(' ');
+      let firstLine = '';
+      let idx = 0;
+      while (idx < words.length) {
+        const next = firstLine ? `${firstLine} ${words[idx]}` : words[idx];
+        if (serif.widthOfTextAtSize(next, 8.9) <= firstMax) {
+          firstLine = next;
+          idx += 1;
+        } else {
+          break;
+        }
+      }
+      const remaining = words.slice(idx).join(' ');
+      const extraLines = remaining ? wrapText(remaining, serif, 8.9, CONTENT_WIDTH) : [];
+      const blockH = (1 + extraLines.length) * 11.4 + 2;
+
+      if (!ensureSpace(blockH)) break;
+
+      page.drawText(label, { x: MARGIN_X, y, size: 8.9, font: serif, color: COLOR_NAVY });
+      if (firstLine) {
+        page.drawText(firstLine, {
+          x: MARGIN_X + labelW,
+          y,
+          size: 8.9,
+          font: serif,
+          color: COLOR_INK,
         });
-      });
-    });
+      }
+      y -= 11.4;
+      for (const el of extraLines) {
+        page.drawText(el, { x: MARGIN_X, y, size: 8.9, font: serif, color: COLOR_INK });
+        y -= 11.4;
+      }
+      y -= 1.5;
+    }
   }
 
   // =========================================================================
-  // PAGE FOOTERS
+  // 8. ADDITIONAL
+  // =========================================================================
+  const metrics = SITE_PROFILE.heroMetrics.map((m) =>
+    /based in/i.test(m.label) ? `${m.label} (${m.value})` : `${m.value} ${m.label}`
+  );
+  if (metrics.length > 0 && drawSectionHeading('ADDITIONAL', 6)) {
+    const addLines = wrapText(metrics.join(' · '), serif, 8.8, CONTENT_WIDTH);
+    for (const line of addLines) {
+      if (!ensureSpace(12)) break;
+      page.drawText(line, { x: MARGIN_X, y, size: 8.8, font: serif, color: COLOR_INK });
+      y -= 11.2;
+    }
+  }
+
+  // =========================================================================
+  // PAGE FOOTERS (subtle page indicator)
   // =========================================================================
   const pages = doc.getPages();
   pages.forEach((p, idx) => {
-    const leftFooter = sanitizeWinAnsi(
-      `${SITE_PROFILE.fullName} — Resume  ·  ${SITE_PROFILE.email}`
-    );
     const rightFooter = `Page ${idx + 1} of ${pages.length}`;
-    const rw = font.widthOfTextAtSize(rightFooter, 7.5);
-    p.drawLine({
-      start: { x: MARGIN_X, y: 31 },
-      end: { x: PAGE_WIDTH - MARGIN_X, y: 31 },
-      thickness: 0.5,
-      color: COLOR_BLUE_RULE,
-    });
-    p.drawText(leftFooter, { x: MARGIN_X, y: 20, size: 7.5, font, color: COLOR_MUTED });
+    const rw = serif.widthOfTextAtSize(rightFooter, 7.6);
     p.drawText(rightFooter, {
       x: PAGE_WIDTH - MARGIN_X - rw,
-      y: 20,
-      size: 7.5,
-      font,
+      y: 18,
+      size: 7.6,
+      font: serif,
       color: COLOR_COBALT,
     });
   });
