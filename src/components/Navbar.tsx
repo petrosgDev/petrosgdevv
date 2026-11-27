@@ -8,6 +8,7 @@ import {
   ArrowUpRight,
   Briefcase,
   Code2,
+  FileText,
   GitBranch,
   Github,
   Home,
@@ -55,6 +56,7 @@ const DESKTOP_PRIMARY_NAV: DockNavItem[] = [
     icon: GitBranch,
   },
   { id: 'blog', label: 'Blog', href: '/blog', matchPath: '/blog', icon: Newspaper },
+  { id: 'resume', label: 'Resume', href: '/resume', matchPath: '/resume', icon: FileText },
 ];
 
 const MOBILE_DOCK_PRIMARY_NAV: DockNavItem[] = [
@@ -77,6 +79,7 @@ const MOBILE_DOCK_PRIMARY_NAV: DockNavItem[] = [
     icon: GitBranch,
   },
   { id: 'blog', label: 'Blog', href: '/blog', matchPath: '/blog', icon: Newspaper },
+  { id: 'resume', label: 'Resume', href: '/resume', matchPath: '/resume', icon: FileText },
 ];
 
 const MOBILE_DRAWER_NAV = [
@@ -85,6 +88,7 @@ const MOBILE_DRAWER_NAV = [
   { label: 'Skills', href: '/#skills', matchPath: '/', hash: '#skills' },
   { label: 'Experience', href: '/#experience', matchPath: '/', hash: '#experience' },
   { label: 'Blog', href: '/blog', matchPath: '/blog' },
+  { label: 'Resume', href: '/resume', matchPath: '/resume' },
   { label: 'Contact', href: '/contact', matchPath: '/contact' },
 ];
 

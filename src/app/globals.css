@@ -64,12 +64,20 @@
 }
 
 @media print {
+  @page {
+    size: A4;
+    margin: 12mm 14mm;
+  }
   header,
   footer,
+  nav,
+  aside[aria-label="Social media accounts"],
   .no-print {
     display: none !important;
   }
-  body {
+  html,
+  body,
+  [data-portfolio-surface="public"] {
     background: #ffffff !important;
     color: #111111 !important;
   }
