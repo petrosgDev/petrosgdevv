@@ -7,6 +7,7 @@ import {
   Compass,
   FolderGit2,
   Image as ImageIcon,
+  Inbox,
   Layers,
   LayoutDashboard,
   LogOut,
@@ -21,7 +22,7 @@ import {
 } from 'lucide-react';
 import type { AdminSectionKey } from '@/lib/portfolioSchema';
 
-export type AdminTabId = 'overview' | AdminSectionKey;
+export type AdminTabId = 'overview' | 'messages' | AdminSectionKey;
 
 interface NavEntry {
   id: AdminTabId;
@@ -45,6 +46,7 @@ interface AdminSidebarProps {
     skills: number;
     experiences: number;
     navigation: number;
+    unreadMessages?: number;
   };
   isCustomized: boolean;
   userEmail?: string | null;
@@ -71,7 +73,16 @@ export function AdminSidebar({
   const groups: NavGroup[] = [
     {
       heading: 'Workspace',
-      items: [{ id: 'overview', index: '00', label: 'Overview', icon: LayoutDashboard }],
+      items: [
+        { id: 'overview', index: '00', label: 'Overview', icon: LayoutDashboard },
+        {
+          id: 'messages',
+          index: '00b',
+          label: 'Messages',
+          icon: Inbox,
+          count: counts.unreadMessages,
+        },
+      ],
     },
     {
       heading: 'Content & Media',
@@ -133,9 +144,6 @@ export function AdminSidebar({
             <span className="font-sans text-[12px] font-semibold tracking-[0.16em] text-[#1A1A1A] dark:text-[#F0F0EE] truncate">
               {brand}
             </span>
-            <span className="rounded-full border border-black/[0.1] dark:border-white/[0.12] px-2 py-0.5 text-[9.5px] font-mono uppercase tracking-[0.1em] text-[#666666] dark:text-[#9A9A96]">
-              CMS
-            </span>
           </Link>
 
           <button
@@ -164,6 +172,7 @@ export function AdminSidebar({
                   const active = activeTab === item.id;
                   const dirty =
                     item.id !== 'overview' &&
+                    item.id !== 'messages' &&
                     dirtySections.includes(item.id as AdminSectionKey);
 
                   return (
@@ -198,8 +207,8 @@ export function AdminSidebar({
                         {dirty ? (
                           <span
                             title="Unsaved changes"
-                            className={`h-2 w-2 rounded-full ${
-                              active ? 'bg-amber-300 dark:bg-amber-600' : 'bg-amber-500'
+                            className={`h-1.5 w-1.5 rounded-full ${
+                              active ? 'bg-white dark:bg-[#0A0A0A]' : 'bg-[#1A1A1A] dark:bg-[#F0F0EE]'
                             }`}
                           />
                         ) : null}
@@ -227,22 +236,7 @@ export function AdminSidebar({
       {/* Bottom Status & Links */}
       <div className="shrink-0 border-t border-[#EAEAEA] dark:border-[#222220] p-4 space-y-2.5">
         <div className="flex items-center justify-between px-1 text-[11px] font-mono text-[#666666] dark:text-[#9A9A96]">
-          <span className="flex items-center gap-1.5">
-            <span
-              className={`h-2 w-2 rounded-full ${
-                firebaseConfigured
-                  ? isCustomized
-                    ? 'bg-emerald-500'
-                    : 'bg-sky-500'
-                  : 'bg-amber-500'
-              }`}
-            />
-            {firebaseConfigured
-              ? isCustomized
-                ? 'Firestore Synced'
-                : 'Firestore Seed'
-              : 'Firebase Pending'}
-          </span>
+          <span>{firebaseConfigured ? (isCustomized ? 'Published' : 'Default') : 'Offline'}</span>
           <span>Google Auth</span>
         </div>
 

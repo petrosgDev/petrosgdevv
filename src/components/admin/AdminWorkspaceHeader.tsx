@@ -43,18 +43,6 @@ export function AdminWorkspaceHeader({
           <h1 className="font-display text-[18px] sm:text-[20px] font-extrabold uppercase tracking-tight text-[#1A1A1A] dark:text-[#F0F0EE] truncate">
             {sectionTitle}
           </h1>
-
-          {dirtyCount > 0 ? (
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 text-[10.5px] font-mono text-amber-700 dark:text-amber-300 shrink-0">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-              {dirtyCount} unsaved {dirtyCount === 1 ? 'section' : 'sections'}
-            </span>
-          ) : (
-            <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[10.5px] font-mono text-emerald-700 dark:text-emerald-400 shrink-0">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-              Synced
-            </span>
-          )}
         </div>
       </div>
 

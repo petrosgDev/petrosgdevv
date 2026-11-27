@@ -227,7 +227,7 @@ export function MediaLibrarySection({
                         usages.map((u) => (
                           <span
                             key={u}
-                            className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-mono text-emerald-700 dark:text-emerald-400"
+                            className="rounded-full border border-[#EAEAEA] dark:border-[#222220] px-2 py-0.5 text-[10px] font-mono text-[#1A1A1A] dark:text-[#F0F0EE]"
                           >
                             Used: {u}
                           </span>

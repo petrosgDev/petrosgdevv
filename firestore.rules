@@ -108,5 +108,25 @@ service cloud.firestore {
         && isValidId(docId)
         && docId == 'published';
     }
+
+    function isValidContactMessage(msg) {
+      return msg.keys().hasAll(['name', 'email', 'subject', 'message', 'status', 'createdAt'])
+        && msg.keys().hasOnly(['name', 'email', 'subject', 'message', 'status', 'createdAt'])
+        && msg.name is string && msg.name.size() >= 2 && msg.name.size() <= 100
+        && msg.email is string && msg.email.size() >= 5 && msg.email.size() <= 160
+        && msg.subject is string && msg.subject.size() >= 2 && msg.subject.size() <= 160
+        && msg.message is string && msg.message.size() >= 10 && msg.message.size() <= 3000
+        && msg.status == 'unread'
+        && msg.createdAt == request.time;
+    }
+
+    match /messages/{msgId} {
+      // Public visitors may submit a new contact message; only owner may read, update status, or delete
+      allow create: if isValidId(msgId) && isValidContactMessage(incoming());
+      allow get, list, delete: if isAdmin();
+      allow update: if isAdmin()
+        && incoming().diff(existing()).affectedKeys().hasOnly(['status'])
+        && incoming().status in ['unread', 'read'];
+    }
   }
 }

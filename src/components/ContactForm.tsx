@@ -10,6 +10,7 @@ import {
   Send,
 } from 'lucide-react';
 import { usePortfolio } from '@/components/PortfolioContext';
+import { isFirebaseConfigured, sendContactMessageToFirestore } from '@/lib/firebase';
 import {
   buildPlainTextMessage,
   hasValidationErrors,
@@ -83,6 +84,17 @@ export function ContactForm() {
     setResult(null);
 
     try {
+      if (isFirebaseConfigured()) {
+        await sendContactMessageToFirestore(values);
+        setResult({
+          status: 'sent',
+          message:
+            'Your message has been delivered directly to my inbox. Thank you for reaching out—I will reply soon.',
+        });
+        setValues(INITIAL_VALUES);
+        return;
+      }
+
       const submission = await submitContactInquiry(
         values,
         SITE_PROFILE.email,
@@ -93,6 +105,11 @@ export function ContactForm() {
       if (submission.status === 'sent') {
         setValues(INITIAL_VALUES);
       }
+    } catch {
+      setResult({
+        status: 'error',
+        message: 'Could not send your message right now. Please try again or email directly.',
+      });
     } finally {
       setSubmitting(false);
     }
@@ -159,15 +176,6 @@ export function ContactForm() {
               )}
             </div>
           ))}
-        </div>
-
-        <div className="space-y-1.5 text-[11.5px] text-[#666666] dark:text-[#9A9A96]">
-          <p className="font-mono">Delivery Transparency</p>
-          <p className="leading-relaxed">
-            {configuredEndpoint
-              ? 'This form submits directly to the configured contact webhook endpoint.'
-              : `Submitting the form validates your inquiry and prepares an immediate email dispatch to ${SITE_PROFILE.email} (or configure NEXT_PUBLIC_CONTACT_ENDPOINT for webhook delivery).`}
-          </p>
         </div>
       </aside>
 
@@ -428,11 +436,7 @@ export function ContactForm() {
               >
                 <Send className="h-3.5 w-3.5" aria-hidden="true" />
                 <span>
-                  {submitting
-                    ? 'Processing...'
-                    : configuredEndpoint
-                    ? 'Send Message'
-                    : 'Prepare Email Inquiry'}
+                  {submitting ? 'Sending...' : 'Send Message'}
                 </span>
               </button>
             </div>

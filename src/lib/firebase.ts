@@ -10,12 +10,16 @@ import {
   type User,
 } from 'firebase/auth';
 import {
+  addDoc,
+  collection,
   deleteDoc,
   doc,
   getDoc,
   getDocFromServer,
   getFirestore,
   onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
   setDoc,
   Timestamp,
@@ -300,6 +304,84 @@ export async function resetPublishedPortfolio(user: User): Promise<void> {
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, PORTFOLIO_DOC_PATH);
   }
+}
+
+export interface ContactMessageRecord {
+  id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  status: 'unread' | 'read';
+  createdAt: string | null;
+}
+
+export const MESSAGES_COLLECTION = 'messages';
+
+export async function sendContactMessageToFirestore(values: {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}): Promise<void> {
+  if (!isFirebaseConfigured()) {
+    throw new Error('Firebase is not configured.');
+  }
+
+  await addDoc(collection(db, MESSAGES_COLLECTION), {
+    name: values.name.trim(),
+    email: values.email.trim(),
+    subject: values.subject.trim(),
+    message: values.message.trim(),
+    status: 'unread',
+    createdAt: serverTimestamp(),
+  });
+}
+
+export function subscribeContactMessages(
+  onUpdate: (messages: ContactMessageRecord[]) => void,
+  onError?: (error: Error) => void
+): Unsubscribe {
+  if (!isFirebaseConfigured()) {
+    onUpdate([]);
+    return () => {};
+  }
+
+  const q = query(collection(db, MESSAGES_COLLECTION), orderBy('createdAt', 'desc'));
+  return onSnapshot(
+    q,
+    (snap) => {
+      const records: ContactMessageRecord[] = snap.docs.map((d) => {
+        const raw = d.data();
+        return {
+          id: d.id,
+          name: typeof raw.name === 'string' ? raw.name : '',
+          email: typeof raw.email === 'string' ? raw.email : '',
+          subject: typeof raw.subject === 'string' ? raw.subject : '',
+          message: typeof raw.message === 'string' ? raw.message : '',
+          status: raw.status === 'read' ? 'read' : 'unread',
+          createdAt: extractIsoTimestamp(raw.createdAt),
+        };
+      });
+      onUpdate(records);
+    },
+    (error) => {
+      if (onError) {
+        onError(error instanceof Error ? error : new Error(String(error)));
+      }
+    }
+  );
+}
+
+export async function markContactMessageStatus(
+  id: string,
+  status: 'read' | 'unread'
+): Promise<void> {
+  await updateDoc(doc(db, MESSAGES_COLLECTION, id), { status });
+}
+
+export async function deleteContactMessage(id: string): Promise<void> {
+  await deleteDoc(doc(db, MESSAGES_COLLECTION, id));
 }
 
 export { AUTHORIZED_ADMIN_EMAIL };

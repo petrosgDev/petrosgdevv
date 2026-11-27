@@ -20,20 +20,25 @@ import {
 import { DEFAULT_THEME_TOKENS } from '@/lib/themeSystem';
 import {
   AUTHORIZED_ADMIN_EMAIL,
+  type ContactMessageRecord,
+  deleteContactMessage,
   getFirebaseAdminIdToken,
   getFirebaseProjectInfo,
   isAuthorizedAdminUser,
+  markContactMessageStatus,
   resetPublishedPortfolio,
   savePublishedPortfolio,
   signInAdminWithGoogle,
   signOutAdmin,
   subscribeAdminAuth,
+  subscribeContactMessages,
 } from '@/lib/firebase';
 import { usePortfolio } from '@/components/PortfolioContext';
 import { AdminErrorBoundary, CARD_CLASS } from '@/components/admin/AdminFields';
 import { AdminSidebar, type AdminTabId } from '@/components/admin/AdminSidebar';
 import { AdminWorkspaceHeader } from '@/components/admin/AdminWorkspaceHeader';
 import { OverviewSection } from '@/components/admin/OverviewSection';
+import { MessagesSection } from '@/components/admin/MessagesSection';
 import { ProfileSection } from '@/components/admin/ProfileSection';
 import { ProjectsSection } from '@/components/admin/ProjectsSection';
 import { SkillsSection } from '@/components/admin/SkillsSection';
@@ -49,6 +54,7 @@ import { LivePreviewPane } from '@/components/admin/LivePreviewPane';
 
 const TAB_TITLES: Record<AdminTabId, string> = {
   overview: '00 · Studio Overview',
+  messages: '00b · Visitor Messages',
   profile: '01 · Profile & Hero',
   projects: '02 · Projects & Case Studies',
   skills: '03 · Skills & Stack',
@@ -114,6 +120,7 @@ function AdminStudioContent() {
 
   const [saving, setSaving] = useState(false);
   const [resetting, setResetting] = useState(false);
+  const [messages, setMessages] = useState<ContactMessageRecord[]>([]);
   const [statusMessage, setStatusMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -215,6 +222,18 @@ function AdminStudioContent() {
       });
     }
   }, [authorized, contextError]);
+
+  // Subscribe to visitor contact messages in Firestore when signed in as owner
+  useEffect(() => {
+    if (!authorized) {
+      setMessages([]);
+      return;
+    }
+    const unsubscribe = subscribeContactMessages((records) => {
+      setMessages(records);
+    });
+    return () => unsubscribe();
+  }, [authorized]);
 
   const authHeaders = useMemo<Record<string, string>>(() => {
     const headers: Record<string, string> = {};
@@ -527,6 +546,7 @@ function AdminStudioContent() {
           skills: draft.SKILL_CATEGORIES.length,
           experiences: draft.EXPERIENCES.length,
           navigation: draft.NAVIGATION_LINKS.length,
+          unreadMessages: messages.filter((m) => m.status === 'unread').length,
         }}
         isCustomized={isCustomized}
         userEmail={user.email}
@@ -579,6 +599,14 @@ function AdminStudioContent() {
                   onExportJson={handleExportJson}
                   onImportJson={handleImportJson}
                   onResetDefaults={handleResetDefaults}
+                />
+              )}
+
+              {activeTab === 'messages' && (
+                <MessagesSection
+                  messages={messages}
+                  onToggleStatus={markContactMessageStatus}
+                  onDelete={deleteContactMessage}
                 />
               )}
 

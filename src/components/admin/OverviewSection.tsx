@@ -176,7 +176,7 @@ export function OverviewSection({
             Publish State
           </p>
           <p className="mt-2 font-display text-[24px] font-extrabold uppercase leading-tight text-[#1A1A1A] dark:text-[#F0F0EE]">
-            {isCustomized ? 'Cloud Synced' : 'Default Seed'}
+            {isCustomized ? 'Published' : 'Default'}
           </p>
           <p className="mt-1 text-[11.5px] text-[#666666] dark:text-[#9A9A96] truncate">
             {formattedUpdated}
