@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { ArrowUpRight, ChevronDown, ChevronUp } from 'lucide-react';
+import { ArrowUpRight } from 'lucide-react';
 import type { ExperienceItem } from '@/data/portfolio';
 import { getActiveExperienceId } from '@/lib/portfolioLogic';
 
@@ -19,24 +19,16 @@ export function ExperienceShowcase({
   idPrefix = 'exp',
 }: ExperienceShowcaseProps) {
   const [activeId, setActiveId] = useState<string>(items[0]?.id ?? '');
-  const [expandedIds, setExpandedIds] = useState<string[]>(() =>
-    items[0]?.id ? [items[0].id] : []
-  );
   const rowRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
     if (items.length === 0) {
       setActiveId('');
-      setExpandedIds([]);
       return;
     }
     setActiveId((prev) =>
       items.some((item) => item.id === prev) ? prev : items[0].id
     );
-    setExpandedIds((prev) => {
-      const valid = prev.filter((id) => items.some((item) => item.id === id));
-      return valid.length > 0 ? valid : [items[0].id];
-    });
   }, [items]);
 
   useEffect(() => {
@@ -92,16 +84,8 @@ export function ExperienceShowcase({
     };
   }, [items]);
 
-  const toggleRow = (id: string) => {
-    setActiveId(id);
-    setExpandedIds((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
-    );
-  };
-
   const handleSelectRole = (id: string) => {
     setActiveId(id);
-    setExpandedIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
     const el = rowRefs.current[id];
     if (el) {
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -139,10 +123,7 @@ export function ExperienceShowcase({
         </div>
 
         {/* Desktop Sticky Timeline Index */}
-        <ol
-          aria-label="Experience roles"
-          className="mt-7 hidden lg:grid gap-0.5 border-l border-[#EAEAEA] dark:border-[#222220]"
-        >
+        <ol aria-label="Experience roles" className="mt-7 hidden lg:grid gap-1">
           {items.map((item, idx) => {
             const isActive = activeId === item.id;
             return (
@@ -153,10 +134,10 @@ export function ExperienceShowcase({
                   data-xp-item="true"
                   data-active={isActive ? 'true' : 'false'}
                   aria-current={isActive ? 'true' : undefined}
-                  className={`group relative -ml-px grid w-full grid-cols-[24px_minmax(0,1fr)] items-baseline gap-2.5 border-l-2 py-2 pl-4 pr-3 text-left transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] dark:focus-visible:ring-white/60 ${
+                  className={`group grid w-full grid-cols-[24px_minmax(0,1fr)] items-baseline gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] dark:focus-visible:ring-white/60 ${
                     isActive
-                      ? 'border-[#1A1A1A] dark:border-[#F0F0EE] text-[#1A1A1A] dark:text-[#F0F0EE]'
-                      : 'border-transparent text-[#666666] dark:text-[#9A9A96] hover:border-black/25 dark:hover:border-white/25 hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE]'
+                      ? 'bg-[#F5F5F4] dark:bg-[#17191C] text-[#1A1A1A] dark:text-[#F0F0EE]'
+                      : 'text-[#666666] dark:text-[#9A9A96] hover:bg-black/[0.03] dark:hover:bg-white/[0.04] hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE]'
                   }`}
                 >
                   <span className="font-mono text-[11px] tabular-nums opacity-60">
@@ -183,11 +164,10 @@ export function ExperienceShowcase({
         </ol>
       </aside>
 
-      {/* Right Column: Clean Boxless Accordion Rows */}
+      {/* Right Column: Clean Boxless Editorial Rows */}
       <div className="divide-y divide-[#EAEAEA] dark:divide-[#1E1E1C]">
         {items.map((item, idx) => {
           const isActive = activeId === item.id;
-          const isExpanded = expandedIds.includes(item.id);
           const conciseStack = item.stack.slice(0, 6);
 
           return (
@@ -206,78 +186,53 @@ export function ExperienceShowcase({
                   {idx + 1}
                 </span>
 
-                <div className="min-w-0 flex-1">
-                  {/* Clickable Header Row */}
-                  <button
-                    type="button"
-                    onClick={() => toggleRow(item.id)}
-                    aria-expanded={isExpanded}
-                    className="group flex w-full items-start justify-between gap-4 text-left cursor-pointer focus-visible:outline-none"
-                  >
-                    <div className="min-w-0 space-y-1">
-                      <h3 className="text-[16px] sm:text-[18px] leading-snug tracking-[-0.01em]">
-                        <span className="font-semibold text-[#1A1A1A] dark:text-[#F5F5F3]">
-                          {item.role}
-                        </span>
-                        <span
-                          aria-hidden="true"
-                          className="mx-2 font-normal text-[#888884] dark:text-[#555552]"
-                        >
-                          /
-                        </span>
-                        <span className="font-normal text-[#666666] dark:text-[#A3A39E]">
-                          {item.organization}
-                        </span>
-                      </h3>
+                <div className="min-w-0 flex-1 space-y-2.5">
+                  <div>
+                    <h3 className="text-[16px] sm:text-[18px] leading-snug tracking-[-0.01em]">
+                      <span className="font-semibold text-[#1A1A1A] dark:text-[#F5F5F3]">
+                        {item.role}
+                      </span>
+                      <span
+                        aria-hidden="true"
+                        className="mx-2 font-normal text-[#888884] dark:text-[#555552]"
+                      >
+                        /
+                      </span>
+                      <span className="font-normal text-[#666666] dark:text-[#A3A39E]">
+                        {item.organization}
+                      </span>
+                    </h3>
 
-                      <p className="text-[12px] font-mono">
-                        <span className="text-[#991B1B] dark:text-[#B91C1C]">
-                          {item.location}
-                        </span>
-                        <span aria-hidden="true" className="mx-2 text-[#888884] dark:text-[#555552]">
-                          ·
-                        </span>
-                        <span className="text-[#666666] dark:text-[#9A9A96] tabular-nums">
-                          {item.period}
-                        </span>
-                      </p>
-                    </div>
-
-                    <span
-                      aria-hidden="true"
-                      className="mt-1 shrink-0 text-[#666666] dark:text-[#9A9A96] group-hover:text-[#1A1A1A] dark:group-hover:text-[#F0F0EE] transition-colors"
-                    >
-                      {isExpanded ? (
-                        <ChevronUp className="h-4 w-4 text-[#991B1B] dark:text-[#B91C1C]" />
-                      ) : (
-                        <ChevronDown className="h-4 w-4" />
-                      )}
-                    </span>
-                  </button>
-
-                  {/* Expandable Clean Summary + Optional Link */}
-                  {isExpanded ? (
-                    <div className="mt-4 border-l border-[#D4D4D0] dark:border-[#2C2C2A] pl-4 space-y-2.5">
-                      <p className="max-w-[62ch] text-[13.5px] leading-[1.7] text-[#3A3A37] dark:text-[#C8C8C4]">
-                        {item.summary}
-                      </p>
-
+                    <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] font-mono text-[#666666] dark:text-[#9A9A96]">
+                      <span>{item.location}</span>
+                      <span aria-hidden="true" className="opacity-45">
+                        ·
+                      </span>
+                      <span className="tabular-nums">{item.period}</span>
                       {item.organizationUrl ? (
-                        <a
-                          href={item.organizationUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-[12px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 decoration-black/25 dark:decoration-white/25 hover:opacity-70 transition-opacity"
-                        >
-                          <span>{item.organizationUrlLabel ?? 'Official Site'}</span>
-                          <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden="true" />
-                        </a>
+                        <>
+                          <span aria-hidden="true" className="opacity-45">
+                            ·
+                          </span>
+                          <a
+                            href={item.organizationUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-[#1A1A1A] dark:text-[#F0F0EE] underline underline-offset-4 decoration-black/25 dark:decoration-white/25 hover:opacity-70 transition-opacity"
+                          >
+                            <span>{item.organizationUrlLabel ?? 'Official Site'}</span>
+                            <ArrowUpRight className="h-3 w-3 opacity-70" aria-hidden="true" />
+                          </a>
+                        </>
                       ) : null}
                     </div>
-                  ) : null}
+                  </div>
 
-                  {/* Clean Plain-Text Tech Stack Row */}
-                  <div className="mt-3.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#666666] dark:text-[#8E8E8A]">
+                  <p className="max-w-[62ch] text-[13.5px] leading-[1.7] text-[#3A3A37] dark:text-[#C8C8C4]">
+                    {item.summary}
+                  </p>
+
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-[#666666] dark:text-[#8E8E8A]">
                     {conciseStack.map((tech) => (
                       <span key={tech}>{tech}</span>
                     ))}
