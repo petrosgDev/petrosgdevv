@@ -59,7 +59,16 @@ export function HomeView() {
               <strong className="font-semibold text-[#1A1A1A] dark:text-white">
                 full-stack applications
               </strong>{' '}
-              and practical, scalable digital products through clean code and thoughtful design.
+              and practical, scalable digital products through clean code and thoughtful design.{' '}
+              <a
+                href="/api/resume/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline underline-offset-4 decoration-[#1A1A1A]/60 dark:decoration-[#F0F0EE]/60 hover:opacity-65 transition-opacity"
+              >
+                View resume
+              </a>
+              .
             </p>
 
             <div className="pt-1 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] text-[#2A2A2A] dark:text-[#D4D4D0]">
