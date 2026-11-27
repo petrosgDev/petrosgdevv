@@ -28,7 +28,6 @@ import {
   signInAdminWithGoogle,
   signOutAdmin,
   subscribeAdminAuth,
-  subscribePublishedPortfolio,
 } from '@/lib/firebase';
 import { usePortfolio } from '@/components/PortfolioContext';
 import { AdminErrorBoundary, CARD_CLASS } from '@/components/admin/AdminFields';
@@ -87,7 +86,14 @@ function GoogleMark() {
 }
 
 function AdminStudioContent() {
-  const { applyPortfolio } = usePortfolio();
+  const {
+    data: liveData,
+    updatedAt: liveUpdatedAt,
+    isCustomized: liveIsCustomized,
+    loadedFromServer,
+    lastError: contextError,
+    applyPortfolio,
+  } = usePortfolio();
   const firebaseInfo = useMemo(() => getFirebaseProjectInfo(), []);
 
   const [authReady, setAuthReady] = useState(false);
@@ -100,12 +106,10 @@ function AdminStudioContent() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
 
-  const [draft, setDraft] = useState<PortfolioBundle>(() => getDefaultPortfolioBundle());
-  const [savedBundle, setSavedBundle] = useState<PortfolioBundle>(() =>
-    getDefaultPortfolioBundle()
-  );
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
-  const [isCustomized, setIsCustomized] = useState(false);
+  const [draft, setDraft] = useState<PortfolioBundle>(() => liveData);
+  const [savedBundle, setSavedBundle] = useState<PortfolioBundle>(() => liveData);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(liveUpdatedAt);
+  const [isCustomized, setIsCustomized] = useState(liveIsCustomized);
   const [bundleReady, setBundleReady] = useState(false);
 
   const [saving, setSaving] = useState(false);
@@ -118,6 +122,30 @@ function AdminStudioContent() {
   const authorized = isAuthorizedAdminUser(user);
   const savingRef = useRef(false);
   const hasDirtyRef = useRef(false);
+  const lastSyncedSigRef = useRef<string>('');
+  const statusTimerRef = useRef<number | null>(null);
+
+  const showTransientStatus = (type: 'success' | 'error', text: string, ms = 4500) => {
+    if (statusTimerRef.current !== null) {
+      window.clearTimeout(statusTimerRef.current);
+      statusTimerRef.current = null;
+    }
+    setStatusMessage({ type, text });
+    if (ms > 0) {
+      statusTimerRef.current = window.setTimeout(() => {
+        setStatusMessage(null);
+        statusTimerRef.current = null;
+      }, ms);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (statusTimerRef.current !== null) {
+        window.clearTimeout(statusTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     savingRef.current = saving;
@@ -138,61 +166,55 @@ function AdminStudioContent() {
     return () => unsubscribe();
   }, []);
 
-  // Subscribe to Firestore /portfolio/published when verified owner is signed in
+  // Hydrate Studio editor from the single shared PortfolioContext snapshot without clobbering active edits
   useEffect(() => {
     if (!authorized) {
       setBundleReady(false);
+      lastSyncedSigRef.current = '';
       return;
     }
 
-    const unsubscribe = subscribePublishedPortfolio(
-      (snapshot) => {
-        // Ignore snapshot echoes while saving or while the user has unsaved edits in the editor
-        if (savingRef.current) {
-          setBundleReady(true);
-          return;
-        }
+    if (!loadedFromServer) {
+      return;
+    }
 
-        const defaults = getDefaultPortfolioBundle();
-        if (snapshot) {
-          const hydrated: PortfolioBundle = {
-            ...defaults,
-            ...snapshot.data,
-            THEME_TOKENS: snapshot.data.THEME_TOKENS ?? defaults.THEME_TOKENS,
-            SEO_SETTINGS: snapshot.data.SEO_SETTINGS ?? defaults.SEO_SETTINGS,
-            BLOG_SETTINGS: snapshot.data.BLOG_SETTINGS ?? defaults.BLOG_SETTINGS,
-          };
-          setSavedBundle(hydrated);
-          if (!hasDirtyRef.current) {
-            setDraft(hydrated);
-          }
-          setUpdatedAt(snapshot.updatedAt ?? new Date().toISOString());
-          setIsCustomized(snapshot.isCustomized);
-          applyPortfolio(hydrated, {
-            updatedAt: snapshot.updatedAt ?? new Date().toISOString(),
-            isCustomized: snapshot.isCustomized,
-          });
-        } else {
-          setSavedBundle(defaults);
-          if (!hasDirtyRef.current) {
-            setDraft(defaults);
-          }
-          setUpdatedAt(null);
-          setIsCustomized(false);
-        }
-        setBundleReady(true);
-      },
-      (err) => {
-        setBundleReady(true);
-        setStatusMessage({
-          type: 'error',
-          text: `Firestore read warning: ${err.message}`,
-        });
+    if (savingRef.current || resetting) {
+      setBundleReady(true);
+      return;
+    }
+
+    const defaults = getDefaultPortfolioBundle();
+    const hydrated: PortfolioBundle = {
+      ...defaults,
+      ...liveData,
+      THEME_TOKENS: liveData.THEME_TOKENS ?? defaults.THEME_TOKENS,
+      SEO_SETTINGS: liveData.SEO_SETTINGS ?? defaults.SEO_SETTINGS,
+      BLOG_SETTINGS: liveData.BLOG_SETTINGS ?? defaults.BLOG_SETTINGS,
+    };
+    const nextSig = JSON.stringify(hydrated);
+
+    setUpdatedAt(liveUpdatedAt);
+    setIsCustomized(liveIsCustomized);
+
+    if (nextSig !== lastSyncedSigRef.current) {
+      lastSyncedSigRef.current = nextSig;
+      setSavedBundle(hydrated);
+      if (!hasDirtyRef.current) {
+        setDraft(hydrated);
       }
-    );
+    }
 
-    return () => unsubscribe();
-  }, [authorized, applyPortfolio]);
+    setBundleReady(true);
+  }, [authorized, loadedFromServer, liveData, liveUpdatedAt, liveIsCustomized, resetting]);
+
+  useEffect(() => {
+    if (authorized && contextError) {
+      setStatusMessage({
+        type: 'error',
+        text: `Firestore read warning: ${contextError}`,
+      });
+    }
+  }, [authorized, contextError]);
 
   const authHeaders = useMemo<Record<string, string>>(() => {
     const headers: Record<string, string> = {};
@@ -263,6 +285,8 @@ function AdminStudioContent() {
     setSaving(true);
     try {
       const saved = await savePublishedPortfolio(validation.data, user);
+      lastSyncedSigRef.current = JSON.stringify(saved.data);
+      hasDirtyRef.current = false;
       setDraft(saved.data);
       setSavedBundle(saved.data);
       setUpdatedAt(saved.updatedAt);
@@ -272,19 +296,18 @@ function AdminStudioContent() {
         isCustomized: true,
       });
 
-      setStatusMessage({
-        type: 'success',
-        text: 'Published live to Firebase Firestore (/portfolio/published)!',
-      });
-      setTimeout(() => setStatusMessage(null), 4500);
+      showTransientStatus(
+        'success',
+        'Published live to Firebase Firestore (/portfolio/published)!'
+      );
     } catch (err) {
-      setStatusMessage({
-        type: 'error',
-        text:
-          err instanceof Error
-            ? err.message
-            : 'Failed to save portfolio to Firebase Firestore.',
-      });
+      showTransientStatus(
+        'error',
+        err instanceof Error
+          ? err.message
+          : 'Failed to save portfolio to Firebase Firestore.',
+        0
+      );
     } finally {
       setSaving(false);
     }
@@ -298,21 +321,23 @@ function AdminStudioContent() {
     try {
       await resetPublishedPortfolio(user);
       const defaults = getDefaultPortfolioBundle();
+      lastSyncedSigRef.current = JSON.stringify(defaults);
+      hasDirtyRef.current = false;
       setDraft(defaults);
       setSavedBundle(defaults);
       setUpdatedAt(null);
       setIsCustomized(false);
       applyPortfolio(defaults, { updatedAt: null, isCustomized: false });
-      setStatusMessage({
-        type: 'success',
-        text: 'Deleted Firestore override and restored built-in portfolio defaults.',
-      });
-      setTimeout(() => setStatusMessage(null), 4500);
+      showTransientStatus(
+        'success',
+        'Deleted Firestore override and restored built-in portfolio defaults.'
+      );
     } catch (err) {
-      setStatusMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Failed to reset Firestore document.',
-      });
+      showTransientStatus(
+        'error',
+        err instanceof Error ? err.message : 'Failed to reset Firestore document.',
+        0
+      );
     } finally {
       setResetting(false);
     }
@@ -320,11 +345,7 @@ function AdminStudioContent() {
 
   const handleDiscardDraft = () => {
     setDraft(JSON.parse(JSON.stringify(savedBundle)) as PortfolioBundle);
-    setStatusMessage({
-      type: 'success',
-      text: 'Unsaved draft edits discarded.',
-    });
-    setTimeout(() => setStatusMessage(null), 3000);
+    showTransientStatus('success', 'Unsaved draft edits discarded.', 3000);
   };
 
   const handleExportJson = () => {

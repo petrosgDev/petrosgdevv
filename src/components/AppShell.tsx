@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { isAiCrawlerUserAgent } from '@/lib/dataShield';
 import { ThemeProvider } from '@/components/ThemeContext';
 import { PortfolioProvider } from '@/components/PortfolioContext';
+import type { PublishedPortfolioSnapshot } from '@/lib/serverPortfolio';
 import { ThemeTokenStyle } from '@/components/ThemeTokenStyle';
 import { Navbar } from '@/components/Navbar';
 import { SocialRail } from '@/components/SocialRail';
@@ -13,13 +14,14 @@ import { SplashIntro } from '@/components/SplashIntro';
 
 interface AppShellProps {
   children: React.ReactNode;
+  initialSnapshot?: PublishedPortfolioSnapshot | null;
 }
 
 /**
  * Application shell with SSR-first rendering so search engines (Googlebot, Bingbot)
  * immediately receive full semantic HTML, headings, and internal links on initial crawl.
  */
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, initialSnapshot = null }: AppShellProps) {
   const pathname = usePathname() || '/';
   const [blocked, setBlocked] = useState(false);
   const isAdminRoute = pathname === '/boss' || pathname.startsWith('/boss/');
@@ -43,7 +45,7 @@ export function AppShell({ children }: AppShellProps) {
 
   return (
     <ThemeProvider>
-      <PortfolioProvider>
+      <PortfolioProvider initialSnapshot={initialSnapshot}>
         {isAdminRoute ? (
           <div
             id="root"

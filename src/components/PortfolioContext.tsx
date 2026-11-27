@@ -13,30 +13,60 @@ import React, {
 import type { PortfolioBundle } from '@/data/portfolio';
 import { getDefaultPortfolioBundle } from '@/data/portfolio';
 import { validatePortfolioBundle } from '@/lib/portfolioSchema';
+import type { PublishedPortfolioSnapshot } from '@/lib/serverPortfolio';
 import {
   isFirebaseConfigured,
   subscribePublishedPortfolio,
   testFirestoreConnection,
 } from '@/lib/firebase';
 
-const PORTFOLIO_CACHE_KEY = 'petros_portfolio_snapshot_v1';
+const LEGACY_CACHE_KEY = 'petros_portfolio_snapshot_v1';
+const PORTFOLIO_CACHE_KEY = 'petros_portfolio_snapshot_v2';
 
-interface CachedPortfolioSnapshot {
+interface PortfolioContextValue {
   data: PortfolioBundle;
   updatedAt: string | null;
   isCustomized: boolean;
+  loadedFromServer: boolean;
+  lastError: string | null;
+  applyPortfolio: (
+    nextData: PortfolioBundle,
+    meta?: { updatedAt?: string | null; isCustomized?: boolean }
+  ) => void;
 }
 
-function readCachedSnapshot(): CachedPortfolioSnapshot | null {
+const PortfolioContext = createContext<PortfolioContextValue | null>(null);
+
+function normalizeWithDefaults(raw: PortfolioBundle): PortfolioBundle {
+  const defaults = getDefaultPortfolioBundle();
+  return {
+    ...defaults,
+    ...raw,
+    THEME_TOKENS: raw.THEME_TOKENS ?? defaults.THEME_TOKENS,
+    SEO_SETTINGS: raw.SEO_SETTINGS ?? defaults.SEO_SETTINGS,
+    BLOG_SETTINGS: raw.BLOG_SETTINGS ?? defaults.BLOG_SETTINGS,
+  };
+}
+
+function bundleSignature(bundle: PortfolioBundle): string {
+  try {
+    return JSON.stringify(bundle);
+  } catch {
+    return '';
+  }
+}
+
+function readCachedSnapshot(): PublishedPortfolioSnapshot | null {
   if (typeof window === 'undefined') return null;
   try {
+    window.localStorage.removeItem(LEGACY_CACHE_KEY);
     const raw = window.localStorage.getItem(PORTFOLIO_CACHE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<CachedPortfolioSnapshot>;
+    const parsed = JSON.parse(raw) as Partial<PublishedPortfolioSnapshot>;
     const validated = validatePortfolioBundle(parsed?.data);
     if (!validated.ok) return null;
     return {
-      data: validated.data,
+      data: normalizeWithDefaults(validated.data),
       updatedAt: typeof parsed.updatedAt === 'string' ? parsed.updatedAt : null,
       isCustomized: Boolean(parsed.isCustomized),
     };
@@ -45,9 +75,10 @@ function readCachedSnapshot(): CachedPortfolioSnapshot | null {
   }
 }
 
-function writeCachedSnapshot(snapshot: CachedPortfolioSnapshot | null): void {
+function writeCachedSnapshot(snapshot: PublishedPortfolioSnapshot | null): void {
   if (typeof window === 'undefined') return;
   try {
+    window.localStorage.removeItem(LEGACY_CACHE_KEY);
     if (!snapshot || !snapshot.isCustomized) {
       window.localStorage.removeItem(PORTFOLIO_CACHE_KEY);
       return;
@@ -58,35 +89,56 @@ function writeCachedSnapshot(snapshot: CachedPortfolioSnapshot | null): void {
   }
 }
 
-interface PortfolioContextValue {
-  data: PortfolioBundle;
-  updatedAt: string | null;
-  isCustomized: boolean;
-  loadedFromServer: boolean;
-  applyPortfolio: (
-    nextData: PortfolioBundle,
-    meta?: { updatedAt?: string | null; isCustomized?: boolean }
-  ) => void;
-}
+export function PortfolioProvider({
+  children,
+  initialSnapshot = null,
+}: {
+  children: React.ReactNode;
+  initialSnapshot?: PublishedPortfolioSnapshot | null;
+}) {
+  const initialBundle = useMemo(
+    () =>
+      initialSnapshot?.data
+        ? normalizeWithDefaults(initialSnapshot.data)
+        : getDefaultPortfolioBundle(),
+    [initialSnapshot]
+  );
 
-const PortfolioContext = createContext<PortfolioContextValue | null>(null);
+  const [data, setData] = useState<PortfolioBundle>(initialBundle);
+  const [updatedAt, setUpdatedAt] = useState<string | null>(
+    initialSnapshot?.updatedAt ?? null
+  );
+  const [isCustomized, setIsCustomized] = useState<boolean>(
+    Boolean(initialSnapshot?.isCustomized)
+  );
+  const [loadedFromServer, setLoadedFromServer] = useState<boolean>(
+    Boolean(initialSnapshot) || !isFirebaseConfigured()
+  );
+  const [lastError, setLastError] = useState<string | null>(null);
 
-export function PortfolioProvider({ children }: { children: React.ReactNode }) {
-  const [data, setData] = useState<PortfolioBundle>(() => getDefaultPortfolioBundle());
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null);
-  const [isCustomized, setIsCustomized] = useState(false);
-  const [loadedFromServer, setLoadedFromServer] = useState(false);
-  const hasLoadedLiveRef = useRef(false);
+  const lastSignatureRef = useRef<string>(bundleSignature(initialBundle));
+  const isCustomizedRef = useRef<boolean>(Boolean(initialSnapshot?.isCustomized));
+  const updatedAtRef = useRef<string | null>(initialSnapshot?.updatedAt ?? null);
 
-  // Hydrate last known published snapshot before first paint to prevent flashing old defaults
+  // Only read browser cache if SSR did not receive a snapshot, and clean legacy keys
   useLayoutEffect(() => {
-    const cached = readCachedSnapshot();
-    if (cached && !hasLoadedLiveRef.current) {
-      setData(cached.data);
-      setUpdatedAt(cached.updatedAt);
-      setIsCustomized(cached.isCustomized);
+    if (initialSnapshot) {
+      writeCachedSnapshot(initialSnapshot);
+      return;
     }
-  }, []);
+    const cached = readCachedSnapshot();
+    if (cached) {
+      const nextSig = bundleSignature(cached.data);
+      if (nextSig !== lastSignatureRef.current) {
+        lastSignatureRef.current = nextSig;
+        setData(cached.data);
+      }
+      isCustomizedRef.current = cached.isCustomized;
+      updatedAtRef.current = cached.updatedAt;
+      setIsCustomized(cached.isCustomized);
+      setUpdatedAt(cached.updatedAt);
+    }
+  }, [initialSnapshot]);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,14 +153,20 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
           isCustomized?: boolean;
         };
         if (json?.data?.SITE_PROFILE && Array.isArray(json.data.PROJECTS)) {
+          const normalized = normalizeWithDefaults(json.data);
           const nextUpdatedAt = typeof json.updatedAt === 'string' ? json.updatedAt : null;
           const nextCustomized = Boolean(json.isCustomized);
-          hasLoadedLiveRef.current = true;
-          setData(json.data);
+          const nextSig = bundleSignature(normalized);
+          if (nextSig !== lastSignatureRef.current) {
+            lastSignatureRef.current = nextSig;
+            setData(normalized);
+          }
+          updatedAtRef.current = nextUpdatedAt;
+          isCustomizedRef.current = nextCustomized;
           setUpdatedAt(nextUpdatedAt);
           setIsCustomized(nextCustomized);
           writeCachedSnapshot({
-            data: json.data,
+            data: normalized,
             updatedAt: nextUpdatedAt,
             isCustomized: nextCustomized,
           });
@@ -134,22 +192,50 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = subscribePublishedPortfolio(
       (snapshot) => {
         if (cancelled) return;
-        hasLoadedLiveRef.current = true;
+        setLastError(null);
+
         if (snapshot) {
-          setData(snapshot.data);
-          setUpdatedAt(snapshot.updatedAt);
-          setIsCustomized(snapshot.isCustomized);
-          writeCachedSnapshot(snapshot);
+          const normalized = normalizeWithDefaults(snapshot.data);
+          const nextSig = bundleSignature(normalized);
+          if (nextSig !== lastSignatureRef.current) {
+            lastSignatureRef.current = nextSig;
+            setData(normalized);
+          }
+          if (snapshot.updatedAt !== updatedAtRef.current) {
+            updatedAtRef.current = snapshot.updatedAt;
+            setUpdatedAt(snapshot.updatedAt);
+          }
+          if (snapshot.isCustomized !== isCustomizedRef.current) {
+            isCustomizedRef.current = snapshot.isCustomized;
+            setIsCustomized(snapshot.isCustomized);
+          }
+          writeCachedSnapshot({
+            data: normalized,
+            updatedAt: snapshot.updatedAt,
+            isCustomized: snapshot.isCustomized,
+          });
         } else {
-          setData(getDefaultPortfolioBundle());
-          setUpdatedAt(null);
-          setIsCustomized(false);
+          const defaults = getDefaultPortfolioBundle();
+          const defaultSig = bundleSignature(defaults);
+          if (defaultSig !== lastSignatureRef.current) {
+            lastSignatureRef.current = defaultSig;
+            setData(defaults);
+          }
+          if (updatedAtRef.current !== null) {
+            updatedAtRef.current = null;
+            setUpdatedAt(null);
+          }
+          if (isCustomizedRef.current !== false) {
+            isCustomizedRef.current = false;
+            setIsCustomized(false);
+          }
           writeCachedSnapshot(null);
         }
         setLoadedFromServer(true);
       },
-      () => {
+      (err) => {
         if (!cancelled) {
+          setLastError(err.message);
           setLoadedFromServer(true);
         }
       }
@@ -166,26 +252,27 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       nextData: PortfolioBundle,
       meta?: { updatedAt?: string | null; isCustomized?: boolean }
     ) => {
-      hasLoadedLiveRef.current = true;
+      const normalized = normalizeWithDefaults(nextData);
+      const nextSig = bundleSignature(normalized);
       const nextUpdatedAt =
-        meta && 'updatedAt' in meta ? (meta.updatedAt ?? null) : updatedAt;
+        meta && 'updatedAt' in meta ? (meta.updatedAt ?? null) : updatedAtRef.current;
       const nextCustomized =
-        meta && 'isCustomized' in meta ? Boolean(meta.isCustomized) : isCustomized;
+        meta && 'isCustomized' in meta ? Boolean(meta.isCustomized) : isCustomizedRef.current;
 
-      setData(nextData);
-      if (meta && 'updatedAt' in meta) {
-        setUpdatedAt(nextUpdatedAt);
-      }
-      if (meta && 'isCustomized' in meta) {
-        setIsCustomized(nextCustomized);
-      }
+      lastSignatureRef.current = nextSig;
+      updatedAtRef.current = nextUpdatedAt;
+      isCustomizedRef.current = nextCustomized;
+
+      setData(normalized);
+      setUpdatedAt(nextUpdatedAt);
+      setIsCustomized(nextCustomized);
       writeCachedSnapshot({
-        data: nextData,
+        data: normalized,
         updatedAt: nextUpdatedAt,
         isCustomized: nextCustomized,
       });
     },
-    [updatedAt, isCustomized]
+    []
   );
 
   const value = useMemo<PortfolioContextValue>(
@@ -194,9 +281,10 @@ export function PortfolioProvider({ children }: { children: React.ReactNode }) {
       updatedAt,
       isCustomized,
       loadedFromServer,
+      lastError,
       applyPortfolio,
     }),
-    [data, updatedAt, isCustomized, loadedFromServer, applyPortfolio]
+    [data, updatedAt, isCustomized, loadedFromServer, lastError, applyPortfolio]
   );
 
   return (
@@ -214,6 +302,7 @@ export function usePortfolio(): PortfolioContextValue {
       updatedAt: null,
       isCustomized: false,
       loadedFromServer: false,
+      lastError: null,
       applyPortfolio: () => { },
     };
   }

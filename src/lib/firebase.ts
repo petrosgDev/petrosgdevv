@@ -210,9 +210,12 @@ export function subscribePublishedPortfolio(
       const raw = snap.data();
       const validated = validatePortfolioBundle(raw);
       if (validated.ok) {
+        const resolvedUpdatedAt =
+          extractIsoTimestamp(raw.updatedAt) ??
+          (snap.metadata.hasPendingWrites ? new Date().toISOString() : null);
         onUpdate({
           data: validated.data,
-          updatedAt: extractIsoTimestamp(raw.updatedAt),
+          updatedAt: resolvedUpdatedAt,
           isCustomized: true,
         });
       } else {

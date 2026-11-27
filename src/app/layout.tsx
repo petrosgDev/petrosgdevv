@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Barlow_Condensed, JetBrains_Mono, Plus_Jakarta_Sans } from 'next/font/google';
 import { AppShell } from '@/components/AppShell';
+import { getPublishedPortfolioServer } from '@/lib/serverPortfolio';
 import {
   buildRootJsonLd,
   buildSafeJsonLdString,
@@ -8,6 +9,8 @@ import {
   SEO_CONFIG,
 } from '@/lib/seo';
 import './globals.css';
+
+export const dynamic = 'force-dynamic';
 
 const barlowCondensed = Barlow_Condensed({
   subsets: ['latin'],
@@ -101,12 +104,15 @@ const THEME_INIT_SCRIPT = `(function(){try{var s=localStorage.getItem('petros-po
 
 const SPLASH_INIT_SCRIPT = `(function(){try{var bot=/Googlebot|Bingbot|DuckDuckBot|Applebot|YandexBot|Slurp/i.test(navigator.userAgent||'');var seen=sessionStorage.getItem('petros-splash-seen')==='1';var rm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;var q=new URLSearchParams(window.location.search);var skip=bot||q.get('nosplash')==='1'||q.get('autostart')==='1';if(!seen&&!rm&&!skip){document.documentElement.setAttribute('data-splash','active');window.setTimeout(function(){document.documentElement.removeAttribute('data-splash');},3000);}}catch(e){}})();`;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const rootJsonLd = buildSafeJsonLdString(buildRootJsonLd(undefined, resolveSiteUrl()));
+  const initialSnapshot = await getPublishedPortfolioServer();
+  const rootJsonLd = buildSafeJsonLdString(
+    buildRootJsonLd(initialSnapshot?.data, resolveSiteUrl())
+  );
 
   return (
     <html
@@ -124,7 +130,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: SPLASH_INIT_SCRIPT }} />
       </head>
       <body className="bg-white text-[#1A1A1A] dark:bg-[#0A0A0A] dark:text-[#F0F0EE] antialiased selection:bg-[#1A1A1A]/10 dark:selection:bg-white/15">
-        <AppShell>{children}</AppShell>
+        <AppShell initialSnapshot={initialSnapshot}>{children}</AppShell>
       </body>
     </html>
   );

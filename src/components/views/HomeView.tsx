@@ -232,7 +232,7 @@ export function HomeView() {
         className="scroll-mt-24 border-t border-[#EAEAEA] dark:border-[#222220]"
       >
         <div className="mx-auto max-w-[1200px] px-6 py-16 md:px-10 md:py-24">
-          <ExperienceShowcase items={EXPERIENCES} showAboutLink />
+          <ExperienceShowcase items={EXPERIENCES} />
         </div>
       </section>
 
