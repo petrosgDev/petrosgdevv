@@ -328,16 +328,19 @@ export function PortfolioAssistant() {
               </p>
             </div>
 
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2 shrink-0">
               {turns.length > 0 ? (
                 <button
                   type="button"
                   onClick={() => setTurns([])}
                   aria-label="Reset conversation"
                   title="New conversation"
-                  className="inline-flex h-8 items-center gap-1.5 rounded-full border border-black/[0.08] dark:border-white/[0.1] px-2.5 text-[11px] font-medium text-[#666666] dark:text-[#9A9A96] hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors cursor-pointer"
+                  className="group inline-flex h-8 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-black/[0.08] dark:border-white/[0.11] bg-[#F4F4F2] dark:bg-[#1C1C1A] px-2.5 text-[11.5px] font-medium tracking-[-0.01em] text-[#3A3A38] dark:text-[#D4D4CF] shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)] hover:bg-[#EAEAE7] dark:hover:bg-[#272724] hover:text-[#111110] dark:hover:text-white hover:border-black/[0.15] dark:hover:border-white/[0.18] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] dark:focus-visible:ring-[#F0F0EE] focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#111110] transition-all duration-150 cursor-pointer"
                 >
-                  <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                  <RotateCcw
+                    className="h-3 w-3 opacity-80 group-hover:opacity-100 motion-safe:group-hover:-rotate-45 transition-transform duration-200"
+                    aria-hidden="true"
+                  />
                   <span>Reset</span>
                 </button>
               ) : null}
@@ -346,9 +349,13 @@ export function PortfolioAssistant() {
                 type="button"
                 onClick={() => setOpen(false)}
                 aria-label="Close Q&A assistant"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-black/[0.08] dark:border-white/[0.1] text-[#666666] dark:text-[#9A9A96] hover:text-[#1A1A1A] dark:hover:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors cursor-pointer"
+                title="Close (Esc)"
+                className="group inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-black/[0.08] dark:border-white/[0.11] bg-[#F4F4F2] dark:bg-[#1C1C1A] text-[#3A3A38] dark:text-[#D4D4CF] shadow-[inset_0_1px_0_rgba(255,255,255,0.75),0_1px_2px_rgba(0,0,0,0.04)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_1px_2px_rgba(0,0,0,0.35)] hover:bg-[#1A1A1A] dark:hover:bg-[#F0F0EE] hover:text-white dark:hover:text-[#0A0A0A] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] active:scale-[0.95] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1A1A1A] dark:focus-visible:ring-[#F0F0EE] focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-[#111110] transition-all duration-150 cursor-pointer"
               >
-                <X className="h-3.5 w-3.5" aria-hidden="true" />
+                <X
+                  className="h-3.5 w-3.5 motion-safe:group-hover:rotate-90 transition-transform duration-200"
+                  aria-hidden="true"
+                />
               </button>
             </div>
           </div>
