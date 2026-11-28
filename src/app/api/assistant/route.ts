@@ -4,19 +4,15 @@ import { getPublishedPortfolioServer } from '@/lib/serverPortfolio';
 import {
   answerPortfolioQuestion,
   buildPortfolioSystemPrompt,
+  type AssistantHistoryTurn,
   type AssistantReply,
 } from '@/lib/portfolioAssistant';
 
 export const dynamic = 'force-dynamic';
 
-interface HistoryTurn {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
 async function tryOptionalLlmAnswer(
   question: string,
-  history: HistoryTurn[],
+  history: AssistantHistoryTurn[],
   bundle: PortfolioBundle
 ): Promise<string | null> {
   const systemPrompt = buildPortfolioSystemPrompt(bundle);
@@ -30,7 +26,7 @@ async function tryOptionalLlmAnswer(
   if (geminiKey) {
     try {
       const contents = [
-        ...history.slice(-6).map((m) => ({
+        ...history.slice(-8).map((m) => ({
           role: m.role === 'assistant' ? 'model' : 'user',
           parts: [{ text: m.content }],
         })),
@@ -42,13 +38,13 @@ async function tryOptionalLlmAnswer(
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          signal: AbortSignal.timeout(7000),
+          signal: AbortSignal.timeout(8000),
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: systemPrompt }] },
             contents,
             generationConfig: {
-              temperature: 0.35,
-              maxOutputTokens: 360,
+              temperature: 0.3,
+              maxOutputTokens: 480,
             },
           }),
         }
@@ -84,14 +80,14 @@ async function tryOptionalLlmAnswer(
           'Content-Type': 'application/json',
           Authorization: `Bearer ${openaiKey}`,
         },
-        signal: AbortSignal.timeout(7000),
+        signal: AbortSignal.timeout(8000),
         body: JSON.stringify({
           model,
-          temperature: 0.35,
-          max_tokens: 360,
+          temperature: 0.3,
+          max_tokens: 480,
           messages: [
             { role: 'system', content: systemPrompt },
-            ...history.slice(-6),
+            ...history.slice(-8),
             { role: 'user', content: question },
           ],
         }),
@@ -130,32 +126,33 @@ export async function POST(request: NextRequest) {
     }
 
     const rawHistory = Array.isArray(body?.history) ? body.history : [];
-    const history: HistoryTurn[] = rawHistory
-      .slice(-6)
+    const history: AssistantHistoryTurn[] = rawHistory
+      .slice(-10)
       .filter(
-        (item): item is HistoryTurn =>
+        (item): item is AssistantHistoryTurn =>
           Boolean(item) &&
           typeof item === 'object' &&
-          ((item as HistoryTurn).role === 'user' ||
-            (item as HistoryTurn).role === 'assistant') &&
-          typeof (item as HistoryTurn).content === 'string'
+          ((item as AssistantHistoryTurn).role === 'user' ||
+            (item as AssistantHistoryTurn).role === 'assistant') &&
+          typeof (item as AssistantHistoryTurn).content === 'string'
       )
       .map((item) => ({
         role: item.role,
-        content: item.content.slice(0, 800),
+        content: item.content.slice(0, 1000),
       }));
 
     const snapshot = await getPublishedPortfolioServer();
     const bundle = snapshot?.data ?? getDefaultPortfolioBundle();
 
-    // Always compute contextual links via grounded engine; use optional LLM text if configured
-    const engineReply = answerPortfolioQuestion(question, bundle);
+    // Always compute contextual links and follow-ups via grounded engine
+    const engineReply = answerPortfolioQuestion(question, bundle, history);
     const llmAnswer = await tryOptionalLlmAnswer(question, history, bundle);
 
     const payload: AssistantReply = llmAnswer
       ? {
           answer: llmAnswer,
           links: engineReply.links,
+          followUps: engineReply.followUps,
           mode: 'llm',
         }
       : engineReply;
@@ -175,4 +172,3 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-
