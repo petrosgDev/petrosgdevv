@@ -12,14 +12,26 @@ import {
 test('answerPortfolioQuestion rejects off-topic queries instead of dumping unrelated experience', () => {
   const bundle = getDefaultPortfolioBundle();
 
-  const ghana = answerPortfolioQuestion('who is the president of ghna', bundle);
-  assert.equal(ghana.offTopic, true);
-  assert.match(ghana.answer, /only answer questions about/i);
-  assert.doesNotMatch(ghana.answer, /RiseTech|Debre Birhan University|Verified Experience/i);
+  const offTopicQueries = [
+    'who is the president of ghna',
+    'who is the prime minister of ethiopia',
+    'what is the weather in tokyo today?',
+    'where is paris?',
+    'is pizza good?',
+    'how much does an iphone cost?',
+    'what is 2 + 2?',
+  ];
 
-  const weather = answerPortfolioQuestion('what is the weather in tokyo today?', bundle);
-  assert.equal(weather.offTopic, true);
-  assert.doesNotMatch(weather.answer, /RiseTech|Sprint Studio/i);
+  for (const query of offTopicQueries) {
+    const reply = answerPortfolioQuestion(query, bundle);
+    assert.equal(reply.offTopic, true, `Expected offTopic=true for "${query}"`);
+    assert.match(reply.answer, /only answer questions about/i, `Unexpected answer for "${query}"`);
+    assert.doesNotMatch(
+      reply.answer,
+      /RiseTech|Debre Birhan University|Verified Experience|Core Strengths|Availability, Location/i,
+      `Leaked portfolio details on off-topic query "${query}"`
+    );
+  }
 
   // Even after talking about Aman Pay, an unrelated short question must NOT falsely hijack prior project context
   const afterProject = answerPortfolioQuestion(
@@ -45,6 +57,9 @@ test('answerPortfolioQuestion answers critical recruiter questions grounded in P
 
   const hire = answerPortfolioQuestion('did i hire him? should I hire him?', bundle);
   assert.match(hire.answer, /private employer records|public portfolio/i);
+  assert.match(hire.answer, /Why Hire Petros Geto/i);
+  assert.match(hire.answer, /Aman Pay/);
+  assert.match(hire.answer, /Event Hub/);
   assert.match(hire.answer, /Sprint Studio|RiseTech|INSA/);
   assert.ok(hire.links.some((l) => l.href === '/contact'));
 
@@ -70,7 +85,7 @@ test('answerPortfolioQuestion handles compound multi-intent questions without dr
     bundle
   );
 
-  assert.match(compound.answer, /Hiring Assessment/i);
+  assert.match(compound.answer, /Why Hire Petros Geto/i);
   assert.match(compound.answer, /Core Strengths/i);
   assert.match(compound.answer, /Honest Limitations/i);
   assert.match(compound.answer, /Backend & Database Engineering Fit/i);

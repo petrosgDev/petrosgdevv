@@ -4,12 +4,14 @@ import { getPublishedPortfolioServer } from '@/lib/serverPortfolio';
 import {
   classifyGeminiError,
   GEMINI_ASSISTANT_MODEL,
+  getGeminiApiKey,
   getGeminiClient,
   PORTFOLIO_ASSISTANT_RESPONSE_SCHEMA,
   ThinkingLevel,
   withExponentialBackoff,
 } from '@/lib/gemini';
 import {
+  answerPortfolioQuestion,
   buildGeminiConversationContents,
   buildPortfolioSystemPrompt,
   normalizeGeminiAssistantReply,
@@ -60,6 +62,18 @@ export async function POST(request: NextRequest) {
 
     const snapshot = await getPublishedPortfolioServer();
     const bundle = snapshot?.data ?? getDefaultPortfolioBundle();
+
+    // When GEMINI_API_KEY is not configured in the environment, serve the deterministic
+    // grounded portfolio index explicitly (mode: 'portfolio-engine') so the portfolio Q&A
+    // stays functional. When GEMINI_API_KEY IS configured, always use Gemini and surface
+    // any real upstream API errors transparently.
+    if (!getGeminiApiKey()) {
+      const groundedReply = answerPortfolioQuestion(question, bundle, history);
+      return NextResponse.json(groundedReply, {
+        status: 200,
+        headers: RESPONSE_HEADERS,
+      });
+    }
 
     const ai = getGeminiClient();
     const systemInstruction = buildPortfolioSystemPrompt(bundle);

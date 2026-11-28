@@ -49,10 +49,10 @@ export function getGeminiClient(): GoogleGenAI {
 export function classifyGeminiError(error: unknown): ClassifiedGeminiError {
   if (error instanceof GeminiConfigError) {
     return {
-      status: 503,
+      status: 502,
       code: 'MISSING_CONFIG',
       message:
-        'The portfolio assistant is temporarily unavailable. You can still browse projects, view the resume, or reach out via the Contact page.',
+        'The AI assistant is temporarily unavailable. You can still browse projects, view the resume, or reach out via the Contact page.',
       retryable: false,
     };
   }
@@ -78,10 +78,10 @@ export function classifyGeminiError(error: unknown): ClassifiedGeminiError {
     /API_KEY_INVALID|PERMISSION_DENIED|invalid api key|unauthenticated/i.test(rawMessage)
   ) {
     return {
-      status: 503,
+      status: 502,
       code: 'AUTH_ERROR',
       message:
-        'The portfolio assistant is temporarily unavailable due to a service configuration issue. Please try again later.',
+        'The AI assistant could not authenticate with the model service. Please try again later.',
       retryable: false,
     };
   }

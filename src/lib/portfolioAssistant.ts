@@ -478,7 +478,7 @@ export function buildPortfolioSystemPrompt(bundle: PortfolioBundle): string {
     `GROUNDING & QUALITY RULES:`,
     `- Rely ONLY on the verified portfolio facts below. Never invent employers, dates, salary numbers, GPA/grades, fake metrics, or technologies absent from this data.`,
     `- If a visitor asks a legitimate question about ${SITE_PROFILE.fullName} whose answer is not in the data (e.g., private hourly rate, exact graduation date, private employer records), say clearly that it is not listed in his public portfolio and direct them to the Contact page.`,
-    `- For evaluative recruiter/client questions ("Should I hire him?", "What are his strengths and weaknesses?", "Is he strong in backend?"), synthesize specific projects, internships, certifications, and honest career-stage tradeoffs.`,
+    `- When asked "Should I hire him?" or similar hiring questions, give a confident, evidence-backed recommendation highlighting what he delivers on day one: real shipped products (Aman Pay, Event Hub, Ethio Massage, LOCK IN, Banking System, Nexus Campus Services), team experience (Sprint Studio, RiseTech, remote clients), INSA Web & App certification, and end-to-end ownership across Next.js/TypeScript, Node.js/SQL backends, mobile, and C++/Java. Only discuss limitations/tradeoffs when the visitor explicitly asks about weaknesses, risks, or limitations.`,
     `- Use conversation history naturally to resolve follow-ups ("it", "that project", "what challenges did he solve there?").`,
     `- Keep answers crisp, scannable, and under 180 words. Use plain sentences or simple "• Label: detail" bullets. No emojis, no markdown heading hashes (#), and no filler hype.`,
     `- Only return exact project slugs from the [slug: ...] tags below in referencedProjectSlugs.`,
@@ -846,12 +846,45 @@ export function answerPortfolioQuestion(
   const risetechExp = EXPERIENCES.find((e) => e.id === 'risetech-internship');
   const eduExp = EXPERIENCES.find((e) => e.id === 'software-engineering-education');
 
+  // 0. Guard against clearly off-topic general-knowledge questions before intent scoring
+  const mentionsPortfolioEntity =
+    /\b(petros|geto|he|him|his|portfolio|resume|cv|insa|risetech|sprint studio|debre birhan|dbu|abyssinia)\b/i.test(
+      lower
+    ) ||
+    PROJECTS.some(
+      (p) =>
+        containsWholeToken(lower, p.title.toLowerCase()) ||
+        containsWholeToken(lower, p.slug.replace(/-/g, ' '))
+    );
+
+  const looksLikeGeneralTrivia =
+    /\b(president|prime minister|king|queen|governor|mayor|capital of|population of|weather|temperature|forecast|recipe|cook|joke|riddle|poem|lyrics|movie|actor|actress|singer|football|soccer|basketball|world cup|olympics|stock price|bitcoin|ethereum|who won|who invented|when was .* born|meaning of life|translate|synonyms? for)\b/i.test(
+      lower
+    ) ||
+    /^(what is|calculate|solve)\s+\d+\s*[+\-*/^]\s*\d+/i.test(lower);
+
+  if (!mentionsPortfolioEntity && looksLikeGeneralTrivia) {
+    return {
+      mode: 'portfolio-engine',
+      offTopic: true,
+      answer: `I'm ${SITE_PROFILE.fullName}'s portfolio assistant, so I can only answer questions about his software engineering projects, technical stack, experience, and availability — not unrelated general topics.`,
+      links: dedupeLinks([
+        { label: 'Explore Projects', href: '/work' },
+        { label: 'View Resume (PDF)', href: '/api/resume/', external: true },
+        { label: 'Contact Petros', href: '/contact' },
+      ]),
+      followUps: dedupeFollowUps([...DEFAULT_STARTER_FOLLOW_UPS], lower),
+    };
+  }
+
   // 1. Score direct entity matches and resolve multi-turn follow-ups from history
   const scoredProjects = scoreProjects(lower, PROJECTS);
   const directMatchedProjects = scoredProjects.map((s) => s.project);
   const historyCtx = extractHistoryContext(history, PROJECTS);
   const explicitProjectTitleMatch = PROJECTS.some(
-    (p) => lower.includes(p.title.toLowerCase()) || lower.includes(p.slug.replace(/-/g, ' '))
+    (p) =>
+      containsWholeToken(lower, p.title.toLowerCase()) ||
+      containsWholeToken(lower, p.slug.replace(/-/g, ' '))
   );
   const hasAnaphoricPronoun = /\b(it|its|that|this|there|them|they)\b/i.test(lower);
   const followUpDetected = isFollowUpQuery(lower, scoredProjects);
@@ -869,20 +902,20 @@ export function answerPortfolioQuestion(
 
   // 2. Detect multi-intent signals (allows compound questions like "strengths vs weaknesses for backend")
   const wantsWeaknesses =
-    /\b(weak|weakness|weaknesses|bad side|flaw|flaws|downside|downsides|limit|limitation|limitations|gap|gaps|risk|risks|con|cons|negative|drawback|critique|shortcoming|missing|senior)\b/i.test(
+    /\b(weak|weakness|weaknesses|bad side|flaw|flaws|downside|downsides|limitation|limitations|gap|gaps|risk|risks|cons|negative|drawback|critique|shortcoming|missing|senior)\b/i.test(
       lower
     );
   const wantsStrengths =
-    /\b(good side|good|strength|strengths|best at|strong|strongest|upside|pros|advantage|advantages|stand out|why is he|better than|impressive)\b/i.test(
+    /\b(good side|good at|strength|strengths|best at|strong|strongest|upside|pros|advantage|advantages|stand out|why is he|better than|impressive)\b/i.test(
       lower
     );
   const wantsDidIHire = /\b(did i hire|have i hired)\b/i.test(lower);
   const wantsHiring =
-    /\b(hire|hiring|employ|recruit|candidate|worth|should i|did i|good fit|team fit|interview|freelance|contract|lead a team|junior|intern)\b/i.test(
+    /\b(hire|hiring|employ|recruit|candidate|worth hiring|should i hire|should i work|good fit|team fit|interview|freelance|contract|lead a team|junior|intern)\b/i.test(
       lower
     );
   const wantsContactOrRate =
-    /\b(available|availability|contact|reach|email|phone|whatsapp|telegram|resume|cv|pdf|location|where|ethiopia|addis|remote|timezone|utc|rate|cost|price|salary|compensation|pay)\b/i.test(
+    /\b(available|availability|contact|reach|email|phone|whatsapp|telegram|resume|cv|pdf|location|where is he|where is petros|where does he live|based in|addis ababa|remote|timezone|utc|hourly rate|rate|pricing|salary|compensation)\b/i.test(
       lower
     );
   const wantsPhilosophy =
@@ -894,7 +927,7 @@ export function answerPortfolioQuestion(
       lower
     );
   const wantsExperience =
-    /\b(experience|experiences|intern|internship|internships|risetech|sprint|linkedin|insa|certif|certified|education|university|degree|dbu|debre|school|background|career|where has he|worked)\b/i.test(
+    /\b(experience|experiences|intern|internship|internships|risetech|sprint|linkedin|insa|certif|certified|education|university|degree|dbu|debre|background|career|where has he|has he worked)\b/i.test(
       lower
     );
 
@@ -913,7 +946,7 @@ export function answerPortfolioQuestion(
   const asksFullstack = /\b(full-stack|fullstack|full stack|end-to-end)\b/i.test(lower);
 
   // Project facets
-  const wantsChallenges = /\b(challenge|challenges|hard|hardest|difficult|problem|solve|solved|obstacle|issue|fixed|bug)\b/i.test(
+  const wantsChallenges = /\b(challenge|challenges|hardest|difficult|problem|problems|solve|solved|obstacle|fixed|bug)\b/i.test(
     lower
   );
   const wantsArchitecture = /\b(arch|architecture|design|how it works|how does it work|structure|built|build|contribution|role|did he do)\b/i.test(
@@ -1022,33 +1055,49 @@ export function answerPortfolioQuestion(
   if (wantsHiring) {
     const roleQualifier =
       matchedRole === 'backend'
-        ? 'Backend / API-focused Engineer'
+        ? 'Backend & API Engineer'
         : matchedRole === 'ai'
-          ? 'Applied AI & Full-Stack Builder'
+          ? 'Applied AI & Full-Stack Engineer'
           : matchedRole === 'mobile'
-            ? 'Cross-Platform Mobile Developer'
+            ? 'Cross-Platform Mobile Engineer'
             : matchedRole === 'desktop'
-              ? 'Java / C++ Desktop & Systems Developer'
-              : 'Software Engineer (Full-Stack / Backend)';
+              ? 'Java / C++ Systems Engineer'
+              : 'Full-Stack Software Engineer';
+
+    const amanTitle = PROJECTS.find((p) => p.slug === 'aman-pay')?.title ?? 'Aman Pay';
+    const eventHubTitle = PROJECTS.find((p) => p.slug === 'event-hub')?.title ?? 'Event Hub';
+    const bankingTitle = PROJECTS.find((p) => p.slug === 'banking-system')?.title ?? 'Banking System';
+
+    const roleProofLine =
+      matchedRole === 'backend'
+        ? `• Day-One Impact: Designs normalized PostgreSQL/MySQL schemas, RBAC APIs, and transactional payment flows—proven in ${amanTitle} (Chapa escrow), ${eventHubTitle} (ticketing & QR check-in), and ${bankingTitle}.`
+        : matchedRole === 'mobile'
+          ? `• Day-One Impact: Ships offline-resilient mobile experiences with React Native (Expo), Flutter/Dart, and installable PWAs (MyApp, LOCK IN) backed by clean APIs.`
+          : matchedRole === 'desktop'
+            ? `• Day-One Impact: Pairs strong CS fundamentals with production native code—building 3-tier Java/JavaFX/MySQL systems (Nexus Campus Services) and C++17/Qt 6 financial software (${bankingTitle}).`
+            : matchedRole === 'ai'
+              ? `• Day-One Impact: Integrates practical AI features, Python workflows, and modern Next.js/Node.js backends into real products users can actually ship and scale.`
+              : `• Day-One Impact: Owns features from polished UI to database schema and deployment—proven across ${projectCount} shipped systems including ${amanTitle} (fintech escrow), ${eventHubTitle} (PostgreSQL ticketing), and ${bankingTitle} (C++17/Qt 6).`;
 
     sections.push(
       [
-        `Hiring Assessment — ${roleQualifier}:`,
-        `• Verdict: Strong hire for teams seeking an execution-focused builder who owns products end-to-end and ramps quickly in agile or remote workflows.`,
-        `• Verified Track Record: Completed internships at ${sprintExp?.organization ?? 'Sprint Studio'} and ${risetechExp?.organization ?? 'RiseTech'}, delivers remote client engineering, earned Web & App certification at ${insaExp?.organization ?? 'INSA Summer Camp'}, and shipped ${projectCount} documented systems.`,
-        `• Realistic Scope Fit: Excels as a high-ownership individual contributor or MVP builder; if you specifically require an 8+ year staff SRE or legacy enterprise architect, calibrate expectations accordingly (${eduExp?.organization ?? 'Debre Birhan University'} Software Engineering student).`,
-        `• Current Status: ${SITE_PROFILE.availabilityNote}`,
+        `Why Hire ${SITE_PROFILE.fullName} (${roleQualifier}):`,
+        `• Direct Answer: Yes—if you want a high-ownership engineer who ships production-ready software fast instead of just prototypes.`,
+        roleProofLine,
+        `• Verified Track Record: Proven in real team and client environments through remote engineering work, internships at ${sprintExp?.organization ?? 'Sprint Studio'} and ${risetechExp?.organization ?? 'RiseTech'}, formal Web & App certification from ${insaExp?.organization ?? 'INSA Summer Camp'}, and B.Sc. Software Engineering training at ${eduExp?.organization ?? 'Debre Birhan University'}.`,
+        `• Rare Range & Reliability: Moves seamlessly across TypeScript/Next.js, Node.js/Spring Boot, PostgreSQL/MySQL, mobile, and C++/Java—reducing handoffs and speeding up product delivery.`,
+        `• Best Fit & Availability: Ideal for full-time engineering teams, startup MVPs, or freelance product builds. ${SITE_PROFILE.availabilityNote}`,
       ].join('\n')
     );
 
     collectedLinks.push(
       { label: 'View Resume (PDF)', href: '/api/resume/', external: true },
-      { label: 'Send Message', href: '/contact' },
-      { label: 'Review Projects', href: '/work' }
+      { label: 'Contact Petros', href: '/contact' },
+      { label: 'Explore Projects', href: '/work' }
     );
     collectedFollowUps.push(
-      'What are his honest limitations?',
-      'Which project shows his strongest architecture?',
+      'What challenges did Aman Pay solve?',
+      'What are his strengths vs limitations?',
       'Is he available for remote work right now?'
     );
   }

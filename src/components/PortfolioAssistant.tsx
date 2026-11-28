@@ -25,6 +25,7 @@ interface ChatTurn {
   content: string;
   links?: AssistantLink[];
   followUps?: string[];
+  mode?: 'llm' | 'portfolio-engine';
   offTopic?: boolean;
   isError?: boolean;
   retryQuestion?: string;
@@ -267,6 +268,7 @@ export function PortfolioAssistant() {
           content: payload.answer,
           links: payload.links,
           followUps: payload.followUps,
+          mode: payload.mode,
           offTopic: Boolean(payload.offTopic),
         },
       ]);
@@ -425,7 +427,11 @@ export function PortfolioAssistant() {
                       <div className="group relative rounded-2xl rounded-tl-md border border-[#EAEAEA] dark:border-[#222220] bg-[#FAFAFA] dark:bg-[#161615] px-3.5 py-3">
                         <div className="flex items-center justify-between gap-2 pb-1.5 mb-1.5 border-b border-black/[0.05] dark:border-white/[0.06]">
                           <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-[#777773] dark:text-[#8E8E88]">
-                            {turn.offTopic ? 'Out of Scope' : 'Verified Answer'}
+                            {turn.offTopic
+                              ? 'Out of Scope'
+                              : turn.mode === 'llm'
+                                ? 'AI Answer'
+                                : 'Verified Answer'}
                           </span>
                           <button
                             type="button"
