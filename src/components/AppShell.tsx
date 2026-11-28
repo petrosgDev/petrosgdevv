@@ -11,6 +11,7 @@ import { Navbar } from '@/components/Navbar';
 import { SocialRail } from '@/components/SocialRail';
 import { Footer } from '@/components/Footer';
 import { SplashIntro } from '@/components/SplashIntro';
+import { PortfolioAssistant } from '@/components/PortfolioAssistant';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -78,6 +79,7 @@ export function AppShell({ children, initialSnapshot = null }: AppShellProps) {
 
               <Footer />
             </div>
+            <PortfolioAssistant />
           </>
         )}
       </PortfolioProvider>
