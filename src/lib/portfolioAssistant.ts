@@ -16,9 +16,70 @@ export interface AssistantReply {
   links: AssistantLink[];
   followUps?: string[];
   mode: 'llm' | 'portfolio-engine';
+  offTopic?: boolean;
+}
+
+export interface StructuredGeminiReply {
+  answer?: string;
+  offTopic?: boolean;
+  referencedProjectSlugs?: string[];
+  includeResumeLink?: boolean;
+  includeContactLink?: boolean;
+  includeWorkLink?: boolean;
+  includeBlogLink?: boolean;
+  followUps?: string[];
 }
 
 const STOP_WORDS = new Set([
+  // Common 2-letter and short English stop words (prevents false matches like "is" -> "RiseTech" or "of" -> "Software")
+  'is',
+  'of',
+  'in',
+  'on',
+  'at',
+  'to',
+  'by',
+  'an',
+  'as',
+  'or',
+  'be',
+  'do',
+  'my',
+  'we',
+  'he',
+  'me',
+  'us',
+  'up',
+  'so',
+  'no',
+  'if',
+  'am',
+  'it',
+  'its',
+  'you',
+  'your',
+  'our',
+  'she',
+  'out',
+  'off',
+  'not',
+  'but',
+  'too',
+  'now',
+  'new',
+  'one',
+  'two',
+  'get',
+  'got',
+  'let',
+  'may',
+  'set',
+  'try',
+  'put',
+  'run',
+  'see',
+  'say',
+  'ask',
   'the',
   'and',
   'for',
@@ -166,6 +227,23 @@ const QUERY_SYNONYMS: Record<string, readonly string[]> = {
   insa: ['insa', 'summer camp', 'security'],
 };
 
+const DEFAULT_STARTER_FOLLOW_UPS = [
+  'Should I hire Petros for a full-stack role?',
+  'What challenges did Aman Pay solve?',
+  'Compare his backend, mobile, and desktop stack',
+] as const;
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function containsWholeToken(haystackLower: string, tokenLower: string): boolean {
+  if (!tokenLower) return false;
+  const escaped = escapeRegex(tokenLower);
+  const pattern = new RegExp(`(^|[^a-z0-9+#])${escaped}(?=$|[^a-z0-9+#])`, 'i');
+  return pattern.test(haystackLower);
+}
+
 function dedupeLinks(links: AssistantLink[]): AssistantLink[] {
   const seen = new Set<string>();
   const out: AssistantLink[] = [];
@@ -214,6 +292,7 @@ interface ScoredProject {
 function scoreProjects(queryLower: string, projects: readonly ProjectItem[]): ScoredProject[] {
   const rawTokens = queryLower
     .split(/[^a-z0-9+#.]+/)
+    .map((t) => t.replace(/^\.+|\.+$/g, ''))
     .filter((t) => t.length >= 2 && !STOP_WORDS.has(t));
   const tokens = tokenizeQuery(queryLower);
 
@@ -233,7 +312,10 @@ function scoreProjects(queryLower: string, projects: readonly ProjectItem[]): Sc
       const deepText = `${p.overview} ${p.problemStatement} ${p.objectives.join(' ')} ${p.category}`.toLowerCase();
 
       let score = 0;
-      if (queryLower.includes(titleLower) || queryLower.includes(slugClean)) {
+      if (
+        containsWholeToken(queryLower, titleLower) ||
+        containsWholeToken(queryLower, slugClean)
+      ) {
         score += 14;
       }
 
@@ -241,19 +323,19 @@ function scoreProjects(queryLower: string, projects: readonly ProjectItem[]): Sc
         const isDirect = rawTokens.includes(tok);
         const weightMult = isDirect ? 1 : 0.6;
 
-        if (titleLower.includes(tok) || slugClean.includes(tok)) {
+        if (containsWholeToken(titleLower, tok) || containsWholeToken(slugClean, tok)) {
           score += 7 * weightMult;
         }
-        if (techLower.includes(tok)) {
+        if (containsWholeToken(techLower, tok)) {
           score += 4.5 * weightMult;
         }
-        if (archLower.includes(tok) || challengeLower.includes(tok)) {
+        if (containsWholeToken(archLower, tok) || containsWholeToken(challengeLower, tok)) {
           score += 3 * weightMult;
         }
-        if (coreText.includes(tok)) {
+        if (containsWholeToken(coreText, tok)) {
           score += 2.2 * weightMult;
         }
-        if (deepText.includes(tok)) {
+        if (containsWholeToken(deepText, tok)) {
           score += 1.4 * weightMult;
         }
       }
@@ -279,9 +361,9 @@ function scoreExperiences(
 
       let score = 0;
       for (const tok of tokens) {
-        if (titleText.includes(tok)) score += 5;
-        if (stackText.includes(tok)) score += 3;
-        if (bodyText.includes(tok)) score += 1.5;
+        if (containsWholeToken(titleText, tok)) score += 5;
+        if (containsWholeToken(stackText, tok)) score += 3;
+        if (containsWholeToken(bodyText, tok)) score += 1.5;
       }
       return { exp, score };
     })
@@ -338,16 +420,13 @@ function extractHistoryContext(
 
 function isFollowUpQuery(queryLower: string, directProjects: readonly ScoredProject[]): boolean {
   if (directProjects.length > 0) return false;
-  const wordCount = queryLower.split(/\s+/).filter(Boolean).length;
-  const hasPronounOrEllipsis =
-    /\b(it|its|that|this|them|they|there|more|else|detail|details|deeper|challenge|challenges|architecture|stack|tech|demo|live|github|repo|code|problem|feature|features|role|contribution|why|how)\b/i.test(
-      queryLower
-    );
-  return hasPronounOrEllipsis || wordCount <= 5;
+  return /\b(it|its|that|this|them|they|there|more|else|detail|details|deeper|challenge|challenges|architecture|stack|tech|demo|live|github|repo|code|problem|feature|features|role|contribution)\b/i.test(
+    queryLower
+  );
 }
 
 /**
- * Builds a rich, grounded system prompt from the live PortfolioBundle for optional LLM providers.
+ * Builds a rich, strictly grounded system prompt from the live PortfolioBundle for Gemini.
  */
 export function buildPortfolioSystemPrompt(bundle: PortfolioBundle): string {
   const {
@@ -357,6 +436,7 @@ export function buildPortfolioSystemPrompt(bundle: PortfolioBundle): string {
     SKILL_CATEGORIES,
     PHILOSOPHY_PILLARS,
     TECHNICAL_INTERESTS,
+    BLOG_SETTINGS,
   } = bundle;
 
   const expSummary = EXPERIENCES.map((e) => {
@@ -374,7 +454,7 @@ export function buildPortfolioSystemPrompt(bundle: PortfolioBundle): string {
     const urls = [p.liveUrl ? `Live: ${p.liveUrl}` : '', p.githubUrl ? `GitHub: ${p.githubUrl}` : '']
       .filter(Boolean)
       .join(', ');
-    return `- ${p.title} (${p.category}, ${p.year}) [/work/${p.slug}/]: ${p.subtitle}. Overview: ${p.overview} Problem: ${p.problemStatement} Role: ${p.contribution} [Tech: ${p.technologies.join(', ')}]${arch}${chall}${urls ? ` | Links: ${urls}` : ''}`;
+    return `- [slug: ${p.slug}] ${p.title} (${p.category}, ${p.year}): ${p.subtitle}. Overview: ${p.overview} Problem: ${p.problemStatement} Role (${p.role}): ${p.contribution} [Tech: ${p.technologies.join(', ')}]${arch}${chall}${urls ? ` | Links: ${urls}` : ''}`;
   }).join('\n');
 
   const skillsSummary = SKILL_CATEGORIES.map(
@@ -383,14 +463,25 @@ export function buildPortfolioSystemPrompt(bundle: PortfolioBundle): string {
 
   const philosophySummary = PHILOSOPHY_PILLARS.map((p) => `${p.title}: ${p.description}`).join(' | ');
   const interestsSummary = TECHNICAL_INTERESTS.map((i) => i.title).join(', ');
+  const blogLine = BLOG_SETTINGS
+    ? `Blog & Notes: @${BLOG_SETTINGS.telegramChannel} — ${BLOG_SETTINGS.subtitle}`
+    : '';
 
   return [
-    `You are the portfolio intelligence assistant representing ${SITE_PROFILE.fullName} (${SITE_PROFILE.brand}), a ${SITE_PROFILE.role} based in ${SITE_PROFILE.location}.`,
-    `Answer visitor, client, founder, and technical recruiter questions honestly, analytically, and concisely using ONLY the verified portfolio facts below.`,
-    `Never invent employers, salary numbers, GPA/grades, fake metrics, or skills absent from this data.`,
-    `When asked evaluative questions ("Should I hire him?", "What is his good side?", "What are his weaknesses?", "Is he good for backend?"), synthesize specific projects, architecture decisions, internships, and realistic scope tradeoffs (e.g., he is an undergraduate Software Engineering student shipping end-to-end systems rather than a 10-year enterprise architect).`,
-    `Use prior conversation history to resolve pronouns ("it", "that project", "what challenges did he solve there?") naturally.`,
-    `Keep replies crisp, scannable, and under 190 words with clean section labels or short bullets. No emojis or filler hype.`,
+    `You are the portfolio assistant representing ${SITE_PROFILE.fullName} (${SITE_PROFILE.brand}), a ${SITE_PROFILE.role} based in ${SITE_PROFILE.location}.`,
+    ``,
+    `STRICT SCOPE & OFF-TOPIC POLICY:`,
+    `1. Only answer questions about ${SITE_PROFILE.fullName} — his software engineering projects, architecture, technical stack, work experience, education, certifications, hiring fit, strengths/limitations, engineering philosophy, tech blog, availability, and contact information.`,
+    `2. If the user asks an unrelated or general-knowledge question (for example: world politics, presidents, capitals, weather, sports, celebrities, recipes, random trivia, or unrelated homework/coding problems), you MUST set offTopic=true, leave referencedProjectSlugs empty, and reply in 1-2 polite, direct sentences stating that you only answer questions about ${SITE_PROFILE.fullName}'s engineering portfolio and work. Do NOT answer the off-topic trivia and do NOT dump his resume or experience list when the question is off-topic.`,
+    `3. Even if the user has spelling typos (e.g., "who is the president of ghna" or "aman pay stack"), infer their real intent accurately before judging relevance.`,
+    ``,
+    `GROUNDING & QUALITY RULES:`,
+    `- Rely ONLY on the verified portfolio facts below. Never invent employers, dates, salary numbers, GPA/grades, fake metrics, or technologies absent from this data.`,
+    `- If a visitor asks a legitimate question about ${SITE_PROFILE.fullName} whose answer is not in the data (e.g., private hourly rate, exact graduation date, private employer records), say clearly that it is not listed in his public portfolio and direct them to the Contact page.`,
+    `- For evaluative recruiter/client questions ("Should I hire him?", "What are his strengths and weaknesses?", "Is he strong in backend?"), synthesize specific projects, internships, certifications, and honest career-stage tradeoffs.`,
+    `- Use conversation history naturally to resolve follow-ups ("it", "that project", "what challenges did he solve there?").`,
+    `- Keep answers crisp, scannable, and under 180 words. Use plain sentences or simple "• Label: detail" bullets. No emojis, no markdown heading hashes (#), and no filler hype.`,
+    `- Only return exact project slugs from the [slug: ...] tags below in referencedProjectSlugs.`,
     ``,
     `PROFILE:`,
     `Name: ${SITE_PROFILE.fullName} | Role: ${SITE_PROFILE.role} | Location: ${SITE_PROFILE.location}`,
@@ -399,6 +490,7 @@ export function buildPortfolioSystemPrompt(bundle: PortfolioBundle): string {
     `Focus Areas: ${interestsSummary}`,
     `Availability: ${SITE_PROFILE.availabilityNote}`,
     `Contact: Email ${SITE_PROFILE.email} | Phone ${SITE_PROFILE.phoneDisplay} | GitHub ${SITE_PROFILE.githubUrl} | LinkedIn ${SITE_PROFILE.linkedinUrl}`,
+    ...(blogLine ? [blogLine] : []),
     ``,
     `EXPERIENCE & EDUCATION:`,
     expSummary,
@@ -409,6 +501,102 @@ export function buildPortfolioSystemPrompt(bundle: PortfolioBundle): string {
     `TECHNICAL SKILLS:`,
     skillsSummary,
   ].join('\n');
+}
+
+/**
+ * Safely parses JSON returned by Gemini (even if wrapped in markdown code fences).
+ */
+export function parseStructuredGeminiJson(rawText: string): StructuredGeminiReply | null {
+  const cleaned = rawText
+    .trim()
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+
+  if (!cleaned) return null;
+
+  try {
+    const parsed = JSON.parse(cleaned) as StructuredGeminiReply;
+    if (!parsed || typeof parsed !== 'object') return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Converts a structured Gemini response into a verified AssistantReply whose links
+ * are strictly derived from the live PortfolioBundle (never hallucinated URLs).
+ */
+export function normalizeGeminiAssistantReply(
+  raw: StructuredGeminiReply,
+  bundle: PortfolioBundle,
+  question: string
+): AssistantReply {
+  const questionLower = question.trim().toLowerCase();
+  const offTopic = Boolean(raw.offTopic);
+  const answer =
+    typeof raw.answer === 'string' && raw.answer.trim().length > 0
+      ? raw.answer.trim()
+      : offTopic
+        ? `I'm ${bundle.SITE_PROFILE.fullName}'s portfolio assistant, so I can only answer questions about his software engineering projects, skills, experience, and availability.`
+        : `I couldn't find enough verified portfolio detail to answer that clearly. Feel free to explore ${bundle.SITE_PROFILE.fullName}'s projects or reach out directly.`;
+
+  const links: AssistantLink[] = [];
+
+  if (!offTopic) {
+    const projectBySlug = new Map(bundle.PROJECTS.map((p) => [p.slug.toLowerCase(), p]));
+    const slugs = Array.isArray(raw.referencedProjectSlugs) ? raw.referencedProjectSlugs : [];
+
+    for (const rawSlug of slugs) {
+      if (typeof rawSlug !== 'string') continue;
+      const project = projectBySlug.get(rawSlug.trim().toLowerCase());
+      if (!project) continue;
+      links.push({ label: project.title, href: `/work/${project.slug}/` });
+      if (slugs.length === 1 && project.liveUrl) {
+        links.push({ label: 'Live Demo', href: project.liveUrl, external: true });
+      }
+      if (slugs.length === 1 && project.githubUrl) {
+        links.push({ label: 'GitHub Repo', href: project.githubUrl, external: true });
+      }
+    }
+
+    if (raw.includeResumeLink) {
+      links.push({ label: 'View Resume (PDF)', href: '/api/resume/', external: true });
+    }
+    if (raw.includeContactLink) {
+      links.push({ label: 'Contact Petros', href: '/contact' });
+    }
+    if (raw.includeBlogLink) {
+      links.push({ label: 'Engineering Blog', href: '/blog' });
+    }
+    if (raw.includeWorkLink || links.length === 0) {
+      links.push({ label: 'Explore Projects', href: '/work' });
+    }
+  } else {
+    links.push(
+      { label: 'Explore Projects', href: '/work' },
+      { label: 'View Resume (PDF)', href: '/api/resume/', external: true },
+      { label: 'Contact Petros', href: '/contact' }
+    );
+  }
+
+  const rawFollowUps = Array.isArray(raw.followUps)
+    ? raw.followUps.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    : [];
+
+  const followUps = dedupeFollowUps(
+    rawFollowUps.length > 0 ? rawFollowUps : [...DEFAULT_STARTER_FOLLOW_UPS],
+    questionLower
+  );
+
+  return {
+    answer,
+    links: dedupeLinks(links),
+    followUps,
+    mode: 'llm',
+    offTopic,
+  };
 }
 
 function formatProjectDeepDive(
@@ -1121,15 +1309,30 @@ export function answerPortfolioQuestion(
   }
 
   const featuredNames = featured.map((p) => p.title).join(', ');
-  const isGreeting = /\b(hi|hello|hey|salam|selam|greetings|help|who is petros)\b/i.test(lower);
-  const introLine = isGreeting
-    ? `${SITE_PROFILE.fullName} is a ${SITE_PROFILE.role} in ${SITE_PROFILE.location} (${eduExp?.organization ?? 'Debre Birhan University'}).`
-    : `I answer specifically from ${SITE_PROFILE.fullName}'s verified portfolio rather than guessing outside it. Here is his grounded snapshot:`;
+  const isGreetingOrOverview =
+    /\b(hi|hello|hey|salam|selam|greetings|help|who is petros|who is he|tell me about petros|tell me about him|introduce|portfolio|overview|summary)\b/i.test(
+      lower
+    );
+
+  if (!isGreetingOrOverview) {
+    return {
+      mode: 'portfolio-engine',
+      offTopic: true,
+      answer: `I'm ${SITE_PROFILE.fullName}'s portfolio assistant, so I can only answer questions about his software engineering projects, technical stack, experience, and availability — not unrelated general topics.`,
+      links: dedupeLinks([
+        { label: 'Explore Projects', href: '/work' },
+        { label: 'View Resume (PDF)', href: '/api/resume/', external: true },
+        { label: 'Contact Petros', href: '/contact' },
+      ]),
+      followUps: dedupeFollowUps([...DEFAULT_STARTER_FOLLOW_UPS], lower),
+    };
+  }
 
   return {
     mode: 'portfolio-engine',
+    offTopic: false,
     answer: [
-      introLine,
+      `${SITE_PROFILE.fullName} is a ${SITE_PROFILE.role} in ${SITE_PROFILE.location} (${eduExp?.organization ?? 'Debre Birhan University'}).`,
       ``,
       `• Engineering Range: Next.js/React/TypeScript frontend, Node.js/Express/Spring Boot/SQL backends, React Native/Flutter mobile apps, and C++17/Java desktop systems.`,
       `• Credentials: ${insaExp?.organization ?? 'INSA 5th Round'} Web & App certified, remote client delivery${remoteExp ? ' (active)' : ''}, and internships at ${sprintExp?.organization ?? 'Sprint Studio'} & ${risetechExp?.organization ?? 'RiseTech'}.`,
@@ -1149,4 +1352,38 @@ export function answerPortfolioQuestion(
       lower
     ),
   };
+}
+
+/**
+ * Normalizes chat history into alternating Gemini content turns ending with the current user question.
+ */
+export function buildGeminiConversationContents(
+  history: readonly AssistantHistoryTurn[],
+  question: string
+): Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> {
+  const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
+
+  for (const turn of history.slice(-8)) {
+    const text = turn.content.trim().slice(0, 1000);
+    if (!text) continue;
+    const role: 'user' | 'model' = turn.role === 'assistant' ? 'model' : 'user';
+    // Skip leading assistant turns or collapse consecutive duplicate roles
+    if (contents.length === 0 && role === 'model') continue;
+    const prev = contents[contents.length - 1];
+    if (prev && prev.role === role) {
+      prev.parts[0].text = `${prev.parts[0].text}\n${text}`;
+    } else {
+      contents.push({ role, parts: [{ text }] });
+    }
+  }
+
+  const cleanQuestion = question.trim();
+  const last = contents[contents.length - 1];
+  if (last && last.role === 'user') {
+    last.parts[0].text = `${last.parts[0].text}\n${cleanQuestion}`;
+  } else {
+    contents.push({ role: 'user', parts: [{ text: cleanQuestion }] });
+  }
+
+  return contents;
 }

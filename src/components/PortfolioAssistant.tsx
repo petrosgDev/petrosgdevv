@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
+  AlertCircle,
   ArrowUpRight,
   Check,
   Copy,
@@ -12,11 +13,10 @@ import {
   X,
 } from 'lucide-react';
 import { usePortfolio } from '@/components/PortfolioContext';
-import {
-  answerPortfolioQuestion,
-  type AssistantHistoryTurn,
-  type AssistantLink,
-  type AssistantReply,
+import type {
+  AssistantHistoryTurn,
+  AssistantLink,
+  AssistantReply,
 } from '@/lib/portfolioAssistant';
 
 interface ChatTurn {
@@ -25,6 +25,9 @@ interface ChatTurn {
   content: string;
   links?: AssistantLink[];
   followUps?: string[];
+  offTopic?: boolean;
+  isError?: boolean;
+  retryQuestion?: string;
 }
 
 const STARTER_GROUPS = [
@@ -51,6 +54,24 @@ const STARTER_GROUPS = [
   },
 ] as const;
 
+function renderInlineEmphasis(text: string): React.ReactNode {
+  const segments = text.split(/(\*\*[^*]+\*\*)/g);
+  if (segments.length === 1) return text;
+  return segments.map((part, idx) => {
+    if (part.startsWith('**') && part.endsWith('**') && part.length > 4) {
+      return (
+        <strong
+          key={`em-${idx}`}
+          className="font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]"
+        >
+          {part.slice(2, -2)}
+        </strong>
+      );
+    }
+    return <React.Fragment key={`tx-${idx}`}>{part}</React.Fragment>;
+  });
+}
+
 function FormattedAssistantContent({ content }: { content: string }) {
   const blocks = content.split('\n');
 
@@ -62,12 +83,26 @@ function FormattedAssistantContent({ content }: { content: string }) {
           return <div key={`sp-${index}`} className="h-1" aria-hidden="true" />;
         }
 
-        // Bullet line: "• Label: body" or "- body"
-        if (line.startsWith('• ') || line.startsWith('- ')) {
-          const isNested = rawLine.startsWith('  - ');
-          const body = line.replace(/^[•-]\s+/, '');
-          const colonIdx = body.indexOf(':');
-          const hasLeadLabel = colonIdx > 0 && colonIdx <= 42;
+        // Markdown heading fallback ("## Title" or "### Title")
+        if (/^#{1,4}\s+/.test(line)) {
+          return (
+            <p
+              key={`mhd-${index}`}
+              className="pt-1 first:pt-0 text-[12px] font-semibold tracking-[-0.01em] text-[#1A1A1A] dark:text-[#F0F0EE]"
+            >
+              {line.replace(/^#{1,4}\s+/, '').replace(/\*\*/g, '')}
+            </p>
+          );
+        }
+
+        // Bullet line: "• Label: body", "- body", or "* body"
+        if (line.startsWith('• ') || line.startsWith('- ') || line.startsWith('* ')) {
+          const isNested = rawLine.startsWith('  - ') || rawLine.startsWith('  • ');
+          const body = line.replace(/^[•*-]\s+/, '');
+          const cleanBody = body.replace(/^\*\*([^*]+)\*\*/, '$1');
+          const colonIdx = cleanBody.indexOf(':');
+          const hasLeadLabel =
+            !body.startsWith('**') && colonIdx > 0 && colonIdx <= 42;
 
           return (
             <div
@@ -84,10 +119,10 @@ function FormattedAssistantContent({ content }: { content: string }) {
                     <strong className="font-semibold text-[#1A1A1A] dark:text-[#F0F0EE]">
                       {body.slice(0, colonIdx + 1)}
                     </strong>
-                    {body.slice(colonIdx + 1)}
+                    {renderInlineEmphasis(body.slice(colonIdx + 1))}
                   </>
                 ) : (
-                  body
+                  renderInlineEmphasis(body)
                 )}
               </span>
             </div>
@@ -101,14 +136,14 @@ function FormattedAssistantContent({ content }: { content: string }) {
               key={`hd-${index}`}
               className="pt-1 first:pt-0 text-[12px] font-semibold tracking-[-0.01em] text-[#1A1A1A] dark:text-[#F0F0EE]"
             >
-              {line.slice(0, -1)}
+              {line.slice(0, -1).replace(/\*\*/g, '')}
             </p>
           );
         }
 
         return (
           <p key={`tx-${index}`} className="text-[#2A2A2A] dark:text-[#D4D4D0]">
-            {line}
+            {renderInlineEmphasis(line)}
           </p>
         );
       })}
@@ -164,22 +199,32 @@ export function PortfolioAssistant() {
     }
   };
 
-  const askQuestion = async (rawQuestion: string) => {
+  const askQuestion = async (rawQuestion: string, options?: { isRetry?: boolean }) => {
     const question = rawQuestion.trim();
     if (!question || loading) return;
 
-    const historySnapshot: AssistantHistoryTurn[] = turns.map((t) => ({
-      role: t.role,
-      content: t.content,
-    }));
+    const cleanPreviousTurns = options?.isRetry
+      ? turns.filter((t, idx) => !(idx === turns.length - 1 && t.isError))
+      : turns;
 
-    const userTurn: ChatTurn = {
-      id: `u-${Date.now()}`,
-      role: 'user',
-      content: question,
-    };
+    const historySnapshot: AssistantHistoryTurn[] = cleanPreviousTurns
+      .filter((t) => !t.isError)
+      .map((t) => ({
+        role: t.role,
+        content: t.content,
+      }));
 
-    setTurns((prev) => [...prev, userTurn]);
+    if (options?.isRetry) {
+      setTurns(cleanPreviousTurns);
+    } else {
+      const userTurn: ChatTurn = {
+        id: `u-${Date.now()}`,
+        role: 'user',
+        content: question,
+      };
+      setTurns((prev) => [...prev, userTurn]);
+    }
+
     setInput('');
     setLoading(true);
 
@@ -193,11 +238,25 @@ export function PortfolioAssistant() {
         }),
       });
 
-      let reply: AssistantReply;
-      if (res.ok) {
-        reply = (await res.json()) as AssistantReply;
-      } else {
-        reply = answerPortfolioQuestion(question, data, historySnapshot);
+      const payload = (await res.json().catch(() => null)) as
+        | (AssistantReply & { error?: string })
+        | null;
+
+      if (!res.ok || !payload || typeof payload.answer !== 'string') {
+        const errorMessage =
+          payload?.error ||
+          'Unable to get an answer right now. Please try again in a moment.';
+        setTurns((prev) => [
+          ...prev,
+          {
+            id: `e-${Date.now()}`,
+            role: 'assistant',
+            content: errorMessage,
+            isError: true,
+            retryQuestion: question,
+          },
+        ]);
+        return;
       }
 
       setTurns((prev) => [
@@ -205,21 +264,22 @@ export function PortfolioAssistant() {
         {
           id: `a-${Date.now()}`,
           role: 'assistant',
-          content: reply.answer,
-          links: reply.links,
-          followUps: reply.followUps,
+          content: payload.answer,
+          links: payload.links,
+          followUps: payload.followUps,
+          offTopic: Boolean(payload.offTopic),
         },
       ]);
     } catch {
-      const fallback = answerPortfolioQuestion(question, data, historySnapshot);
       setTurns((prev) => [
         ...prev,
         {
-          id: `a-${Date.now()}`,
+          id: `e-${Date.now()}`,
           role: 'assistant',
-          content: fallback.answer,
-          links: fallback.links,
-          followUps: fallback.followUps,
+          content:
+            'Could not reach the assistant right now. Check your connection and try again.',
+          isError: true,
+          retryQuestion: question,
         },
       ]);
     } finally {
@@ -335,12 +395,37 @@ export function PortfolioAssistant() {
                     <div className="max-w-[85%] rounded-2xl rounded-br-md bg-[#1A1A1A] dark:bg-[#F0F0EE] px-3.5 py-2 text-[12.5px] leading-relaxed text-white dark:text-[#0A0A0A]">
                       {turn.content}
                     </div>
+                  ) : turn.isError ? (
+                    <div
+                      role="alert"
+                      className="rounded-2xl rounded-tl-md border border-red-200 dark:border-red-900/60 bg-red-50/70 dark:bg-red-950/30 px-3.5 py-3 space-y-2"
+                    >
+                      <div className="flex items-center gap-1.5 font-mono text-[9.5px] uppercase tracking-[0.12em] text-red-700 dark:text-red-300">
+                        <AlertCircle className="h-3 w-3 shrink-0" aria-hidden="true" />
+                        <span>Assistant Unavailable</span>
+                      </div>
+                      <p className="text-[12.5px] leading-[1.55] text-[#2A2A2A] dark:text-[#E5E5E1]">
+                        {turn.content}
+                      </p>
+                      {turn.retryQuestion ? (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            void askQuestion(turn.retryQuestion!, { isRetry: true })
+                          }
+                          className="inline-flex items-center gap-1.5 rounded-full border border-black/[0.12] dark:border-white/[0.16] bg-white dark:bg-[#161615] px-3 py-1 text-[11px] font-medium text-[#1A1A1A] dark:text-[#F0F0EE] hover:border-[#1A1A1A] dark:hover:border-[#F0F0EE] transition-colors cursor-pointer"
+                        >
+                          <RotateCcw className="h-3 w-3" aria-hidden="true" />
+                          <span>Try again</span>
+                        </button>
+                      ) : null}
+                    </div>
                   ) : (
                     <div className="space-y-2.5">
                       <div className="group relative rounded-2xl rounded-tl-md border border-[#EAEAEA] dark:border-[#222220] bg-[#FAFAFA] dark:bg-[#161615] px-3.5 py-3">
                         <div className="flex items-center justify-between gap-2 pb-1.5 mb-1.5 border-b border-black/[0.05] dark:border-white/[0.06]">
                           <span className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-[#777773] dark:text-[#8E8E88]">
-                            Verified Answer
+                            {turn.offTopic ? 'Out of Scope' : 'Verified Answer'}
                           </span>
                           <button
                             type="button"
@@ -400,7 +485,7 @@ export function PortfolioAssistant() {
                       turn.followUps.length > 0 ? (
                         <div className="pt-0.5 space-y-1.5">
                           <p className="font-mono text-[9.5px] uppercase tracking-[0.12em] text-[#777773] dark:text-[#8E8E88]">
-                            Follow up
+                            {turn.offTopic ? 'Try asking about Petros' : 'Follow up'}
                           </p>
                           <div className="flex flex-wrap gap-1.5">
                             {turn.followUps.map((followUp) => (
@@ -424,7 +509,7 @@ export function PortfolioAssistant() {
 
             {loading ? (
               <div className="rounded-2xl border border-[#EAEAEA] dark:border-[#222220] bg-[#FAFAFA] dark:bg-[#161615] px-3.5 py-2.5 text-[12px] font-mono text-[#666666] dark:text-[#9A9A96]">
-                Analyzing portfolio context...
+                Thinking...
               </div>
             ) : null}
           </div>

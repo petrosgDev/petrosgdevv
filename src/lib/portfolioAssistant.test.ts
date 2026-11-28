@@ -3,8 +3,36 @@ import assert from 'node:assert/strict';
 import { getDefaultPortfolioBundle } from '../data/portfolio';
 import {
   answerPortfolioQuestion,
+  buildGeminiConversationContents,
   buildPortfolioSystemPrompt,
+  normalizeGeminiAssistantReply,
+  parseStructuredGeminiJson,
 } from './portfolioAssistant';
+
+test('answerPortfolioQuestion rejects off-topic queries instead of dumping unrelated experience', () => {
+  const bundle = getDefaultPortfolioBundle();
+
+  const ghana = answerPortfolioQuestion('who is the president of ghna', bundle);
+  assert.equal(ghana.offTopic, true);
+  assert.match(ghana.answer, /only answer questions about/i);
+  assert.doesNotMatch(ghana.answer, /RiseTech|Debre Birhan University|Verified Experience/i);
+
+  const weather = answerPortfolioQuestion('what is the weather in tokyo today?', bundle);
+  assert.equal(weather.offTopic, true);
+  assert.doesNotMatch(weather.answer, /RiseTech|Sprint Studio/i);
+
+  // Even after talking about Aman Pay, an unrelated short question must NOT falsely hijack prior project context
+  const afterProject = answerPortfolioQuestion(
+    'capital of france?',
+    bundle,
+    [
+      { role: 'user', content: 'tell me about Aman Pay' },
+      { role: 'assistant', content: 'Aman Pay is an escrow payment platform.' },
+    ]
+  );
+  assert.equal(afterProject.offTopic, true);
+  assert.doesNotMatch(afterProject.answer, /Aman Pay/i);
+});
 
 test('answerPortfolioQuestion answers critical recruiter questions grounded in Petros data', () => {
   const bundle = getDefaultPortfolioBundle();
@@ -86,11 +114,59 @@ test('answerPortfolioQuestion resolves multi-turn conversation history and synon
   assert.ok(nexusStackFollowUp.links.some((l) => l.href === '/work/nexus-campus-services/'));
 });
 
-test('buildPortfolioSystemPrompt includes deep project architecture, challenges, and strict grounding', () => {
+test('normalizeGeminiAssistantReply verifies slugs strictly and handles off-topic replies cleanly', () => {
+  const bundle = getDefaultPortfolioBundle();
+
+  const parsed = parseStructuredGeminiJson(
+    '```json\n{"answer":"Aman Pay uses Next.js and Chapa escrow.","offTopic":false,"referencedProjectSlugs":["aman-pay","fake-hallucinated-slug"],"includeResumeLink":true,"includeContactLink":false,"includeWorkLink":false,"includeBlogLink":false,"followUps":["What challenges did Aman Pay solve?","Compare his backend stack"]}\n```'
+  );
+  assert.ok(parsed);
+
+  const normalized = normalizeGeminiAssistantReply(parsed, bundle, 'Tell me about Aman Pay');
+  assert.equal(normalized.mode, 'llm');
+  assert.equal(normalized.offTopic, false);
+  assert.ok(normalized.links.some((l) => l.href === '/work/aman-pay/'));
+  assert.ok(normalized.links.some((l) => l.href === '/api/resume/'));
+  assert.ok(!normalized.links.some((l) => l.href.includes('fake-hallucinated-slug')));
+
+  const offTopicNormalized = normalizeGeminiAssistantReply(
+    {
+      answer: "I only answer questions about Petros Geto's engineering portfolio.",
+      offTopic: true,
+      referencedProjectSlugs: ['aman-pay'],
+      followUps: ['Should I hire Petros?'],
+    },
+    bundle,
+    'who is the president of ghna'
+  );
+  assert.equal(offTopicNormalized.offTopic, true);
+  assert.ok(!offTopicNormalized.links.some((l) => l.href === '/work/aman-pay/'));
+  assert.ok(offTopicNormalized.links.some((l) => l.href === '/work'));
+});
+
+test('buildGeminiConversationContents produces alternating turns ending with user question', () => {
+  const contents = buildGeminiConversationContents(
+    [
+      { role: 'assistant', content: 'Stale leading message' },
+      { role: 'user', content: 'Tell me about Aman Pay' },
+      { role: 'assistant', content: 'Aman Pay is a fintech escrow app.' },
+    ],
+    'What stack did it use?'
+  );
+
+  assert.equal(contents.length, 3);
+  assert.equal(contents[0].role, 'user');
+  assert.equal(contents[1].role, 'model');
+  assert.equal(contents[2].role, 'user');
+  assert.equal(contents[2].parts[0].text, 'What stack did it use?');
+});
+
+test('buildPortfolioSystemPrompt includes strict off-topic rules, slugs, and grounding', () => {
   const bundle = getDefaultPortfolioBundle();
   const prompt = buildPortfolioSystemPrompt(bundle);
   assert.match(prompt, /Petros Geto/);
-  assert.match(prompt, /Aman Pay/);
+  assert.match(prompt, /\[slug: aman-pay\]/);
+  assert.match(prompt, /STRICT SCOPE & OFF-TOPIC POLICY/);
   assert.match(prompt, /Architecture:/);
   assert.match(prompt, /Challenge Solved:/);
   assert.match(prompt, /Never invent employers/);
